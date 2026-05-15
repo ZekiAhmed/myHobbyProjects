@@ -9,51 +9,66 @@ type Project = {
 
 const projects: Project[] = [
   {
-    title: "PulseBoard",
+    title: "xyzPolicyAI",
     description:
-      "Real-time engineering analytics dashboard with event streaming, anomaly alerts, and role-based insights.",
-    stack: "React, TypeScript, Node.js, PostgreSQL, WebSockets",
-    href: "https://example.com/pulseboard",
+      "An AI-powered assistant that instantly finds and explains accurate company policies for employees.",
+    stack: "Next.js, TypeScript,  Neon as a vector DB, Prisma, Clerk",
+    href: "https://www.linkedin.com/posts/iltcode-coding-790538219_softwaredevelopment-webdevelopment-startuplife-activity-7448737357752696833-JsT6?utm_source=share&utm_medium=member_desktop&rcm=ACoAADcS-VwB13qqeYX4wlG-3pLz53Q_J43NJow",
   },
   {
-    title: "ShipFlow",
+    title: "xClone",
     description:
-      "CI/CD orchestration tool that cut deployment lead time by automating preview environments and rollback checks.",
-    stack: "Next.js, Go, Docker, GitHub Actions, Redis",
-    href: "https://example.com/shipflow",
+      "A lightweight x(tweeter) clone platform designed for real-time public messaging",
+    stack: "Next.js, TypeScript, Neon, Prisma, Clerk,TanStack Query, ImageKit,",
+    href: "https://www.linkedin.com/posts/iltcode-coding-790538219_softwaredevelopment-webdevelopment-startuplife-activity-7410477124878389248-xbF4?utm_source=share&utm_medium=member_desktop&rcm=ACoAADcS-VwB13qqeYX4wlG-3pLz53Q_J43NJow",
   },
   {
-    title: "SupportIQ",
+    title: "Better-Auth with billing boilerplate",
     description:
-      "AI-assisted support workspace that summarizes tickets and suggests responses directly in the agent dashboard.",
-    stack: "React, Python, FastAPI, OpenAI API, Supabase",
-    href: "https://example.com/supportiq",
+      "Next-gen boilerplate with Better-Auth and Stripe.",
+    stack: "Next.js, TypeScript, Better-auth, Neon, Prisma",
+    href: "https://www.linkedin.com/posts/iltcode-coding-790538219_softwaredevelopment-webdevelopment-startuplife-activity-7427480092504838144-nMIr?utm_source=share&utm_medium=member_desktop&rcm=ACoAADcS-VwB13qqeYX4wlG-3pLz53Q_J43NJow",
+  },
+  {
+    title: "shadcn ui simple demo",
+    description:
+      "A responsive demo application demonstrating beautiful, copy-and-paste interface components designed for rapid, customizable web development.",
+    stack: "Next.js, shadcn ui",
+    href: "https://www.linkedin.com/posts/iltcode-coding-790538219_softwaredevelopment-webdevelopment-startuplife-activity-7420584912912633856-jAI7?utm_source=share&utm_medium=member_desktop&rcm=ACoAADcS-VwB13qqeYX4wlG-3pLz53Q_J43NJow",
   },
 ];
 
 const experiences = [
   {
-    role: "Senior Software Developer",
-    company: "Northstar Labs",
-    period: "2023 - Present",
+    role: "Real-Time Systems Developer",
+    company: "Independent Software Projects",
+    period: "2025",
     detail:
-      "Leading frontend architecture for two SaaS products, improving Core Web Vitals and reducing defect escape rate through shared component standards.",
+      "Developed a high-concurrency messaging engine (xClone) leveraging TanStack Query for optimistic UI state mutations and ImageKit for optimized media assets delivery.",
   },
   {
-    role: "Software Developer",
-    company: "Pixel Forge",
-    period: "2020 - 2023",
+    role: "Independent Full-Stack Developer",
+    company: "Self-Directed Projects & Open Source",
+    period: "2026",
     detail:
-      "Built customer-facing features across React and Node services, with a focus on API performance and accessible UI patterns.",
+      "Architected enterprise-grade Next.js applications, implementing secure authentication systems via Better-Auth and Clerk alongside robust Stripe billing pipelines.",
   },
   {
-    role: "Junior Developer",
-    company: "BrightFrame",
-    period: "2018 - 2020",
+    role: "AI & Database Solutions Engineer",
+    company: "Independent Software Engineering",
+    period: "2026",
     detail:
-      "Delivered full-stack features for internal operations tooling and collaborated closely with design and QA teams.",
+      "Engineered an AI-powered retrieval assistant utilizing Neon vector databases, Prisma ORM, and TypeScript to optimize document indexing and contextual search query speeds.",
+  },
+  {
+    role: "Frontend & Interface Developer",
+    company: "Independent Projects",
+    period: "2026",
+    detail:
+      "Designed high-performance user interfaces by leveraging shadcn/ui and Tailwind CSS, while managing complex asynchronous server states with TanStack Query.",
   },
 ];
+
 
 export default function App() {
   const reduceMotion = useReducedMotion();
@@ -66,7 +81,7 @@ export default function App() {
           aria-label="Main navigation"
         >
           <a href="#home" className="text-lg font-semibold tracking-wide text-white">
-            Avery Morgan
+            Zeki Ahmed
           </a>
           <div className="flex items-center gap-6 text-sm text-zinc-300">
             <a href="#projects" className="transition hover:text-white">
@@ -97,8 +112,8 @@ export default function App() {
               reduceMotion
                 ? undefined
                 : {
-                    opacity: [0.4, 0.6, 0.4],
-                  }
+                  opacity: [0.4, 0.6, 0.4],
+                }
             }
             transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -115,10 +130,10 @@ export default function App() {
                 Software Developer Portfolio
               </p>
               <h1 className="text-5xl leading-tight font-semibold tracking-tight text-white sm:text-6xl md:text-7xl">
-                Avery Morgan
+                Zeki Ahmed
               </h1>
               <p className="mt-6 max-w-2xl text-lg text-zinc-200 sm:text-xl">
-                I design and build resilient web products with React, TypeScript, and cloud-native tooling focused on speed, accessibility, and maintainability.
+                I design and build resilient web applications with Next.js, TypeScript, and AI-powered database tooling focused on speed, security, and maintainability.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
                 <a
@@ -157,7 +172,7 @@ export default function App() {
           >
             <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">About</h2>
             <p className="mt-5 text-lg leading-relaxed text-zinc-300">
-              I am a product-minded engineer with 7+ years of experience shipping software across startups and growth-stage teams. My approach blends clean architecture, thoughtful user experience, and strong engineering collaboration to deliver features that last.
+              I am a product-minded engineer specializing in building high-performance, full-stack web applications with Next.js, TypeScript, and modern database architectures. My approach blends secure authentication, vector-based AI search implementations, and real-time state synchronization to deliver scalable software solutions from scratch.
             </p>
           </motion.div>
         </section>
@@ -221,20 +236,22 @@ export default function App() {
             </p>
             <div className="mt-10 grid gap-8 sm:grid-cols-2">
               <a
-                href="mailto:avery@devmail.com"
+                href="https://github.com/ZekiAhmed"
+                target="_blank"
+                rel="noreferrer"
                 className="border border-white/15 px-6 py-5 transition hover:border-cyan-200 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
               >
-                <p className="text-sm uppercase tracking-wide text-zinc-400">Email</p>
-                <p className="mt-2 text-lg text-white">avery@devmail.com</p>
+                <p className="text-sm uppercase tracking-wide text-zinc-400">GitHub Profile page</p>
+                <p className="mt-2 text-lg text-white">github.com/ZekiAhmed</p>
               </a>
               <a
-                href="https://www.linkedin.com"
+                href="https://www.linkedin.com/in/iltcode-coding-790538219/"
                 target="_blank"
                 rel="noreferrer"
                 className="border border-white/15 px-6 py-5 transition hover:border-cyan-200 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
               >
                 <p className="text-sm uppercase tracking-wide text-zinc-400">LinkedIn</p>
-                <p className="mt-2 text-lg text-white">linkedin.com/in/averymorgan</p>
+                <p className="mt-2 text-lg text-white">linkedin.com/in/iltcode-coding-790538219</p>
               </a>
             </div>
           </div>
