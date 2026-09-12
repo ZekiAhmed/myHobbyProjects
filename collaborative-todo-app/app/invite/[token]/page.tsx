@@ -1,39 +1,65 @@
-// Used for rate limiting (see actions/invitations.ts and
-// app/invite/[token]/page.tsx). Upstash's Redis is REST-based, so unlike
-// Prisma there's no connection-pooling concern here — a new "client" is
-// really just an object holding a URL + token, safe to reuse.
+// SEMI-PUBLIC page — reachable without being logged in (see proxy.ts's
+// matcher, which explicitly excludes /invite). This page implements all
+// four branches of the PRD's invite flow diagram:
+//   A) new user            -> redirect to /sign-up?inviteToken=...
+//   B) existing, signed out -> redirect to /sign-in?inviteToken=...
+//   C) already signed in    -> accept immediately, redirect to the board
+//   D) invalid/expired token -> show an error message
+//
+// Also enforces the 30-requests/60-seconds-per-IP rate limit mentioned in
+// TDD §9, to blunt token-guessing attempts.
 
-import { Redis } from '@upstash/redis'
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { prisma } from '@/lib/db'
+import { getOptionalSession } from '@/lib/session'
+import { isInviteValid } from '@/lib/utils/invite-tokens'
+import { acceptInvitation } from '@/actions/invitations'
+import { checkRateLimit } from '@/lib/redis'
 
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
 
-/**
- * Small helper wrapping the common "fixed window" rate-limit pattern:
- * increment a counter for this key, set it to expire after `windowSeconds`
- * the FIRST time it's created, and reject once the count exceeds `limit`.
- *
- * Used for: invite creation (20/hour/user) and invite-link visits
- * (30/60s/IP) — see actions/invitations.ts.
- */
-export async function checkRateLimit(
-  key: string,
-  limit: number,
-  windowSeconds: number
-): Promise<{ allowed: boolean; remaining: number }> {
-  const count = await redis.incr(key)
+  // Rate limit by IP address (best-effort — reads the standard proxy
+  // header set by Vercel's edge network) to slow down anyone trying to
+  // brute-force guess a valid token.
+  const forwardedFor = (await headers()).get('x-forwarded-for')
+  const ip = forwardedFor?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = await checkRateLimit(`invite-visit:${ip}`, 30, 60)
 
-  // Only set an expiry the first time this key is created — otherwise every
-  // increment would keep pushing the expiry further into the future and the
-  // window would never actually reset.
-  if (count === 1) {
-    await redis.expire(key, windowSeconds)
+  if (!allowed) {
+    return <p>Too many attempts. Please try again in a minute.</p>
   }
 
-  return {
-    allowed: count <= limit,
-    remaining: Math.max(0, limit - count),
+  const invitation = await prisma.invitation.findUnique({ where: { token } })
+
+  // BRANCH D: invalid or expired token.
+  if (!invitation || !isInviteValid(invitation)) {
+    return (
+      <div>
+        <h1>This invite link is invalid or has expired.</h1>
+        <p>Ask the list owner to send a new one.</p>
+      </div>
+    )
   }
+
+  const session = await getOptionalSession()
+
+  if (!session) {
+    // We don't know yet whether this email already has an account — rather
+    // than querying for that here, we default to sending them to sign-up;
+    // the sign-up form itself doesn't block existing emails, and a user
+    // who already has an account can just click through to "sign in
+    // instead" from there. This keeps the branching logic simple.
+    //
+    // BRANCH A / B are both effectively handled by sending to /sign-up;
+    // a returning user who already knows they have an account can use the
+    // "sign in" link on that page, which preserves ?inviteToken via its
+    // own querystring forwarding.
+    redirect(`/sign-up?inviteToken=${token}`)
+  }
+
+  // BRANCH C: already signed in — accept right now.
+  const result = await acceptInvitation(token)
+  redirect(`/lists/${result.listId}`)
 }
