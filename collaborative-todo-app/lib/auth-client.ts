@@ -8,8 +8,11 @@
 
 import { createAuthClient } from 'better-auth/react'
 
-export const { useSession, signIn, signUp, signOut } = createAuthClient({
-  // Must be an absolute URL because this client can run in contexts (e.g.
+export const authClient = createAuthClient({
+   // Must be an absolute URL because this client can run in contexts (e.g.
   // during SSR) where a relative URL wouldn't resolve correctly.
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
 })
+
+// Optionally re-export individual helpers if needed elsewhere
+export const { useSession, signIn, signUp, signOut } = authClient
