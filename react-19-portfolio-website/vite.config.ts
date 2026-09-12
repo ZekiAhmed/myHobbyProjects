@@ -16,5 +16,5 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  base: '/react-19-portfolio-website/', // Tells Vite to prepend this path automatically
+  // base: '/react-19-portfolio-website/', // Tells Vite to prepend this path automatically
 });
