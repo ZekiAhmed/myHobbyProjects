@@ -44,14 +44,13 @@ export default defineConfig({
     /**
      * Test environment.
      * 
-     * 'jsdom' provides a browser-like environment:
-     * - DOM APIs (document, window, etc.)
-    * - Browser event handling
-     * - Useful for testing React components
-     * 
-     * Alternative: 'node' for pure Node.js code (faster, no DOM)
+     * Using 'node' environment for faster tests:
+     * - No DOM overhead (faster execution)
+     * - Sufficient for testing utility functions and server-side code
+     * - If you need DOM testing for React components, install jsdom
+     *   and change this to 'jsdom'
      */
-    environment: 'jsdom',
+    environment: 'node',
 
     /**
      * Enable global test APIs.
