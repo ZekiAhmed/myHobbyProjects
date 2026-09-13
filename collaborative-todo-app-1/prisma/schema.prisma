@@ -1,0 +1,231 @@
+// This schema has two sections:
+//   1. BETTER AUTH MODELS — required as-is by the Better Auth library.
+//      Don't rename fields here without checking Better Auth's docs first;
+//      it reads/writes these tables directly.
+//   2. DOMAIN MODELS — the actual Kanban app data (Boards, Todos, Tags, etc).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// BETTER AUTH MODELS — do not rename fields
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations back into our domain models
+  sessions      Session[]
+  accounts      Account[]
+  ownedBoards   Board[]       @relation("BoardOwner")
+  memberships   BoardMember[]
+  assignedTodos Todo[]        @relation("TodoAssignee")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // onDelete: Cascade — if a User is deleted (GDPR erasure), their sessions
+  // disappear automatically. No manual cleanup code needed.
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?   @db.Text
+  password              String?   @db.Text // bcrypt hash — never plaintext
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Verification {
+  // Used by Better Auth for email-verification tokens and password-reset
+  // tokens. "identifier" is typically the user's email.
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// ============================================
+// DOMAIN MODELS — the actual Kanban app
+// ============================================
+
+model Board {
+  // A "Board" is a shared Kanban board. Every Board has exactly ONE owner
+  // (see TDD §11 trade-offs — no co-owners, keeps authorization simple).
+  id          String       @id @default(cuid())
+  name        String
+  ownerId     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  owner       User         @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     BoardMember[]
+  todos       Todo[]
+  tags        Tag[]
+  invitations Invitation[]
+
+  @@index([ownerId])
+}
+
+model BoardMember {
+  // A join table connecting Users to Boards they belong to (but don't own).
+  // NOTE: the owner is NOT automatically also a BoardMember row — ownership
+  // and membership are checked separately everywhere in the code
+  // (see lib/session.ts and every Server Action's auth-check pattern).
+  id       String   @id @default(cuid())
+  boardId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  board    Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Prevents the same user from having two membership rows on one board.
+  @@unique([boardId, userId])
+  @@index([boardId])
+  @@index([userId])
+}
+
+model Invitation {
+  // Represents a pending (or resolved) email invite to join a Board.
+  // IMPORTANT SECURITY NOTE: `token` MUST be generated with
+  // crypto.randomBytes(32).toString('hex') in application code
+  // (see lib/utils/invite-tokens.ts) — never with cuid(), which is
+  // time-based and partially guessable. Prisma's @default(cuid()) is fine
+  // for the `id` field (internal, never exposed in a URL) but NOT for `token`
+  // (which IS exposed in the invite link).
+  id        String           @id @default(cuid())
+  boardId   String
+  email     String
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime         // now() + 48h at creation time
+  createdAt DateTime         @default(now())
+
+  board     Board            @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@index([email])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+model Tag {
+  // Tags are scoped PER BOARD, not global (see TDD trade-offs table) — this
+  // keeps tag colors/names from leaking between unrelated teams' boards.
+  id        String    @id @default(cuid())
+  name      String
+  color     String    // hex string, e.g. "#FF5733"
+  boardId   String
+  createdAt DateTime  @default(now())
+
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  todos     TodoTag[]
+
+  // No two tags with the same name on the same board.
+  @@unique([boardId, name])
+  @@index([boardId])
+}
+
+model Todo {
+  id          String     @id @default(cuid())
+  title       String
+  description String?    @db.Text
+  status      TodoStatus @default(TO_DO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+
+  // `order` is a FRACTIONAL INDEX (a sortable string like "a0", "a0V", "a1"),
+  // not a plain integer. This lets drag-and-drop reordering insert a card
+  // "between" two existing cards by generating a new key that sorts between
+  // their two keys — WITHOUT re-numbering every other card in the column.
+  // See lib/utils/fractional-indexing.ts for the generation logic.
+  order       String
+  boardId     String
+  assigneeId  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  board       Board      @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  // onDelete: SetNull — if the assigned user is removed from the board (or
+  // deleted entirely), the todo becomes unassigned rather than being deleted
+  // or blocking the removal. See PRD open question #2.
+  assignee    User?      @relation("TodoAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  tags        TodoTag[]
+
+  @@index([boardId])
+  @@index([assigneeId])
+  // This composite index covers the board's most common query:
+  // "give me all todos for board X, grouped by status."
+  @@index([boardId, status])
+}
+
+model TodoTag {
+  // Many-to-many join table between Todo and Tag.
+  todoId String
+  tagId  String
+
+  todo   Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([todoId, tagId])
+  @@index([todoId])
+  @@index([tagId])
+}
+
+enum TodoStatus {
+  TO_DO
+  IN_PROGRESS
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
