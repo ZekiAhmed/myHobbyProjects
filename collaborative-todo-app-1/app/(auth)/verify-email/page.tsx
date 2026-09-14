@@ -24,16 +24,17 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { sendVerificationEmail } from '@/lib/auth-client'
+import { sendVerificationEmail, authClient } from '@/lib/auth-client'
 
 /**
  * Email Verification Page Component
  * 
  * Uses React hooks for:
  * - Search params (read token from URL)
+ * - Router (redirect after verification)
  * - Form state (email for resend)
  * - UI state (success/error messages, loading)
  */
@@ -41,6 +42,7 @@ export default function VerifyEmailPage() {
   // Get the token from URL query parameters
   // Example: /verify-email?token=abc123
   const searchParams = useSearchParams()
+  const router = useRouter()
   const token = searchParams.get('token')
   
   // Form state
@@ -50,6 +52,42 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState('') // Success message
   const [error, setError] = useState('') // Error message
   const [loading, setLoading] = useState(false) // Disable form during submission
+  const [verifying, setVerifying] = useState(false) // True while verifying token
+  const [verified, setVerified] = useState(false) // True after successful verification
+
+  /**
+   * Effect to verify email when token is present.
+   * 
+   * WHAT HAPPENS:
+   * 1. User clicks verification link in email
+   * 2. Page loads with token in URL
+   * 3. This effect calls the verification API
+   * 4. Email is marked as verified in database
+   * 5. User sees success message
+   */
+  useEffect(() => {
+    if (token && !verified && !verifying) {
+      setVerifying(true)
+      
+      // Call Better Auth's verification endpoint
+      // The token is passed as a query parameter
+      fetch(`/api/auth/verify-email?token=${token}`)
+        .then(response => {
+          if (response.ok) {
+            setVerified(true)
+            setMessage('Email verified successfully! You can now sign in.')
+          } else {
+            setError('Invalid or expired verification link.')
+          }
+        })
+        .catch(() => {
+          setError('Failed to verify email. Please try again.')
+        })
+        .finally(() => {
+          setVerifying(false)
+        })
+    }
+  }, [token, verified, verifying])
 
   /**
    * Handle resend verification email.
@@ -87,19 +125,42 @@ export default function VerifyEmailPage() {
   }
 
   /**
-   * SCENARIO 1: Token exists in URL
+   * SCENARIO 1: Token exists in URL (verifying or verified)
    * 
-   * This means the user clicked the verification link in the email.
-   * Better Auth validates the token automatically.
-   * If valid, the email is marked as verified.
+   * Show loading state while verifying, then show success/error message.
    */
   if (token) {
+    // Show loading state while verifying the token
+    if (verifying) {
+      return (
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Verifying your email...</h1>
+          <p className="text-gray-600 mb-6">
+            Please wait while we verify your email address.
+          </p>
+        </div>
+      )
+    }
+
+    // Show success or error message after verification
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Email Verified</h1>
-        <p className="text-gray-600 mb-6">
-          Your email has been verified successfully!
-        </p>
+        <h1 className="text-2xl font-bold mb-4">
+          {verified ? 'Email Verified' : 'Verification Failed'}
+        </h1>
+        
+        {message && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
+            {message}
+          </div>
+        )}
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        
         <Link
           href="/sign-in"
           className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
