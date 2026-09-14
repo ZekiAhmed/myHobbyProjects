@@ -25,6 +25,7 @@
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr
  */
 
+import { Suspense } from 'react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { boardsQueryOptions } from '@/lib/queries/boards'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
@@ -58,9 +59,9 @@ export default async function DashboardPage() {
   // HydrationBoundary passes this JSON to the client, where it's restored
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      {/* DashboardClient is a Client Component that uses useSuspenseQuery() */}
-      {/* It will read the prefetched data from the hydration boundary */}
-      <DashboardClient />
+      <Suspense fallback={<div>Loading...</div>}>
+        <DashboardClient />
+      </Suspense>
     </HydrationBoundary>
   )
 }
