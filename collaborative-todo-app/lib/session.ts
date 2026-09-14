@@ -8,6 +8,7 @@
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
 
 /**
  * Use this in any page/action/route that REQUIRES a logged-in user.
@@ -41,4 +42,18 @@ export async function getOptionalSession() {
   } catch {
     return null
   }
+}
+
+
+/**
+ * Use this in Route Handlers (app/api/**), never in Server Components.
+ * Route Handlers are hit by fetch() calls expecting JSON — redirecting
+ * them (like getRequiredSession() does) makes fetch() transparently follow
+ * the redirect and hand back the sign-in page's HTML, which then blows up
+ * whoever calls response.json(). This returns null instead, so the caller
+ * can send back a proper 401 JSON response.
+ */
+export async function getApiSession() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  return session // null if not authenticated — caller decides what to do
 }

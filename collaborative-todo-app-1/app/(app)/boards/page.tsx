@@ -1,5 +1,5 @@
 import { getRequiredSession } from '@/lib/session'
-import { signOut } from '@/app/actions/auth'
+import { SignOutButton } from './sign-out-button'
 
 export default async function BoardsPage() {
   const session = await getRequiredSession()
@@ -13,14 +13,7 @@ export default async function BoardsPage() {
             <span className="text-sm text-gray-600">
               {session.user.email}
             </span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Sign out
-              </button>
-            </form>
+            <SignOutButton />
           </div>
         </div>
       </header>

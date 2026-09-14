@@ -1,9 +1,3 @@
-// The actual dashboard UI. Splits lists into "Lists I Own" and "Lists I'm
-// a Member of" (PRD Dashboard Flow). Uses useSuspenseQuery — meaning by
-// the time this component's body runs, `data` is GUARANTEED to be
-// populated (either from the server prefetch above, or from a loading
-// Suspense boundary further up the tree while it fetches).
-
 'use client'
 
 import { useState } from 'react'
@@ -12,6 +6,7 @@ import { listsQueryOptions } from '@/lib/queries/lists'
 import { ListCard } from './ListCard'
 import { NewListModal } from './NewListModal'
 import { Button } from '@/components/ui/button'
+import { Plus, LayoutGrid } from 'lucide-react'
 
 type ListSummary = {
   id: string
@@ -29,30 +24,53 @@ export function DashboardClient() {
   const memberLists = lists.filter((l: ListSummary) => !l.isOwner)
 
   return (
-    <div>
-      <header>
-        <h1>Your Lists</h1>
-        <Button onClick={() => setIsModalOpen(true)}>New List</Button>
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Your Lists</h1>
+        <Button onClick={() => setIsModalOpen(true)} size="sm">
+          <Plus className="size-4" />
+          New List
+        </Button>
       </header>
 
-      <section>
-        <h2>Lists I Own</h2>
-        {ownedLists.length === 0 && <p>You don't own any lists yet.</p>}
-        <div>
-          {ownedLists.map((list: ListSummary) => (
-            <ListCard key={list.id} list={list} />
-          ))}
-        </div>
+      <section className="mt-8">
+        <h2 className="text-sm font-medium text-muted-foreground mb-3">
+          Lists I Own
+        </h2>
+        {ownedLists.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <LayoutGrid className="size-10 text-muted-foreground/50 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              You don&apos;t own any lists yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {ownedLists.map((list: ListSummary) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <section>
-        <h2>Lists I'm a Member of</h2>
-        {memberLists.length === 0 && <p>You haven't joined any lists yet.</p>}
-        <div>
-          {memberLists.map((list: ListSummary) => (
-            <ListCard key={list.id} list={list} />
-          ))}
-        </div>
+      <section className="mt-8">
+        <h2 className="text-sm font-medium text-muted-foreground mb-3">
+          Lists I&apos;m a Member of
+        </h2>
+        {memberLists.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <LayoutGrid className="size-10 text-muted-foreground/50 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              You haven&apos;t joined any lists yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {memberLists.map((list: ListSummary) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        )}
       </section>
 
       {isModalOpen && <NewListModal onClose={() => setIsModalOpen(false)} />}

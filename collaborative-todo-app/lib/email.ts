@@ -29,7 +29,7 @@ type SendEmailInput = {
 export async function sendEmail({ to, subject, template, props }: SendEmailInput) {
   try {
     await resend.emails.send({
-      from: 'Kanban App <notifications@yourdomain.com>',
+      from: 'Kanban App <notifications@ZekiAhmed.dev>',
       to,
       subject,
       // In a real project, `react:` would point at an actual React Email

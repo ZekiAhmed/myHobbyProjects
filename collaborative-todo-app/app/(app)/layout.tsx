@@ -1,64 +1,21 @@
-// Shared shell for every LOGGED-IN page (dashboard, board, settings): the
-// TanStack Query provider and a global nav bar. This layout does NOT do
-// its own auth check — every page underneath it calls getRequiredSession()
-// individually, which is more robust than relying on a single shared
-// layout-level check (see lib/session.ts comments on why we never assume
-// auth from one layer alone).
-
-// import { QueryProvider } from '@/providers/QueryProvider'
-// import { signOut } from '@/lib/auth-client'
-
-// export default function AppLayout({ children }: { children: React.ReactNode }) {
-//   return (
-//     <QueryProvider>
-//       <nav>
-//         <a href="/">Dashboard</a>
-//         {/* signOut() clears both the DB session row and the browser cookie
-//             — see lib/auth.ts session config. */}
-//         <button onClick={() => signOut({ fetchOptions: { onSuccess: () => (window.location.href = '/sign-in') } })}>
-//           Sign out
-//         </button>
-//       </nav>
-//       <main>{children}</main>
-//     </QueryProvider>
-//   )
-// }
-
-//==============================
-// the above code:
-
-// This error occurs because the arrow function () => (window.location.href = '/sign-in') implicitly returns the result of the assignment expression (a string), but onSuccess expects a function that returns void or Promise<void>.
-
-// To fix this, wrap the assignment statement in curly braces {} so the callback function returns nothing (void).
-//===============================================
-
-//==================================================================================
-
 import { QueryProvider } from "@/providers/QueryProvider";
-import { signOut } from "@/lib/auth-client";
+import { SignOutButton } from "@/components/SignOutButton";
+import Link from "next/link";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <nav>
-        <a href="/">Dashboard</a>
-        {/* signOut() clears both the DB session row and the browser cookie
-            — see lib/auth.ts session config. */}
-        <button
-          onClick={() =>
-            signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  window.location.href = "/sign-in";
-                },
-              },
-            })
-          }
-        >
-          Sign out
-        </button>
-      </nav>
-      <main>{children}</main>
+      <div className="min-h-screen bg-background">
+        <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+            <Link href="/" className="text-lg font-semibold hover:opacity-80 transition-opacity">
+              Kanban
+            </Link>
+            <SignOutButton />
+          </div>
+        </nav>
+        <main>{children}</main>
+      </div>
     </QueryProvider>
   );
 }

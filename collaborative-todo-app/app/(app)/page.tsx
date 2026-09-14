@@ -5,24 +5,28 @@
 // first HTML the browser receives — no loading spinner flash on first
 // visit (see TDD §9 performance target: dashboard first paint < 200ms).
 
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
-import { listsQueryOptions } from '@/lib/queries/lists'
-import { getRequiredSession } from '@/lib/session'
-import { DashboardClient } from '@/components/dashboard/DashboardClient'
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { listsQueryOptions } from "@/lib/queries/lists";
+import { getRequiredSession } from "@/lib/session";
+import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function DashboardPage() {
   // Real auth check happens here, server-side, on every request — NOT
   // assumed from the (app) layout or from proxy.ts.
-  await getRequiredSession()
+  await getRequiredSession();
 
   // A fresh QueryClient per request (server-rendering must never share
   // state between different users' requests).
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient();
 
   // This runs the SAME fetcher function that the client will later use —
   // guaranteeing the server-rendered data and the client cache key match
   // up perfectly, avoiding a mismatch/refetch-flash on hydration.
-  await queryClient.prefetchQuery(listsQueryOptions())
+  await queryClient.prefetchQuery(listsQueryOptions());
 
   return (
     // dehydrate() serializes the QueryClient's cache into plain data that
@@ -32,5 +36,5 @@ export default async function DashboardPage() {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <DashboardClient />
     </HydrationBoundary>
-  )
+  );
 }

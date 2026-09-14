@@ -104,6 +104,7 @@ export default function SignInPage() {
       </Button>
 
       <a href="/forgot-password">Forgot password?</a>
+      <a href="/sign-up">Sign Up</a>
     </form>
   );
 }

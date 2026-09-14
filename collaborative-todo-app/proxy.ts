@@ -47,8 +47,13 @@ export function proxy(request: NextRequest) {
 // `matcher` tells Next.js which paths this proxy should even run on.
 // We EXCLUDE all public/semi-public routes and static assets so we don't
 // waste a cookie-check on pages that don't need auth.
+
+
+// proxy.ts — exclude the whole /api tree, not just api/auth and api/health.
+// API routes now handle their own 401s (see getApiSession above); letting
+// proxy.ts redirect them just recreates the same fetch-follows-redirect bug.
 export const config = {
   matcher: [
-    '/((?!sign-in|sign-up|forgot-password|reset-password|verify-email|invite|api/auth|api/health|_next/static|_next/image|favicon\\.ico).*)',
+    '/((?!sign-in|sign-up|forgot-password|reset-password|verify-email|invite|api|_next/static|_next/image|favicon\\.ico).*)',
   ],
 }

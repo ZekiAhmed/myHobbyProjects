@@ -18,7 +18,7 @@
 
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 
 /**
  * Signs out the current user and redirects to sign-in page.
@@ -47,19 +47,24 @@ import { headers } from 'next/headers'
  * }
  */
 export async function signOut() {
-  // Get the current session to check if user is signed in
+  // Get current session
   const session = await auth.api.getSession({
-    headers: await headers(), // Pass request headers (contains session cookie)
+    headers: await headers(),
   })
 
-  // Only sign out if there's an active session
+  // Sign out (deletes session from DB)
   if (session) {
     await auth.api.signOut({
-      headers: await headers(), // Pass request headers for session deletion
+      headers: await headers(),
     })
   }
 
-  // Redirect to sign-in page after sign-out
-  // This is a server-side redirect (browser will be redirected)
+  // Manually delete the session cookies (both naming conventions Better Auth uses)
+  const cookieStore = await cookies()
+  cookieStore.delete('better-auth.session_token')
+  cookieStore.delete('better-auth-session_token')
+  cookieStore.delete('__Secure-better-auth.session_token')
+  cookieStore.delete('__Secure-better-auth-session_token')
+
   redirect('/sign-in')
 }
