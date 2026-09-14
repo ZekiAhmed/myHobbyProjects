@@ -97,20 +97,6 @@ export const auth = betterAuth({
     minPasswordLength: 12,
 
     /**
-     * Function to send verification emails.
-     * 
-     * Called when:
-     * - A new user signs up
-     * - A user requests to resend verification email
-     * 
-     * @param user - The user object (contains email)
-     * @param token - The verification token (to include in the email link)
-     */
-    sendVerificationEmail: async ({ user, token }: { user: { email: string }; token: string }) => {
-      await sendVerificationEmail(user.email, token)
-    },
-
-    /**
      * Function to send password reset emails.
      * 
      * Called when:
@@ -121,6 +107,33 @@ export const auth = betterAuth({
      */
     sendResetPassword: async ({ user, token }: { user: { email: string }; token: string }) => {
       await sendPasswordResetEmail(user.email, token)
+    },
+  },
+
+  /**
+   * EMAIL VERIFICATION CONFIGURATION
+   * 
+   * This section configures how email verification works.
+   * It's separate from emailAndPassword because it handles the email sending.
+   */
+  emailVerification: {
+    /**
+     * Function to send verification emails.
+     * 
+     * Called when:
+     * - A new user signs up
+     * - A user requests to resend verification email
+     * 
+     * @param data - Contains user, url, and token
+     * @param user - The user object (contains email)
+     * @param url - The verification URL to include in the email
+     * @param token - The verification token
+     */
+    sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
+      // Extract token from the URL
+      const urlObj = new URL(url)
+      const token = urlObj.searchParams.get('token') || ''
+      await sendVerificationEmail(user.email, token)
     },
   },
 

@@ -19,6 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionCookie } from 'better-auth/cookies'
 
 /**
  * Routes that require authentication.
@@ -57,15 +58,17 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   /**
-   * Check for the session cookie.
+   * Check for the session cookie using Better Auth's helper.
    * 
-   * Better Auth uses this cookie name by default.
-   * If you customize the cookie name in auth config, update this too.
+   * WHY use getSessionCookie instead of manually checking?
+   * - Automatically handles the correct cookie name
+   * - Works even if you customize the cookie name in auth config
+   * - Recommended by Better Auth documentation
    * 
-   * The cookie contains a session token that Better Auth validates server-side.
-   * Here we only check if it EXISTS, not if it's valid.
+   * NOTE: This only checks for cookie EXISTENCE, not validity.
+   * For security, always validate the session server-side.
    */
-  const sessionCookie = request.cookies.get('better-auth.session_token')
+  const sessionCookie = getSessionCookie(request)
 
   /**
    * SCENARIO 1: User is on an auth page AND has a session
