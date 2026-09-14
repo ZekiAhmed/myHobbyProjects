@@ -25,7 +25,7 @@ import { getSessionCookie } from 'better-auth/cookies'
  * Routes that require authentication.
  * Users without a session cookie will be redirected to /sign-in.
  */
-const protectedRoutes = ['/', '/boards']
+const protectedRoutes = ['/boards']
 
 /**
  * Routes that are only for unauthenticated users.
