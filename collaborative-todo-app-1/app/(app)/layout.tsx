@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { QueryProvider } from '@/providers/QueryProvider'
 
 export const metadata: Metadata = {
   title: 'Kanban',
@@ -10,5 +11,5 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return <QueryProvider>{children}</QueryProvider>
 }
