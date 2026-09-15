@@ -40,47 +40,14 @@ const protectedRoutes = ['/boards']
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
-  /**
-   * Check for the session cookie using Better Auth's helper.
-   * 
-   * WHY use getSessionCookie instead of manually checking?
-   * - Automatically handles the correct cookie name
-   * - Works even if you customize the cookie name in auth config
-   * - Recommended by Better Auth documentation
-   * 
-   * NOTE: This only checks for cookie EXISTENCE, not validity.
-   * For security, always validate the session server-side.
-   */
   const sessionCookie = getSessionCookie(request)
 
-  /**
-   * SCENARIO 1: User is on a protected page AND doesn't have a session
-   * 
-   * Example: User visits /boards without signing in
-   * Action: Redirect to /sign-in with callbackUrl
-   * 
-   * WHAT IS callbackUrl?
-   * - A query parameter that tells sign-in where to redirect after
-   * - Example: /sign-in?callbackUrl=/boards/abc123
-   * - After sign-in, user is redirected back to /boards/abc123
-   */
   if (protectedRoutes.some(route => pathname.startsWith(route)) && !sessionCookie) {
     const signInUrl = new URL('/sign-in', request.url)
     signInUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(signInUrl)
   }
 
-  /**
-   * SCENARIO 2: No redirect needed
-   * 
-   * Either:
-   * - User is on a public page (no auth required)
-   * - User is on an auth page (normal — page handles its own logic)
-   * - User is on a protected page with a session (normal)
-   * 
-   * Action: Continue to the next handler/page
-   */
   return NextResponse.next()
 }
 
