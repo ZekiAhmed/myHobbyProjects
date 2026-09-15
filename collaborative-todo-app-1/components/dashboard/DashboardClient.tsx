@@ -22,28 +22,7 @@
 
 import { BoardCard } from '@/components/dashboard/BoardCard'
 import { NewBoardModal } from '@/components/dashboard/NewBoardModal'
-
-/**
- * Board type definition — matches the shape returned by Prisma
- *
- * This type represents a board with its metadata:
- * - id: Unique identifier (CUID)
- * - name: Display name (e.g., "Sprint 42")
- * - ownerId: ID of the user who owns the board
- * - createdAt/updatedAt: Timestamps
- * - _count: Metadata counts (members and open todos)
- */
-type Board = {
-  id: string
-  name: string
-  ownerId: string
-  createdAt: Date
-  updatedAt: Date
-  _count: {
-    members: number  // Total number of members (excluding owner)
-    todos: number    // Number of open (non-DONE) todos
-  }
-}
+import type { Board } from '@/lib/types'
 
 /**
  * DashboardClient — renders the dashboard UI
@@ -57,7 +36,7 @@ type Board = {
  * @param initialBoards - The boards fetched by the Server Component
  * @returns The dashboard UI with board sections
  */
-export function DashboardClient({ initialBoards }: { initialBoards: Board[] }) {
+export function DashboardClient({ initialBoards, currentUserId }: { initialBoards: Board[]; currentUserId: string }) {
   const boards = initialBoards
   
   /**
@@ -66,16 +45,9 @@ export function DashboardClient({ initialBoards }: { initialBoards: Board[] }) {
    * HOW IT WORKS:
    * - ownedBoards: Boards where the current user is the owner
    * - memberBoards: Boards where the current user is a member (not owner)
-   *
-   * NOTE: The filtering uses the first board's ownerId as a proxy for the current user.
-   * This works because the query returns boards where the user is owner OR member.
-   * If the first board is owned by the user, all owned boards will be correctly filtered.
-   * If the first board is a member board, all boards will be classified as member boards.
-   *
-   * TODO: Pass the current user's ID from the Server Component for accurate filtering.
    */
-  const ownedBoards = boards.filter((board) => board.ownerId === boards[0]?.ownerId)
-  const memberBoards = boards.filter((board) => board.ownerId !== boards[0]?.ownerId)
+  const ownedBoards = boards.filter((board) => board.ownerId === currentUserId)
+  const memberBoards = boards.filter((board) => board.ownerId !== currentUserId)
 
   return (
     <div className="container mx-auto py-8">

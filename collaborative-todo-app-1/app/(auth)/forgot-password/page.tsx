@@ -23,8 +23,9 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 
 /**
@@ -35,6 +36,9 @@ import { authClient } from '@/lib/auth-client'
  * - UI state (success/error messages, loading)
  */
 export default function ForgotPasswordPage() {
+  // Router for navigation
+  const router = useRouter()
+  
   // Form state
   const [email, setEmail] = useState('')
   
@@ -42,6 +46,17 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState('') // Success message
   const [error, setError] = useState('') // Error message
   const [loading, setLoading] = useState(false) // Disable form during submission
+
+  // Redirect authenticated users away from forgot-password page
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await authClient.getSession()
+      if (data?.session) {
+        router.push('/')
+      }
+    }
+    checkSession()
+  }, [router])
 
   /**
    * Handle form submission.

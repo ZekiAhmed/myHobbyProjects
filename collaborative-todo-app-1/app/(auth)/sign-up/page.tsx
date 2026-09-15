@@ -26,10 +26,10 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signUp } from '@/lib/auth-client'
+import { signUp, authClient } from '@/lib/auth-client'
 
 /**
  * Sign-Up Page Component
@@ -52,6 +52,17 @@ export default function SignUpPage() {
   // UI state
   const [error, setError] = useState('') // Error message to display
   const [loading, setLoading] = useState(false) // Disable form during submission
+
+  // Redirect authenticated users away from sign-up page
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await authClient.getSession()
+      if (data?.session) {
+        router.push('/')
+      }
+    }
+    checkSession()
+  }, [router])
 
   /**
    * Handle form submission.

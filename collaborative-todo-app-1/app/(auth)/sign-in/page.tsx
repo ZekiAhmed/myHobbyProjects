@@ -7,7 +7,7 @@
  * 1. Displays a form with email and password fields
  * 2. Validates input (required fields)
  * 3. Calls Better Auth's signIn.email() to authenticate
- * 4. Redirects to callbackUrl on success (or /boards by default)
+ * 4. Redirects to callbackUrl on success (or / by default)
  * 5. Shows error message on failure
  * 
  * CALLBACK URL:
@@ -21,10 +21,10 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from '@/lib/auth-client'
+import { signIn, authClient } from '@/lib/auth-client'
 
 /**
  * Sign-In Page Component
@@ -44,7 +44,7 @@ export default function SignInPage() {
   // Example: /sign-in?callbackUrl=/boards/abc123
   // searchParams.get('callbackUrl') returns '/boards/abc123'
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/boards'
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   
   // Form state
   const [email, setEmail] = useState('')
@@ -53,6 +53,17 @@ export default function SignInPage() {
   // UI state
   const [error, setError] = useState('') // Error message to display
   const [loading, setLoading] = useState(false) // Disable form during submission
+
+  // Redirect authenticated users away from sign-in page
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await authClient.getSession()
+      if (data?.session) {
+        router.push(callbackUrl)
+      }
+    }
+    checkSession()
+  }, [router, callbackUrl])
 
   /**
    * Handle form submission.

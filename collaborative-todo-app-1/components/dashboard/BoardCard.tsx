@@ -26,24 +26,7 @@
 
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-/**
- * Board type definition — matches the shape returned by GET /api/boards
- *
- * This is the same type as in DashboardClient.tsx.
- * In a larger app, this would be in a shared types/ file to avoid duplication.
- */
-type Board = {
-  id: string
-  name: string
-  ownerId: string
-  createdAt: Date
-  updatedAt: Date
-  _count: {
-    members: number  // Total number of members (excluding owner)
-    todos: number    // Number of open (non-DONE) todos
-  }
-}
+import type { Board } from '@/lib/types'
 
 /**
  * BoardCard — renders a single board card

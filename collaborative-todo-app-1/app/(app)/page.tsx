@@ -18,8 +18,8 @@
  */
 
 import { Suspense } from 'react'
-import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
+import { fetchBoards } from '@/lib/queries/boards'
 import { DashboardClient } from '@/components/dashboard/DashboardClient'
 
 /**
@@ -34,46 +34,14 @@ export default async function DashboardPage() {
   // Step 1: Authenticate — get the current user's session
   const session = await getRequiredSession()
 
-  // Step 2: Query the database directly for all boards the user has access to
-  // This is the same query as GET /api/boards, but without the fetch overhead
-  const boards = await prisma.board.findMany({
-    where: {
-      OR: [
-        // Boards where the user is the owner
-        { ownerId: session.user.id },
-        // Boards where the user is a member
-        {
-          members: {
-            some: {
-              userId: session.user.id,
-            },
-          },
-        },
-      ],
-    },
-    include: {
-      _count: {
-        select: {
-          members: true,
-          todos: {
-            where: {
-              status: {
-                not: 'DONE',
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      updatedAt: 'desc',
-    },
-  })
+  // Step 2: Query the database for all boards the user has access to
+  // Uses the shared fetchBoards function from lib/queries/boards.ts
+  const boards = await fetchBoards(session.user.id)
 
   // Step 3: Pass the data to the Client Component as props
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <DashboardClient initialBoards={boards} />
+      <DashboardClient initialBoards={boards} currentUserId={session.user.id} />
     </Suspense>
   )
 }
