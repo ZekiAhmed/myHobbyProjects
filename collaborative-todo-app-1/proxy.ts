@@ -28,22 +28,6 @@ import { getSessionCookie } from 'better-auth/cookies'
 const protectedRoutes = ['/boards']
 
 /**
- * Routes that are only for unauthenticated users.
- * Users with a session cookie will be redirected to /boards.
- * 
- * WHY redirect authenticated users away from auth pages?
- * - Prevents confusion (already signed in, why show sign-in?)
- * - Better UX (redirect to dashboard automatically)
- */
-const authRoutes = [
-  '/sign-in',
-  '/sign-up',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-]
-
-/**
  * Main proxy function that runs for every matched request.
  * 
  * @param request - The incoming HTTP request
@@ -71,21 +55,7 @@ export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request)
 
   /**
-   * SCENARIO 1: User is on an auth page AND has a session
-   * 
-   * Example: User visits /sign-in but is already signed in
-   * Action: Redirect to /boards (their dashboard)
-   * 
-   * WHY?
-   * - Better UX (don't show sign-in if already signed in)
-   * - Prevents confusion
-   */
-  if (authRoutes.some(route => pathname.startsWith(route)) && sessionCookie) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  /**
-   * SCENARIO 2: User is on a protected page AND doesn't have a session
+   * SCENARIO 1: User is on a protected page AND doesn't have a session
    * 
    * Example: User visits /boards without signing in
    * Action: Redirect to /sign-in with callbackUrl
@@ -102,11 +72,11 @@ export function proxy(request: NextRequest) {
   }
 
   /**
-   * SCENARIO 3: No redirect needed
+   * SCENARIO 2: No redirect needed
    * 
    * Either:
    * - User is on a public page (no auth required)
-   * - User is on an auth page without a session (normal)
+   * - User is on an auth page (normal — page handles its own logic)
    * - User is on a protected page with a session (normal)
    * 
    * Action: Continue to the next handler/page
