@@ -32,7 +32,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBoard } from '@/app/actions/boards'
-import { boardKeys } from '@/lib/queries/boards'
+import { boardKeys } from '@/lib/queries/board-keys'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
