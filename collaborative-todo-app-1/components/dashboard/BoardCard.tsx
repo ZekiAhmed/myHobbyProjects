@@ -37,8 +37,8 @@ type Board = {
   id: string
   name: string
   ownerId: string
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
   _count: {
     members: number  // Total number of members (excluding owner)
     todos: number    // Number of open (non-DONE) todos

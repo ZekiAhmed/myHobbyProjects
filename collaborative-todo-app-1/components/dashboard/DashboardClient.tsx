@@ -2,37 +2,29 @@
  * @fileoverview Dashboard Client Component
  *
  * This is a Client Component that renders the dashboard UI.
- * It reads board data from the TanStack Query cache (prefetched by the Server Component).
+ * It receives board data as props from the Server Component.
  *
  * WHY A CLIENT COMPONENT?
- * - Uses useSuspenseQuery() for reactive data fetching
- * - Could use useState/useEffect for local UI state (modals, filters)
- * - Could use useMutation() for creating/deleting boards
+ * - Can use useState/useEffect for local UI state (modals, filters)
+ * - Can use useMutation() for creating/deleting boards
  * - Server Components can't use React hooks or handle user interactions
  *
  * DATA FLOW:
- * 1. Server Component (page.tsx) prefetches data and passes it via HydrationBoundary
- * 2. This Client Component reads the prefetched data via useSuspenseQuery()
- * 3. If data is stale (older than 30s), it refetches in the background
- * 4. If no data exists (first visit), it shows a loading state until data arrives
+ * 1. Server Component (page.tsx) queries the database directly
+ * 2. Server Component passes data as props to this Client Component
+ * 3. Client Component renders the UI with the data
+ * 4. When the user creates a board, we use useMutation to update the server
  *
- * SUSPENSE INTEGRATION:
- * useSuspenseQuery() integrates with React's Suspense boundary.
- * While data is loading, the nearest <Suspense> fallback is shown.
- * Once data arrives, this component renders with the full board list.
- *
- * @see https://tanstack.com/query/latest/docs/framework/react/guides/suspense
+ * @see https://nextjs.org/docs/app/building-your-application/data-fetching/patterns
  */
 
 'use client' // Marks this as a Client Component (can use hooks, browser APIs)
 
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { boardsQueryOptions } from '@/lib/queries/boards'
 import { BoardCard } from '@/components/dashboard/BoardCard'
 import { NewBoardModal } from '@/components/dashboard/NewBoardModal'
 
 /**
- * Board type definition — matches the shape returned by GET /api/boards
+ * Board type definition — matches the shape returned by Prisma
  *
  * This type represents a board with its metadata:
  * - id: Unique identifier (CUID)
@@ -40,18 +32,13 @@ import { NewBoardModal } from '@/components/dashboard/NewBoardModal'
  * - ownerId: ID of the user who owns the board
  * - createdAt/updatedAt: Timestamps
  * - _count: Metadata counts (members and open todos)
- *
- * WHY DEFINE THE TYPE HERE?
- * - TypeScript needs to know the shape of the data
- * - Keeps the component self-contained and type-safe
- * - Could be moved to a shared types/ file if used elsewhere
  */
 type Board = {
   id: string
   name: string
   ownerId: string
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
   _count: {
     members: number  // Total number of members (excluding owner)
     todos: number    // Number of open (non-DONE) todos
@@ -62,21 +49,16 @@ type Board = {
  * DashboardClient — renders the dashboard UI
  *
  * WHAT IT DOES:
- * 1. Reads board data from the TanStack Query cache
+ * 1. Receives board data from the Server Component
  * 2. Separates boards into "owned" and "member" sections
  * 3. Renders a grid of BoardCard components for each section
  * 4. Shows an empty state if the user has no boards
  *
+ * @param initialBoards - The boards fetched by the Server Component
  * @returns The dashboard UI with board sections
  */
-export function DashboardClient() {
-  // Read board data from the TanStack Query cache
-  // useSuspenseQuery() will:
-  //   - Return cached data if available (from prefetch or previous fetch)
-  //   - Fetch data if not cached or stale
-  //   - Show Suspense fallback while loading
-  //   - Throw an error if the fetch fails (caught by ErrorBoundary)
-  const { data: boards } = useSuspenseQuery(boardsQueryOptions())
+export function DashboardClient({ initialBoards }: { initialBoards: Board[] }) {
+  const boards = initialBoards
   
   /**
    * Separate boards into owned and member sections
@@ -85,17 +67,15 @@ export function DashboardClient() {
    * - ownedBoards: Boards where the current user is the owner
    * - memberBoards: Boards where the current user is a member (not owner)
    *
-   * FILTERING LOGIC:
-   * We compare each board's ownerId to the first board's ownerId.
-   * This is a simplification — ideally, we'd know the current user's ID.
+   * NOTE: The filtering uses the first board's ownerId as a proxy for the current user.
+   * This works because the query returns boards where the user is owner OR member.
+   * If the first board is owned by the user, all owned boards will be correctly filtered.
+   * If the first board is a member board, all boards will be classified as member boards.
    *
-   * IMPORTANT: This logic has a potential bug:
-   * If the user's first board isn't theirs (e.g., they're only a member),
-   * ALL boards will be misclassified. A better approach would be to pass
-   * the current user's ID from the Server Component via props.
+   * TODO: Pass the current user's ID from the Server Component for accurate filtering.
    */
-  const ownedBoards = boards.filter((board: Board) => board.ownerId === boards[0]?.ownerId)
-  const memberBoards = boards.filter((board: Board) => board.ownerId !== boards[0]?.ownerId)
+  const ownedBoards = boards.filter((board) => board.ownerId === boards[0]?.ownerId)
+  const memberBoards = boards.filter((board) => board.ownerId !== boards[0]?.ownerId)
 
   return (
     <div className="container mx-auto py-8">
@@ -112,7 +92,7 @@ export function DashboardClient() {
             <h2 className="text-xl font-semibold mb-4">Boards I Own</h2>
             {/* Responsive grid: 1 column on mobile, 2 on tablet, 3 on desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {ownedBoards.map((board: Board) => (
+              {ownedBoards.map((board) => (
                 <BoardCard key={board.id} board={board} />
               ))}
             </div>
@@ -124,7 +104,7 @@ export function DashboardClient() {
           <section>
             <h2 className="text-xl font-semibold mb-4">Boards I&apos;m a Member of</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {memberBoards.map((board: Board) => (
+              {memberBoards.map((board) => (
                 <BoardCard key={board.id} board={board} />
               ))}
             </div>
