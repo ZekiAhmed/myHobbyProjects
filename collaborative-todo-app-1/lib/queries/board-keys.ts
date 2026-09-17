@@ -132,3 +132,42 @@ export const invitationsQueryOptions = (id: string) =>
     staleTime: 10_000,
     gcTime:    300_000,
   })
+
+/**
+ * Query Options for fetching todos for a board (Kanban)
+ *
+ * WHAT IT DOES:
+ * - Fetches GET /api/boards/[id]/todos (todos with assignee and tags)
+ * - Polls every 8 seconds for near-real-time teammate sync
+ * - staleTime: 0 ensures every poll fetches fresh data
+ *
+ * CONFIGURATION:
+ * - staleTime: 0ms
+ *   Always considered stale so polling always fetches fresh data.
+ *   This is critical for real-time collaboration — teammates' changes
+ *   must appear within 8 seconds.
+ *
+ * - refetchInterval: 8_000ms (8 seconds)
+ *   Polls the server every 8 seconds to sync with other users.
+ *   This is the "near-real-time" mechanism at MVP (no WebSockets).
+ *
+ * - retry: 3
+ *   If a poll fails (network blip, server error), retry up to 3 times
+ *   before giving up. TanStack Query uses exponential backoff.
+ *
+ * USAGE:
+ * - Client: useQuery(todosQueryOptions(boardId))
+ * - Server: prefetchQuery(todosQueryOptions(boardId))
+ *
+ * @example
+ * const { data } = useQuery(todosQueryOptions('abc123'))
+ */
+export const todosQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey:        boardKeys.todos(id),
+    queryFn:         () => fetch(`/api/boards/${id}/todos`).then(r => r.json()),
+    staleTime:       0,
+    gcTime:          300_000,
+    refetchInterval: 8_000,
+    retry:           3,
+  })
