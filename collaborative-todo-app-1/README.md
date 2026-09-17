@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Done. Milestone 3 (Membership & Invitation System) is complete. Here's what was implemented:
 
-## Getting Started
+Server Actions:
 
-First, run the development server:
+createInvitation(boardId, email) — owner-only, generates secure token, sends invite email
+revokeInvitation(invitationId) — owner-only, cancels pending invitation
+acceptInvitation(token) — resolves user from session, validates token, creates membership
+removeMember(boardId, userId) — owner-only, removes member from board
+leaveBoard(boardId) — member self-removal (owner cannot leave)
+Route Handlers:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+GET /api/invitations?boardId=... — returns pending invitations (owner-only)
+GET /api/boards/[id] — returns board detail with members and tags
+GET /api/invite/[token] — validates invitation token with rate limiting
+Pages:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+/invite/[token] — semi-public page using getOptionalSession(), handles all 4 branches (new user, existing unauthed, already signed in, invalid token)
+Components:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+MemberList — shows members with remove button (owner-only) and leave board button
+InviteForm — email input with invite button, shows pending invitations with revoke
+Security:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tokens generated with crypto.randomBytes(32) (256-bit entropy)
+48-hour expiry enforced server-side
+Upstash rate limiting: 30 req/60s/IP on /invite/[token]
+Trust boundary fix: acceptInvitation resolves user from session, not client parameter
