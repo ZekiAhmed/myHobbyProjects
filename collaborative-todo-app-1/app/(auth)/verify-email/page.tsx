@@ -22,12 +22,13 @@
  * @see https://better-auth.com/docs/authentication/email-password#email-verification
  */
 
-'use client' // This is a Client Component (uses hooks, browser APIs)
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sendVerificationEmail, authClient } from '@/lib/auth-client'
+import { acceptInvitation } from '@/app/actions/invitations'
 
 /**
  * Email Verification Page Component
@@ -69,8 +70,6 @@ export default function VerifyEmailPage() {
     if (token && !verified && !verifying) {
       setVerifying(true)
       
-      // Call Better Auth's verification endpoint
-      // The token is passed as a query parameter
       fetch(`/api/auth/verify-email?token=${token}`)
         .then(response => {
           if (response.ok) {
@@ -88,6 +87,22 @@ export default function VerifyEmailPage() {
         })
     }
   }, [token, verified, verifying])
+
+  useEffect(() => {
+    if (verified) {
+      const pendingToken = localStorage.getItem('pendingInviteToken')
+      if (pendingToken) {
+        acceptInvitation(pendingToken)
+          .then((result) => {
+            localStorage.removeItem('pendingInviteToken')
+            router.push(`/boards/${result.boardId}`)
+          })
+          .catch(() => {
+            localStorage.removeItem('pendingInviteToken')
+          })
+      }
+    }
+  }, [verified, router])
 
   /**
    * Handle resend verification email.

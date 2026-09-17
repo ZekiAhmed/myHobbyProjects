@@ -24,9 +24,10 @@ import { queryOptions } from '@tanstack/react-query'
  * - Type-safe: TypeScript knows the shape of each key
  *
  * QUERY KEY STRUCTURE:
- * - boardKeys.all()           → ['boards']                    (list of all boards)
- * - boardKeys.detail(id)      → ['boards', boardId]           (single board details)
- * - boardKeys.todos(id)       → ['boards', boardId, 'todos']  (todos for a board)
+ * - boardKeys.all()             → ['boards']                         (list of all boards)
+ * - boardKeys.detail(id)        → ['boards', boardId]                (single board details)
+ * - boardKeys.todos(id)         → ['boards', boardId, 'todos']       (todos for a board)
+ * - boardKeys.invitations(id)   → ['boards', boardId, 'invitations'] (pending invitations)
  *
  * The nested structure allows TanStack Query to invalidate related queries:
  * - Invalidating ['boards'] invalidates ALL board queries
@@ -46,6 +47,8 @@ export const boardKeys = {
   detail: (id: string) => ['boards', id]           as const,
   /** Todos for a specific board query key — used for the Kanban columns */
   todos:  (id: string) => ['boards', id, 'todos']  as const,
+  /** Pending invitations for a board query key — used in the InviteForm */
+  invitations: (id: string) => ['boards', id, 'invitations'] as const,
 }
 
 /**
@@ -78,4 +81,54 @@ export const boardsQueryOptions = () =>
     queryFn:   () => fetch('/api/boards').then(r => r.json()),
     staleTime: 30_000, // 30 seconds — boards don't change frequently
     gcTime:    300_000, // 5 minutes — keep in cache for quick navigation
+  })
+
+/**
+ * Query Options for fetching a single board's detail (members + tags)
+ *
+ * WHAT IT DOES:
+ * - Fetches GET /api/boards/[id] (board with members, tags, owner)
+ * - Caches the result for 30 seconds (staleTime)
+ * - Keeps unused data in cache for 5 minutes (gcTime)
+ *
+ * USAGE:
+ * - Client: useQuery(boardDetailQueryOptions(boardId))
+ * - Server: prefetchQuery(boardDetailQueryOptions(boardId))
+ *
+ * @example
+ * const { data } = useQuery(boardDetailQueryOptions('abc123'))
+ */
+export const boardDetailQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey:  boardKeys.detail(id),
+    queryFn:   () => fetch(`/api/boards/${id}`).then(r => r.json()),
+    staleTime: 30_000,
+    gcTime:    300_000,
+  })
+
+/**
+ * Query Options for fetching pending invitations for a board
+ *
+ * WHAT IT DOES:
+ * - Fetches GET /api/invitations?boardId=[id] (pending invitations)
+ * - Caches the result for 10 seconds (shorter than board detail)
+ * - Only used by the board owner on the settings/invite page
+ *
+ * CONFIGURATION:
+ * - staleTime: 10_000ms (10 seconds)
+ *   Invitations change when someone invites or revokes, which is less frequent.
+ *   But when it does change, we want to see it quickly.
+ *
+ * USAGE:
+ * - Client: useQuery(invitationsQueryOptions(boardId))
+ *
+ * @example
+ * const { data } = useQuery(invitationsQueryOptions('abc123'))
+ */
+export const invitationsQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey:  boardKeys.invitations(id),
+    queryFn:   () => fetch(`/api/invitations?boardId=${id}`).then(r => r.json()),
+    staleTime: 10_000,
+    gcTime:    300_000,
   })

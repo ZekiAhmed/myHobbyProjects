@@ -27,7 +27,7 @@
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp, authClient } from '@/lib/auth-client'
 
@@ -41,28 +41,30 @@ import { signUp, authClient } from '@/lib/auth-client'
  * - Navigation (redirect after sign-up)
  */
 export default function SignUpPage() {
-  // Router for programmatic navigation after sign-up
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('inviteToken')
   
-  // Form state
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   
-  // UI state
-  const [error, setError] = useState('') // Error message to display
-  const [loading, setLoading] = useState(false) // Disable form during submission
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Redirect authenticated users away from sign-up page
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await authClient.getSession()
       if (data?.session) {
-        router.push('/')
+        if (inviteToken) {
+          router.push(`/invite/${inviteToken}`)
+        } else {
+          router.push('/')
+        }
       }
     }
     checkSession()
-  }, [router])
+  }, [router, inviteToken])
 
   /**
    * Handle form submission.
@@ -76,29 +78,26 @@ export default function SignUpPage() {
    * 6. Reset loading state
    */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault() // Prevent page reload
-    setError('') // Clear previous errors
-    setLoading(true) // Show loading state
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     try {
-      // Call Better Auth's sign-up method
-      // This creates the user in the database and sends a verification email
       const result = await signUp.email({
         email,
         password,
         name,
       })
 
-      // Check if sign-up was successful
       if (result.error) {
-        // Sign-up failed - show error message
         setError(result.error.message || 'Failed to create account')
       } else {
-        // Sign-up successful - redirect to verification page
+        if (inviteToken) {
+          localStorage.setItem('pendingInviteToken', inviteToken)
+        }
         router.push('/verify-email')
       }
     } catch (err) {
-      // Unexpected error (network issue, server error, etc.)
       setError('An unexpected error occurred')
     } finally {
       // Reset loading state regardless of success/failure

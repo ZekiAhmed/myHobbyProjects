@@ -25,6 +25,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, authClient } from '@/lib/auth-client'
+import { acceptInvitation } from '@/app/actions/invitations'
 
 /**
  * Sign-In Page Component
@@ -37,33 +38,36 @@ import { signIn, authClient } from '@/lib/auth-client'
  * - Search params (read callbackUrl from URL)
  */
 export default function SignInPage() {
-  // Router for programmatic navigation after sign-in
   const router = useRouter()
-  
-  // Get the callbackUrl from the URL query parameters
-  // Example: /sign-in?callbackUrl=/boards/abc123
-  // searchParams.get('callbackUrl') returns '/boards/abc123'
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const inviteToken = searchParams.get('inviteToken')
   
-  // Form state
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   
-  // UI state
-  const [error, setError] = useState('') // Error message to display
-  const [loading, setLoading] = useState(false) // Disable form during submission
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Redirect authenticated users away from sign-in page
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await authClient.getSession()
       if (data?.session) {
-        router.push(callbackUrl)
+        if (inviteToken) {
+          acceptInvitation(inviteToken)
+            .then((result) => {
+              router.push(`/boards/${result.boardId}`)
+            })
+            .catch(() => {
+              router.push(callbackUrl)
+            })
+        } else {
+          router.push(callbackUrl)
+        }
       }
     }
     checkSession()
-  }, [router, callbackUrl])
+  }, [router, callbackUrl, inviteToken])
 
   /**
    * Handle form submission.
@@ -77,39 +81,40 @@ export default function SignInPage() {
    * 6. Reset loading state
    */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault() // Prevent page reload
-    setError('') // Clear previous errors
-    setLoading(true) // Show loading state
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     try {
-      // Call Better Auth's sign-in method
-      // This validates credentials and creates a session
       const result = await signIn.email({
         email,
         password,
       })
 
-      // Check if sign-in was successful
       if (result.error) {
-        // Sign-in failed - show error message
         const errorMessage = result.error.message || 'Failed to sign in'
         
-        // Special handling for unverified email
-        // Better Auth returns a specific error message for this case
         if (errorMessage.includes('verified')) {
           setError('Please verify your email address before signing in')
         } else {
           setError(errorMessage)
         }
       } else {
-        // Sign-in successful - redirect to callbackUrl or default to /boards
+        if (inviteToken) {
+          try {
+            const inviteResult = await acceptInvitation(inviteToken)
+            router.push(`/boards/${inviteResult.boardId}`)
+            return
+          } catch {
+            router.push(callbackUrl)
+            return
+          }
+        }
         router.push(callbackUrl)
       }
     } catch (err) {
-      // Unexpected error (network issue, server error, etc.)
       setError('An unexpected error occurred')
     } finally {
-      // Reset loading state regardless of success/failure
       setLoading(false)
     }
   }
