@@ -47,6 +47,7 @@ import { TodoSidePanel } from '@/components/board/TodoSidePanel'
 import { Button } from '@/components/ui/button'
 import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import { generateKeyBetween } from 'fractional-indexing'
 import type { Todo, BoardMember, Tag } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations, BoardDetail } from '@/lib/types'
@@ -343,7 +344,15 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
       {/* Board header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
-        <Button onClick={handleAddTodo}>Add Todo</Button>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/boards/${boardId}/settings`}
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Settings
+          </Link>
+          <Button onClick={handleAddTodo}>Add Todo</Button>
+        </div>
       </div>
 
       {/* Filter bar */}
