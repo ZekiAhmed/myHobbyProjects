@@ -22,15 +22,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card } from '@/components/ui/card'
 import { format, isPast, isToday } from 'date-fns'
 import type { Todo } from '@/lib/generated/prisma/browser'
-
-type TodoWithRelations = Todo & {
-  assignee: { id: string; name: string; image: string | null } | null
-  tags: { tag: { id: string; name: string; color: string } }[]
-}
+import type { TodoWithRelations } from '@/lib/types'
 
 interface TodoCardProps {
   todo: TodoWithRelations
   isActive: boolean
+  onQuickComplete?: (todoId: string) => void
+  onClick?: (todo: TodoWithRelations) => void
 }
 
 /**
@@ -92,7 +90,7 @@ function getInitials(name: string) {
  * @param todo - The todo data with relations
  * @param isActive - Whether this todo is currently being dragged
  */
-export function TodoCard({ todo, isActive }: TodoCardProps) {
+export function TodoCard({ todo, isActive, onQuickComplete, onClick }: TodoCardProps) {
   const {
     attributes,
     listeners,
@@ -110,6 +108,17 @@ export function TodoCard({ todo, isActive }: TodoCardProps) {
   const priorityInfo = getPriorityInfo(todo.priority)
   const dueDateInfo = getDueDateInfo(todo.dueDate)
 
+  const handleQuickComplete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onQuickComplete?.(todo.id)
+  }
+
+  const handleClick = () => {
+    if (!isDragging) {
+      onClick?.(todo)
+    }
+  }
+
   return (
     <Card
       ref={setNodeRef}
@@ -119,6 +128,7 @@ export function TodoCard({ todo, isActive }: TodoCardProps) {
       } ${isActive ? 'ring-2 ring-primary' : ''}`}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
     >
       <div className="p-3 space-y-2">
         {/* Title */}
@@ -139,7 +149,7 @@ export function TodoCard({ todo, isActive }: TodoCardProps) {
           </div>
         )}
 
-        {/* Footer: Priority, Due Date, Assignee */}
+        {/* Footer: Priority, Due Date, Assignee, Quick Complete */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* Priority badge */}
@@ -155,15 +165,45 @@ export function TodoCard({ todo, isActive }: TodoCardProps) {
             )}
           </div>
 
-          {/* Assignee avatar */}
-          {todo.assignee && (
-            <Avatar size="sm">
-              <AvatarImage src={todo.assignee.image || undefined} />
-              <AvatarFallback>
-                {getInitials(todo.assignee.name)}
-              </AvatarFallback>
-            </Avatar>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Quick complete button */}
+            {onQuickComplete && (
+              <button
+                type="button"
+                onClick={handleQuickComplete}
+                className={`p-1 rounded-full transition-colors ${
+                  todo.status === 'DONE'
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                }`}
+                title={todo.status === 'DONE' ? 'Mark as incomplete' : 'Mark as complete'}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            )}
+
+            {/* Assignee avatar */}
+            {todo.assignee && (
+              <Avatar size="sm">
+                <AvatarImage src={todo.assignee.image || undefined} />
+                <AvatarFallback>
+                  {getInitials(todo.assignee.name)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
         </div>
       </div>
     </Card>

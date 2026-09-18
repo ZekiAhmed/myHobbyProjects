@@ -5,6 +5,8 @@
  * Centralizing types prevents duplication and ensures consistency.
  */
 
+import type { Todo, BoardMember, Tag } from '@/lib/generated/prisma/browser'
+
 /**
  * Board type definition — matches the shape returned by Prisma
  *
@@ -25,4 +27,29 @@ export type Board = {
     members: number  // Total number of members (excluding owner)
     todos: number    // Number of open (non-DONE) todos
   }
+}
+
+/**
+ * Todo with related data — used by KanbanBoard, KanbanColumn, TodoCard, TodoSidePanel
+ *
+ * This type represents a todo item with its assignee and tags included.
+ * Centralizing this prevents duplication across components.
+ */
+export type TodoWithRelations = Todo & {
+  assignee: { id: string; name: string; image: string | null } | null
+  tags: { tag: { id: string; name: string; color: string } }[]
+}
+
+/**
+ * Board detail with members and tags — used by KanbanBoard and TodoSidePanel
+ */
+export type BoardDetail = {
+  id: string
+  name: string
+  ownerId: string
+  owner: { id: string; name: string; email: string; image: string | null }
+  members: (BoardMember & {
+    user: { id: string; name: string; email: string; image: string | null }
+  })[]
+  tags: Tag[]
 }

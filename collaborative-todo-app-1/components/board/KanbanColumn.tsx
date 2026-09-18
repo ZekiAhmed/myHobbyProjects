@@ -24,11 +24,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { TodoCard } from '@/components/board/TodoCard'
 import { Button } from '@/components/ui/button'
 import type { Todo } from '@/lib/generated/prisma/browser'
-
-type TodoWithRelations = Todo & {
-  assignee: { id: string; name: string; image: string | null } | null
-  tags: { tag: { id: string; name: string; color: string } }[]
-}
+import type { TodoWithRelations } from '@/lib/types'
 
 interface KanbanColumnProps {
   id: string
@@ -36,6 +32,8 @@ interface KanbanColumnProps {
   todos: TodoWithRelations[]
   activeId: string | null
   collapsible?: boolean
+  onQuickComplete?: (todoId: string) => void
+  onTodoClick?: (todo: TodoWithRelations) => void
 }
 
 const MAX_VISIBLE_DONE = 10
@@ -61,6 +59,8 @@ export function KanbanColumn({
   todos,
   activeId,
   collapsible = false,
+  onQuickComplete,
+  onTodoClick,
 }: KanbanColumnProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -116,6 +116,8 @@ export function KanbanColumn({
                 key={todo.id}
                 todo={todo}
                 isActive={todo.id === activeId}
+                onQuickComplete={onQuickComplete}
+                onClick={onTodoClick}
               />
             ))}
           </div>

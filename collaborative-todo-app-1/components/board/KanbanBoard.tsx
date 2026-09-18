@@ -21,7 +21,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   DndContext,
   closestCorners,
@@ -37,27 +37,17 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { boardDetailQueryOptions, boardKeys, todosQueryOptions } from '@/lib/queries/board-keys'
 import { KanbanColumn } from '@/components/board/KanbanColumn'
 import { FilterBar } from '@/components/board/FilterBar'
+import { TodoSidePanel } from '@/components/board/TodoSidePanel'
+import { Button } from '@/components/ui/button'
+import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
+import { toast } from 'sonner'
+import { generateKeyBetween } from 'fractional-indexing'
 import type { Todo, BoardMember, Tag } from '@/lib/generated/prisma/browser'
-
-type TodoWithRelations = Todo & {
-  assignee: { id: string; name: string; image: string | null } | null
-  tags: { tag: { id: string; name: string; color: string } }[]
-}
-
-type BoardDetail = {
-  id: string
-  name: string
-  ownerId: string
-  owner: { id: string; name: string; email: string; image: string | null }
-  members: (BoardMember & {
-    user: { id: string; name: string; email: string; image: string | null }
-  })[]
-  tags: Tag[]
-}
+import type { TodoWithRelations, BoardDetail } from '@/lib/types'
 
 /**
  * KanbanBoard — renders the Kanban board with drag-and-drop
@@ -82,9 +72,83 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
     dueDate: null as string | null,
   })
 
+  // Side panel state
+  const [sidePanelOpen, setSidePanelOpen] = useState(false)
+  const [selectedTodo, setSelectedTodo] = useState<TodoWithRelations | null>(null)
+
   // Fetch board detail and todos
   const { data: board } = useQuery(boardDetailQueryOptions(boardId) as ReturnType<typeof boardDetailQueryOptions> & { queryKey: readonly ["boards", string] })
   const { data: todos = [] } = useQuery(todosQueryOptions(boardId) as ReturnType<typeof todosQueryOptions> & { queryKey: readonly ["boards", string, "todos"] })
+
+  // Quick-complete mutation
+  const completeMutation = useMutation({
+    mutationFn: (todoId: string) => quickCompleteTodo(todoId),
+    onMutate: async (todoId) => {
+      await queryClient.cancelQueries({ queryKey: boardKeys.todos(boardId) })
+      const previous = queryClient.getQueryData(boardKeys.todos(boardId))
+
+      queryClient.setQueryData<TodoWithRelations[]>(boardKeys.todos(boardId), (old) => {
+        if (!old) return old
+        return old.map((t) =>
+          t.id === todoId
+            ? { ...t, status: t.status === 'DONE' ? 'TO_DO' : 'DONE' }
+            : t
+        )
+      })
+
+      return { previous }
+    },
+    onError: (_err, _todoId, context) => {
+      queryClient.setQueryData(boardKeys.todos(boardId), context?.previous)
+      toast.error('Failed to complete todo — changes reverted')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
+    },
+  })
+
+  // Drag-and-drop mutation for status change
+  const reorderMutation = useMutation({
+    mutationFn: ({ todoId, newStatus, newOrder }: { todoId: string; newStatus: string; newOrder: string }) =>
+      updateTodoStatusAndOrder(todoId, newStatus as 'TO_DO' | 'IN_PROGRESS' | 'DONE', newOrder),
+    onMutate: async ({ todoId, newStatus, newOrder }) => {
+      await queryClient.cancelQueries({ queryKey: boardKeys.todos(boardId) })
+      const previous = queryClient.getQueryData(boardKeys.todos(boardId))
+
+      queryClient.setQueryData<TodoWithRelations[]>(boardKeys.todos(boardId), (old) => {
+        if (!old) return old
+        return old.map((t) =>
+          t.id === todoId ? { ...t, status: newStatus as Todo['status'], order: newOrder } : t
+        )
+      })
+
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(boardKeys.todos(boardId), context?.previous)
+      toast.error('Reorder failed — changes reverted')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
+    },
+  })
+
+  // Handle quick complete
+  const handleQuickComplete = useCallback((todoId: string) => {
+    completeMutation.mutate(todoId)
+  }, [completeMutation])
+
+  // Handle todo click (open side panel)
+  const handleTodoClick = useCallback((todo: TodoWithRelations) => {
+    setSelectedTodo(todo)
+    setSidePanelOpen(true)
+  }, [])
+
+  // Handle add todo
+  const handleAddTodo = useCallback(() => {
+    setSelectedTodo(null)
+    setSidePanelOpen(true)
+  }, [])
 
   // Configure drag-and-drop sensors
   const sensors = useSensors(
@@ -248,6 +312,21 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
           
           return [...otherTodos, ...targetTodos]
         })
+
+        // Generate new order key for server
+        const columnTodosForOrder = (todos as TodoWithRelations[]).filter((t) => t.status === targetStatus)
+        const newOrderIndex = columnTodosForOrder.findIndex((t) => t.id === activeId)
+        const newOrderKey = generateKeyBetween(
+          newOrderIndex > 0 ? columnTodosForOrder[newOrderIndex - 1]?.order : null,
+          newOrderIndex < columnTodosForOrder.length - 1 ? columnTodosForOrder[newOrderIndex + 1]?.order : null
+        )
+
+        // Persist to server
+        reorderMutation.mutate({
+          todoId: activeId,
+          newStatus: targetStatus,
+          newOrder: newOrderKey,
+        })
       }
     }
   }
@@ -262,6 +341,7 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
       {/* Board header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
+        <Button onClick={handleAddTodo}>Add Todo</Button>
       </div>
 
       {/* Filter bar */}
@@ -286,12 +366,16 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
             title="To Do"
             todos={todosByStatus.TO_DO}
             activeId={activeId}
+            onQuickComplete={handleQuickComplete}
+            onTodoClick={handleTodoClick}
           />
           <KanbanColumn
             id="IN_PROGRESS"
             title="In Progress"
             todos={todosByStatus.IN_PROGRESS}
             activeId={activeId}
+            onQuickComplete={handleQuickComplete}
+            onTodoClick={handleTodoClick}
           />
           <KanbanColumn
             id="DONE"
@@ -299,9 +383,21 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
             todos={todosByStatus.DONE}
             activeId={activeId}
             collapsible
+            onQuickComplete={handleQuickComplete}
+            onTodoClick={handleTodoClick}
           />
         </div>
       </DndContext>
+
+      {/* Side panel for create/edit */}
+      <TodoSidePanel
+        open={sidePanelOpen}
+        onOpenChange={setSidePanelOpen}
+        boardId={boardId}
+        todo={selectedTodo}
+        members={members}
+        tags={tags}
+      />
     </div>
   )
 }
