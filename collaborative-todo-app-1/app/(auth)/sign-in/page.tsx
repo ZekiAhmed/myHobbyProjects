@@ -42,6 +42,7 @@ export default function SignInPage() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
   const inviteToken = searchParams.get('inviteToken')
+  const sessionExpired = searchParams.get('sessionExpired') === 'true'
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -50,13 +51,23 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (sessionExpired) {
+      setError('Your session has expired. Please sign in again.')
+    }
+  }, [sessionExpired])
+
+  useEffect(() => {
     const checkSession = async () => {
       const { data } = await authClient.getSession()
       if (data?.session) {
         if (inviteToken) {
           acceptInvitation(inviteToken)
             .then((result) => {
-              router.push(`/boards/${result.boardId}`)
+              if (result.success) {
+                router.push(`/boards/${result.data.boardId}`)
+              } else {
+                router.push(callbackUrl)
+              }
             })
             .catch(() => {
               router.push(callbackUrl)
@@ -103,7 +114,11 @@ export default function SignInPage() {
         if (inviteToken) {
           try {
             const inviteResult = await acceptInvitation(inviteToken)
-            router.push(`/boards/${inviteResult.boardId}`)
+            if (inviteResult.success) {
+              router.push(`/boards/${inviteResult.data.boardId}`)
+            } else {
+              router.push(callbackUrl)
+            }
             return
           } catch {
             router.push(callbackUrl)

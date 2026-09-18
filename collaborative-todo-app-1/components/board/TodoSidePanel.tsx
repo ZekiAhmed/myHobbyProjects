@@ -67,6 +67,7 @@ export function TodoSidePanel({
   const [dueDate, setDueDate] = useState('')
   const [assigneeId, setAssigneeId] = useState<string>('none')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [titleError, setTitleError] = useState('')
 
   useEffect(() => {
     if (todo) {
@@ -86,6 +87,7 @@ export function TodoSidePanel({
       setAssigneeId('none')
       setSelectedTagIds([])
     }
+    setTitleError('')
   }, [todo, open])
 
   const createMutation = useMutation({
@@ -100,10 +102,18 @@ export function TodoSidePanel({
         assigneeId: assigneeId === 'none' ? undefined : assigneeId,
         tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
-      toast.success('Todo created')
-      onOpenChange(false)
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
+        toast.success('Todo created')
+        onOpenChange(false)
+      } else {
+        if (result.error.type === 'validation') {
+          setTitleError(result.error.message)
+        } else {
+          toast.error(result.error.message)
+        }
+      }
     },
     onError: () => {
       toast.error('Failed to create todo')
@@ -121,10 +131,18 @@ export function TodoSidePanel({
         assigneeId: assigneeId === 'none' ? null : assigneeId,
         tagIds: selectedTagIds,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
-      toast.success('Todo updated')
-      onOpenChange(false)
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
+        toast.success('Todo updated')
+        onOpenChange(false)
+      } else {
+        if (result.error.type === 'validation') {
+          setTitleError(result.error.message)
+        } else {
+          toast.error(result.error.message)
+        }
+      }
     },
     onError: () => {
       toast.error('Failed to update todo')
@@ -133,10 +151,14 @@ export function TodoSidePanel({
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteTodo(todo!.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
-      toast.success('Todo deleted')
-      onOpenChange(false)
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
+        toast.success('Todo deleted')
+        onOpenChange(false)
+      } else {
+        toast.error(result.error.message)
+      }
     },
     onError: () => {
       toast.error('Failed to delete todo')
@@ -145,7 +167,12 @@ export function TodoSidePanel({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    setTitleError('')
+
+    if (!title.trim()) {
+      setTitleError('Title is required')
+      return
+    }
 
     if (isEditing) {
       updateMutation.mutate()
@@ -185,10 +212,20 @@ export function TodoSidePanel({
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value)
+                if (titleError) setTitleError('')
+              }}
               placeholder="Enter todo title..."
               required
+              aria-invalid={!!titleError}
+              aria-describedby={titleError ? 'title-error' : undefined}
             />
+            {titleError && (
+              <p id="title-error" className="text-sm text-destructive">
+                {titleError}
+              </p>
+            )}
           </div>
 
           {/* Description */}

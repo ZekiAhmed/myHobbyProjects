@@ -54,6 +54,7 @@ export function BoardSettingsClient({
   // Rename state
   const [name, setName] = useState(boardName)
   const [isEditingName, setIsEditingName] = useState(false)
+  const [nameError, setNameError] = useState('')
 
   // Transfer ownership state
   const [selectedMemberId, setSelectedMemberId] = useState('')
@@ -66,45 +67,71 @@ export function BoardSettingsClient({
   // Rename mutation
   const renameMutation = useMutation({
     mutationFn: () => renameBoard(boardId, name),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
-      queryClient.invalidateQueries({ queryKey: boardKeys.all() })
-      toast.success('Board renamed')
-      setIsEditingName(false)
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        queryClient.invalidateQueries({ queryKey: boardKeys.all() })
+        toast.success('Board renamed')
+        setIsEditingName(false)
+        setNameError('')
+      } else {
+        if (result.error.type === 'validation') {
+          setNameError(result.error.message)
+        } else if (result.error.type === 'authorization') {
+          toast.error(result.error.message)
+        } else {
+          toast.error(result.error.message)
+        }
+      }
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to rename board')
+    onError: () => {
+      toast.error('Failed to rename board')
     },
   })
 
   // Delete board mutation
   const deleteMutation = useMutation({
     mutationFn: () => deleteBoard(boardId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.all() })
-      toast.success('Board deleted')
-      router.push('/')
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.all() })
+        toast.success('Board deleted')
+        router.push('/')
+      } else {
+        toast.error(result.error.message)
+      }
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete board')
+    onError: () => {
+      toast.error('Failed to delete board')
     },
   })
 
   // Transfer ownership mutation
   const transferMutation = useMutation({
     mutationFn: () => transferOwnership(boardId, selectedMemberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
-      queryClient.invalidateQueries({ queryKey: boardKeys.all() })
-      toast.success('Ownership transferred')
-      router.push(`/boards/${boardId}`)
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        queryClient.invalidateQueries({ queryKey: boardKeys.all() })
+        toast.success('Ownership transferred')
+        router.push(`/boards/${boardId}`)
+      } else {
+        if (result.error.type === 'validation') {
+          toast.error(result.error.message)
+        } else if (result.error.type === 'authorization') {
+          toast.error(result.error.message)
+        } else {
+          toast.error(result.error.message)
+        }
+      }
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to transfer ownership')
+    onError: () => {
+      toast.error('Failed to transfer ownership')
     },
   })
 
   const handleRename = () => {
+    setNameError('')
     if (name.trim() && name !== boardName) {
       renameMutation.mutate()
     } else {
@@ -139,31 +166,44 @@ export function BoardSettingsClient({
         <section className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-sm font-medium text-gray-900 mb-3">Board Name</h3>
           {isEditingName ? (
-            <div className="flex gap-2">
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Board name"
-                maxLength={100}
-                className="flex-1"
-              />
-              <Button
-                onClick={handleRename}
-                disabled={renameMutation.isPending || !name.trim()}
-                size="sm"
-              >
-                {renameMutation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsEditingName(false)
-                  setName(boardName)
-                }}
-                variant="outline"
-                size="sm"
-              >
-                Cancel
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    if (nameError) setNameError('')
+                  }}
+                  placeholder="Board name"
+                  maxLength={100}
+                  className="flex-1"
+                  aria-invalid={!!nameError}
+                  aria-describedby={nameError ? 'name-error' : undefined}
+                />
+                <Button
+                  onClick={handleRename}
+                  disabled={renameMutation.isPending || !name.trim()}
+                  size="sm"
+                >
+                  {renameMutation.isPending ? 'Saving...' : 'Save'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsEditingName(false)
+                    setName(boardName)
+                    setNameError('')
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+              </div>
+              {nameError && (
+                <p id="name-error" className="text-sm text-destructive">
+                  {nameError}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between">

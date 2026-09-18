@@ -42,7 +42,12 @@ export default async function InvitePage({
     try {
       const { acceptInvitation } = await import('@/app/actions/invitations')
       const result = await acceptInvitation(token)
-      redirect(`/boards/${result.boardId}`)
+      if (result.success) {
+        redirect(`/boards/${result.data.boardId}`)
+      } else {
+        // If invitation consumption fails, show error via client component
+        return <InviteClient token={token} />
+      }
     } catch {
       // If invitation consumption fails, show error via client component
       return <InviteClient token={token} />

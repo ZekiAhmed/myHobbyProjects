@@ -35,30 +35,56 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
+  const [nameError, setNameError] = useState('')
 
   const createMutation = useMutation({
     mutationFn: () => createTag({ boardId, name, color }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
-      toast.success('Tag created')
-      setName('')
-      setColor(PRESET_COLORS[0])
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        toast.success('Tag created')
+        setName('')
+        setColor(PRESET_COLORS[0])
+        setNameError('')
+      } else {
+        if (result.error.type === 'validation') {
+          setNameError(result.error.message)
+        } else if (result.error.type === 'authorization') {
+          toast.error(result.error.message)
+        } else {
+          toast.error(result.error.message)
+        }
+      }
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to create tag')
+    onError: () => {
+      toast.error('Failed to create tag')
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (tagId: string) => deleteTag(tagId),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        toast.success('Tag deleted')
+      } else {
+        toast.error(result.error.message)
+      }
+    },
+    onError: () => {
+      toast.error('Failed to delete tag')
     },
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    setNameError('')
+
+    if (!name.trim()) {
+      setNameError('Tag name is required')
+      return
+    }
+
     createMutation.mutate()
   }
 
@@ -107,10 +133,20 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
           <Input
             id="tag-name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (nameError) setNameError('')
+            }}
             placeholder="e.g. Bug, Feature, Urgent"
             maxLength={50}
+            aria-invalid={!!nameError}
+            aria-describedby={nameError ? 'tag-name-error' : undefined}
           />
+          {nameError && (
+            <p id="tag-name-error" className="text-sm text-destructive">
+              {nameError}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

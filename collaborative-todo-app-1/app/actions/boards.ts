@@ -30,6 +30,15 @@
 import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
+import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+
+type BoardData = {
+  id: string
+  name: string
+  ownerId: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 /**
  * Creates a new board with the current user as the owner.
@@ -46,29 +55,39 @@ import { getRequiredSession } from '@/lib/session'
  *
  * @example
  * // In a Client Component:
- * const board = await createBoard("My New Board")
- * router.push(`/boards/${board.id}`)
+ * const result = await createBoard("My New Board")
+ * if (result.success) {
+ *   router.push(`/boards/${result.data.id}`)
+ * }
  */
-export async function createBoard(name: string) {
-  // Step 1: Authenticate — getRequiredSession() throws a redirect to /sign-in if no session
-  const session = await getRequiredSession()
-  
-  // Step 2: Create the board in the database
-  // The ownerId is set to the current user's ID, making them the owner
-  const board = await prisma.board.create({
-    data: {
-      name,
-      ownerId: session.user.id, // Owner is always the user who creates the board
-    },
-  })
-  
-  // Step 3: Invalidate the 'boards' cache tag
-  // 'max' means stale content can be served for up to 1 year while revalidation runs
-  // This ensures the dashboard will fetch fresh data on the next request
-  revalidateTag('boards', 'max')
-  
-  // Return the board so the client can use it (e.g., redirect to the new board)
-  return board
+export async function createBoard(name: string): Promise<ActionResult<BoardData>> {
+  try {
+    // Step 1: Authenticate — getRequiredSession() throws a redirect to /sign-in if no session
+    const session = await getRequiredSession()
+
+    if (!name.trim()) {
+      return actionError('validation', 'Board name is required')
+    }
+
+    // Step 2: Create the board in the database
+    // The ownerId is set to the current user's ID, making them the owner
+    const board = await prisma.board.create({
+      data: {
+        name: name.trim(),
+        ownerId: session.user.id, // Owner is always the user who creates the board
+      },
+    })
+
+    // Step 3: Invalidate the 'boards' cache tag
+    // 'max' means stale content can be served for up to 1 year while revalidation runs
+    // This ensures the dashboard will fetch fresh data on the next request
+    revalidateTag('boards', 'max')
+
+    // Return the board so the client can use it (e.g., redirect to the new board)
+    return actionSuccess(board)
+  } catch {
+    return actionError('server', 'Failed to create board')
+  }
 }
 
 /**
@@ -77,7 +96,7 @@ export async function createBoard(name: string) {
  * WHAT HAPPENS:
  * 1. Authenticates the user
  * 2. Fetches the board from the database
- * 3. Checks if the current user is the owner (throws if not)
+ * 3. Checks if the current user is the owner (returns error if not)
  * 4. Updates the board name
  * 5. Invalidates both 'boards' and 'board-detail' cache tags
  * 6. Returns the updated board
@@ -89,41 +108,50 @@ export async function createBoard(name: string) {
  * @param boardId - The unique identifier of the board to rename
  * @param name - The new display name for the board
  * @returns The updated Board object with the new name
- * @throws {Error} 'Forbidden: Only the board owner can rename the board' if user is not owner
  *
  * @example
- * await renameBoard("clx1234567890", "Renamed Board")
+ * const result = await renameBoard("clx1234567890", "Renamed Board")
+ * if (result.success) {
+ *   // Board renamed successfully
+ * }
  */
-export async function renameBoard(boardId: string, name: string) {
-  // Step 1: Authenticate
-  const session = await getRequiredSession()
-  
-  // Step 2: Fetch the board to check ownership
-  // findUniqueOrThrow throws if the board doesn't exist (better than silent failure)
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
-  
-  // Step 3: Authorize — only the owner can rename
-  // This is a critical security check. Without it, any member could rename any board.
-  if (board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can rename the board')
+export async function renameBoard(boardId: string, name: string): Promise<ActionResult<BoardData>> {
+  try {
+    // Step 1: Authenticate
+    const session = await getRequiredSession()
+
+    if (!name.trim()) {
+      return actionError('validation', 'Board name is required')
+    }
+
+    // Step 2: Fetch the board to check ownership
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
+
+    // Step 3: Authorize — only the owner can rename
+    // This is a critical security check. Without it, any member could rename any board.
+    if (board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can rename the board')
+    }
+
+    // Step 4: Update the board name in the database
+    const updatedBoard = await prisma.board.update({
+      where: { id: boardId },
+      data: { name: name.trim() },
+    })
+
+    // Step 5: Invalidate both cache tags
+    // 'boards' — affects the dashboard list of boards
+    // 'board-detail' — affects the individual board page (name displayed there)
+    revalidateTag('boards', 'max')
+    revalidateTag('board-detail', 'max')
+
+    // Return the updated board for the client to use
+    return actionSuccess(updatedBoard)
+  } catch {
+    return actionError('server', 'Failed to rename board')
   }
-  
-  // Step 4: Update the board name in the database
-  const updatedBoard = await prisma.board.update({
-    where: { id: boardId },
-    data: { name },
-  })
-  
-  // Step 5: Invalidate both cache tags
-  // 'boards' — affects the dashboard list of boards
-  // 'board-detail' — affects the individual board page (name displayed there)
-  revalidateTag('boards', 'max')
-  revalidateTag('board-detail', 'max')
-  
-  // Return the updated board for the client to use
-  return updatedBoard
 }
 
 /**
@@ -133,7 +161,7 @@ export async function renameBoard(boardId: string, name: string) {
  * WHAT HAPPENS:
  * 1. Authenticates the user
  * 2. Fetches the board from the database
- * 3. Checks if the current user is the owner (throws if not)
+ * 3. Checks if the current user is the owner (returns error if not)
  * 4. Deletes the board — Prisma's onDelete: Cascade automatically deletes:
  *    - All todos in the board
  *    - All tags in the board
@@ -147,34 +175,39 @@ export async function renameBoard(boardId: string, name: string) {
  * No manual cleanup code is needed — the database handles it.
  *
  * @param boardId - The unique identifier of the board to delete
- * @throws {Error} 'Forbidden: Only the board owner can delete the board' if user is not owner
  *
  * @example
- * await deleteBoard("clx1234567890")
+ * const result = await deleteBoard("clx1234567890")
  * // Board and all its data are permanently deleted
  */
-export async function deleteBoard(boardId: string) {
-  // Step 1: Authenticate
-  const session = await getRequiredSession()
-  
-  // Step 2: Fetch the board to check ownership
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
-  
-  // Step 3: Authorize — only the owner can delete
-  // This is a destructive action, so we're extra careful
-  if (board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can delete the board')
+export async function deleteBoard(boardId: string): Promise<ActionResult<{ success: true }>> {
+  try {
+    // Step 1: Authenticate
+    const session = await getRequiredSession()
+
+    // Step 2: Fetch the board to check ownership
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
+
+    // Step 3: Authorize — only the owner can delete
+    // This is a destructive action, so we're extra careful
+    if (board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can delete the board')
+    }
+
+    // Step 4: Delete the board (and all related data via cascade)
+    await prisma.board.delete({
+      where: { id: boardId },
+    })
+
+    // Step 5: Invalidate the cache so the dashboard shows the updated list
+    revalidateTag('boards', 'max')
+
+    return actionSuccess({ success: true as const })
+  } catch {
+    return actionError('server', 'Failed to delete board')
   }
-  
-  // Step 4: Delete the board (and all related data via cascade)
-  await prisma.board.delete({
-    where: { id: boardId },
-  })
-  
-  // Step 5: Invalidate the cache so the dashboard shows the updated list
-  revalidateTag('boards', 'max')
 }
 
 /**
@@ -194,49 +227,52 @@ export async function deleteBoard(boardId: string) {
  *
  * @param boardId - The board to transfer ownership of
  * @param newOwnerId - The ID of the member to transfer ownership to
- * @throws {Error} If user is not the board owner
- * @throws {Error} If newOwnerId is the same as current owner
- * @throws {Error} If newOwnerId is not a member of the board
  *
  * @example
- * await transferOwnership("board_abc", "user_xyz")
+ * const result = await transferOwnership("board_abc", "user_xyz")
  * // Board ownership transferred, old owner loses settings access
  */
-export async function transferOwnership(boardId: string, newOwnerId: string) {
-  // Step 1: Authenticate
-  const session = await getRequiredSession()
+export async function transferOwnership(boardId: string, newOwnerId: string): Promise<ActionResult<{ success: true }>> {
+  try {
+    // Step 1: Authenticate
+    const session = await getRequiredSession()
 
-  // Step 2: Fetch the board to check ownership
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
+    // Step 2: Fetch the board to check ownership
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
 
-  // Step 3: Authorize — only the current owner can transfer
-  if (board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can transfer ownership')
+    // Step 3: Authorize — only the current owner can transfer
+    if (board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can transfer ownership')
+    }
+
+    // Step 4: Cannot transfer to yourself
+    if (newOwnerId === session.user.id) {
+      return actionError('validation', 'Cannot transfer ownership to yourself')
+    }
+
+    // Step 5: Verify the new owner is a member of the board
+    const member = await prisma.boardMember.findFirst({
+      where: { boardId, userId: newOwnerId },
+    })
+
+    if (!member) {
+      return actionError('validation', 'The user you are trying to transfer ownership to is not a member of this board')
+    }
+
+    // Step 6: Transfer ownership
+    await prisma.board.update({
+      where: { id: boardId },
+      data: { ownerId: newOwnerId },
+    })
+
+    // Step 7: Invalidate both cache tags
+    revalidateTag('boards', 'max')
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess({ success: true as const })
+  } catch {
+    return actionError('server', 'Failed to transfer ownership')
   }
-
-  // Step 4: Cannot transfer to yourself
-  if (newOwnerId === session.user.id) {
-    throw new Error('Cannot transfer ownership to yourself')
-  }
-
-  // Step 5: Verify the new owner is a member of the board
-  const member = await prisma.boardMember.findFirst({
-    where: { boardId, userId: newOwnerId },
-  })
-
-  if (!member) {
-    throw new Error('The user you are trying to transfer ownership to is not a member of this board')
-  }
-
-  // Step 6: Transfer ownership
-  await prisma.board.update({
-    where: { id: boardId },
-    data: { ownerId: newOwnerId },
-  })
-
-  // Step 7: Invalidate both cache tags
-  revalidateTag('boards', 'max')
-  revalidateTag('board-detail', 'max')
 }

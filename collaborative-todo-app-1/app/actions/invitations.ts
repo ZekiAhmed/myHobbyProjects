@@ -30,6 +30,17 @@ import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { generateInviteToken, getInvitationExpiry, isTokenExpired } from '@/lib/utils/invite-tokens'
 import { sendInvitationEmail } from '@/lib/email'
+import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+
+type InvitationData = {
+  id: string
+  boardId: string
+  email: string
+  token: string
+  expiresAt: Date
+  status: string
+  createdAt: Date
+}
 
 /**
  * Creates a new invitation for a user to join a board.
@@ -46,64 +57,67 @@ import { sendInvitationEmail } from '@/lib/email'
  * @param boardId - The board to invite the user to
  * @param email - The email address of the person to invite
  * @returns The created Invitation object
- * @throws {Error} If user is not the board owner
- * @throws {Error} If the user is already a member
- * @throws {Error} If there's already a pending invitation for this email
  *
  * @example
- * const invitation = await createInvitation("board_abc", "colleague@example.com")
- * // Invitation email sent, record created in database
+ * const result = await createInvitation("board_abc", "colleague@example.com")
+ * if (result.success) {
+ *   // Invitation email sent, record created in database
+ * }
  */
-export async function createInvitation(boardId: string, email: string) {
-  const session = await getRequiredSession()
-
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
-
-  if (board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can invite members')
-  }
-
-  const existingMember = await prisma.boardMember.findFirst({
-    where: { boardId, user: { email } },
-  })
-
-  if (existingMember) {
-    throw new Error('This user is already a member of this board')
-  }
-
-  const pendingInvitation = await prisma.invitation.findFirst({
-    where: { boardId, email, status: 'PENDING' },
-  })
-
-  if (pendingInvitation) {
-    if (!isTokenExpired(pendingInvitation.expiresAt)) {
-      throw new Error('A pending invitation already exists for this email')
-    }
-  }
-
-  const token = generateInviteToken()
-  const expiresAt = getInvitationExpiry()
-
-  const invitation = await prisma.invitation.create({
-    data: {
-      boardId,
-      email,
-      token,
-      expiresAt,
-    },
-  })
-
+export async function createInvitation(boardId: string, email: string): Promise<ActionResult<InvitationData>> {
   try {
-    await sendInvitationEmail(email, token, board.name)
+    const session = await getRequiredSession()
+
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
+
+    if (board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can invite members')
+    }
+
+    const existingMember = await prisma.boardMember.findFirst({
+      where: { boardId, user: { email } },
+    })
+
+    if (existingMember) {
+      return actionError('validation', 'This user is already a member of this board')
+    }
+
+    const pendingInvitation = await prisma.invitation.findFirst({
+      where: { boardId, email, status: 'PENDING' },
+    })
+
+    if (pendingInvitation) {
+      if (!isTokenExpired(pendingInvitation.expiresAt)) {
+        return actionError('validation', 'A pending invitation already exists for this email')
+      }
+    }
+
+    const token = generateInviteToken()
+    const expiresAt = getInvitationExpiry()
+
+    const invitation = await prisma.invitation.create({
+      data: {
+        boardId,
+        email,
+        token,
+        expiresAt,
+      },
+    })
+
+    try {
+      await sendInvitationEmail(email, token, board.name)
+    } catch {
+      // Invitation is saved even if email fails — share the link manually
+    }
+
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess(invitation)
   } catch {
-    // Invitation is saved even if email fails — share the link manually
+    return actionError('server', 'Failed to send invitation')
   }
-
-  revalidateTag('board-detail', 'max')
-
-  return invitation
 }
 
 /**
@@ -116,29 +130,34 @@ export async function createInvitation(boardId: string, email: string) {
  * 4. Invalidates the board-detail cache
  *
  * @param invitationId - The invitation to revoke
- * @throws {Error} If user is not the board owner
  *
  * @example
- * await revokeInvitation("inv_abc123")
+ * const result = await revokeInvitation("inv_abc123")
  * // Invitation deleted, invite link is now invalid
  */
-export async function revokeInvitation(invitationId: string) {
-  const session = await getRequiredSession()
+export async function revokeInvitation(invitationId: string): Promise<ActionResult<{ success: true }>> {
+  try {
+    const session = await getRequiredSession()
 
-  const invitation = await prisma.invitation.findUniqueOrThrow({
-    where: { id: invitationId },
-    include: { board: true },
-  })
+    const invitation = await prisma.invitation.findUniqueOrThrow({
+      where: { id: invitationId },
+      include: { board: true },
+    })
 
-  if (invitation.board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can revoke invitations')
+    if (invitation.board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can revoke invitations')
+    }
+
+    await prisma.invitation.delete({
+      where: { id: invitationId },
+    })
+
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess({ success: true as const })
+  } catch {
+    return actionError('server', 'Failed to revoke invitation')
   }
-
-  await prisma.invitation.delete({
-    where: { id: invitationId },
-  })
-
-  revalidateTag('board-detail', 'max')
 }
 
 /**
@@ -160,64 +179,69 @@ export async function revokeInvitation(invitationId: string) {
  *
  * @param token - The invitation token from the URL
  * @returns The board ID the user was invited to
- * @throws {Error} If not authenticated, token is invalid, expired, or already used
  *
  * @example
- * const { boardId } = await acceptInvitation("a1b2c3d4...")
- * // User is now a member of the board
- * // redirect(`/boards/${boardId}`)
+ * const result = await acceptInvitation("a1b2c3d4...")
+ * if (result.success) {
+ *   // User is now a member of the board
+ *   // redirect(`/boards/${result.data.boardId}`)
+ * }
  */
-export async function acceptInvitation(token: string) {
-  const session = await getRequiredSession()
-  const userId = session.user.id
+export async function acceptInvitation(token: string): Promise<ActionResult<{ boardId: string }>> {
+  try {
+    const session = await getRequiredSession()
+    const userId = session.user.id
 
-  const invitation = await prisma.invitation.findUnique({
-    where: { token },
-  })
-
-  if (!invitation) {
-    throw new Error('Invalid invitation link')
-  }
-
-  if (invitation.status !== 'PENDING') {
-    throw new Error('This invitation has already been used')
-  }
-
-  if (isTokenExpired(invitation.expiresAt)) {
-    await prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'EXPIRED' },
+    const invitation = await prisma.invitation.findUnique({
+      where: { token },
     })
-    throw new Error('This invitation link has expired. Ask the board owner to send a new one.')
-  }
 
-  const existingMember = await prisma.boardMember.findFirst({
-    where: { boardId: invitation.boardId, userId },
-  })
+    if (!invitation) {
+      return actionError('validation', 'Invalid invitation link')
+    }
 
-  if (existingMember) {
-    await prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED' },
+    if (invitation.status !== 'PENDING') {
+      return actionError('validation', 'This invitation has already been used')
+    }
+
+    if (isTokenExpired(invitation.expiresAt)) {
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'EXPIRED' },
+      })
+      return actionError('validation', 'This invitation link has expired. Ask the board owner to send a new one.')
+    }
+
+    const existingMember = await prisma.boardMember.findFirst({
+      where: { boardId: invitation.boardId, userId },
     })
-    return { boardId: invitation.boardId }
+
+    if (existingMember) {
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      })
+      return actionSuccess({ boardId: invitation.boardId })
+    }
+
+    await prisma.$transaction([
+      prisma.boardMember.create({
+        data: {
+          boardId: invitation.boardId,
+          userId,
+        },
+      }),
+      prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      }),
+    ])
+
+    revalidateTag('boards', 'max')
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess({ boardId: invitation.boardId })
+  } catch {
+    return actionError('server', 'Failed to accept invitation')
   }
-
-  await prisma.$transaction([
-    prisma.boardMember.create({
-      data: {
-        boardId: invitation.boardId,
-        userId,
-      },
-    }),
-    prisma.invitation.update({
-      where: { id: invitation.id },
-      data: { status: 'ACCEPTED' },
-    }),
-  ])
-
-  revalidateTag('boards', 'max')
-  revalidateTag('board-detail', 'max')
-
-  return { boardId: invitation.boardId }
 }

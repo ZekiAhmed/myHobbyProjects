@@ -1,8 +1,9 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { boardKeys } from '@/lib/queries/board-keys'
 import { removeMember, leaveBoard } from '@/app/actions/members'
+import { toast } from 'sonner'
 
 type Member = {
   id: string
@@ -36,16 +37,32 @@ export function MemberList({
 
   const removeMemberMutation = useMutation({
     mutationFn: (userId: string) => removeMember(boardId, userId),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        toast.success('Member removed')
+      } else {
+        toast.error(result.error.message)
+      }
+    },
+    onError: () => {
+      toast.error('Failed to remove member')
     },
   })
 
   const leaveBoardMutation = useMutation({
     mutationFn: () => leaveBoard(boardId),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.all() })
-      queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: boardKeys.all() })
+        queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
+        toast.success('Left board')
+      } else {
+        toast.error(result.error.message)
+      }
+    },
+    onError: () => {
+      toast.error('Failed to leave board')
     },
   })
 
@@ -92,7 +109,7 @@ export function MemberList({
                 disabled={removeMemberMutation.isPending}
                 className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
               >
-                Remove
+                {removeMemberMutation.isPending ? 'Removing...' : 'Remove'}
               </button>
             )}
           </div>

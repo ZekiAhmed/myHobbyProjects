@@ -23,6 +23,7 @@
 import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
+import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 
 /**
  * Removes a member from a board. Only the board owner can do this.
@@ -36,41 +37,45 @@ import { getRequiredSession } from '@/lib/session'
  *
  * @param boardId - The board to remove the member from
  * @param userId - The ID of the member to remove
- * @throws {Error} If user is not the board owner
- * @throws {Error} If the member doesn't exist
  *
  * @example
- * await removeMember("board_abc", "user_xyz")
+ * const result = await removeMember("board_abc", "user_xyz")
  * // Member removed, their todos are now unassigned
  */
-export async function removeMember(boardId: string, userId: string) {
-  const session = await getRequiredSession()
+export async function removeMember(boardId: string, userId: string): Promise<ActionResult<{ success: true }>> {
+  try {
+    const session = await getRequiredSession()
 
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
 
-  if (board.ownerId !== session.user.id) {
-    throw new Error('Forbidden: Only the board owner can remove members')
+    if (board.ownerId !== session.user.id) {
+      return actionError('authorization', 'Only the board owner can remove members')
+    }
+
+    if (board.ownerId === userId) {
+      return actionError('validation', 'Cannot remove the board owner')
+    }
+
+    const member = await prisma.boardMember.findFirst({
+      where: { boardId, userId },
+    })
+
+    if (!member) {
+      return actionError('validation', 'User is not a member of this board')
+    }
+
+    await prisma.boardMember.delete({
+      where: { id: member.id },
+    })
+
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess({ success: true as const })
+  } catch {
+    return actionError('server', 'Failed to remove member')
   }
-
-  if (board.ownerId === userId) {
-    throw new Error('Cannot remove the board owner')
-  }
-
-  const member = await prisma.boardMember.findFirst({
-    where: { boardId, userId },
-  })
-
-  if (!member) {
-    throw new Error('User is not a member of this board')
-  }
-
-  await prisma.boardMember.delete({
-    where: { id: member.id },
-  })
-
-  revalidateTag('board-detail', 'max')
 }
 
 /**
@@ -88,37 +93,41 @@ export async function removeMember(boardId: string, userId: string) {
  * - The owner must delete the board instead (see deleteBoard action)
  *
  * @param boardId - The board to leave
- * @throws {Error} If user is the board owner
- * @throws {Error} If user is not a member of this board
  *
  * @example
- * await leaveBoard("board_abc")
+ * const result = await leaveBoard("board_abc")
  * // User is no longer a member of this board
  * // Dashboard will no longer show this board
  */
-export async function leaveBoard(boardId: string) {
-  const session = await getRequiredSession()
+export async function leaveBoard(boardId: string): Promise<ActionResult<{ success: true }>> {
+  try {
+    const session = await getRequiredSession()
 
-  const board = await prisma.board.findUniqueOrThrow({
-    where: { id: boardId },
-  })
+    const board = await prisma.board.findUniqueOrThrow({
+      where: { id: boardId },
+    })
 
-  if (board.ownerId === session.user.id) {
-    throw new Error('Board owners cannot leave their own board. Delete it instead.')
+    if (board.ownerId === session.user.id) {
+      return actionError('authorization', 'Board owners cannot leave their own board. Delete it instead.')
+    }
+
+    const member = await prisma.boardMember.findFirst({
+      where: { boardId, userId: session.user.id },
+    })
+
+    if (!member) {
+      return actionError('validation', 'You are not a member of this board')
+    }
+
+    await prisma.boardMember.delete({
+      where: { id: member.id },
+    })
+
+    revalidateTag('boards', 'max')
+    revalidateTag('board-detail', 'max')
+
+    return actionSuccess({ success: true as const })
+  } catch {
+    return actionError('server', 'Failed to leave board')
   }
-
-  const member = await prisma.boardMember.findFirst({
-    where: { boardId, userId: session.user.id },
-  })
-
-  if (!member) {
-    throw new Error('You are not a member of this board')
-  }
-
-  await prisma.boardMember.delete({
-    where: { id: member.id },
-  })
-
-  revalidateTag('boards', 'max')
-  revalidateTag('board-detail', 'max')
 }

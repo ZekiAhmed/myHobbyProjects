@@ -95,7 +95,9 @@ export default function VerifyEmailPage() {
         acceptInvitation(pendingToken)
           .then((result) => {
             localStorage.removeItem('pendingInviteToken')
-            router.push(`/boards/${result.boardId}`)
+            if (result.success) {
+              router.push(`/boards/${result.data.boardId}`)
+            }
           })
           .catch(() => {
             localStorage.removeItem('pendingInviteToken')

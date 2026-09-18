@@ -35,6 +35,7 @@ import { createBoard } from '@/app/actions/boards'
 import { boardKeys } from '@/lib/queries/board-keys'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -85,16 +86,23 @@ export function NewBoardModal() {
    */
   const createMutation = useMutation({
     mutationFn: (name: string) => createBoard(name),
-    onSuccess: (board) => {
-      // Invalidate all board queries (dashboard list will refetch)
-      queryClient.invalidateQueries({ queryKey: boardKeys.all() })
-      
-      // Close the modal and reset the form
-      setOpen(false)
-      setName('')
-      
-      // Navigate to the newly created board
-      router.push(`/boards/${board.id}`)
+    onSuccess: (result) => {
+      if (result.success) {
+        // Invalidate all board queries (dashboard list will refetch)
+        queryClient.invalidateQueries({ queryKey: boardKeys.all() })
+        
+        // Close the modal and reset the form
+        setOpen(false)
+        setName('')
+        
+        // Navigate to the newly created board
+        router.push(`/boards/${result.data.id}`)
+      } else {
+        toast.error(result.error.message)
+      }
+    },
+    onError: () => {
+      toast.error('Failed to create board')
     },
   })
 

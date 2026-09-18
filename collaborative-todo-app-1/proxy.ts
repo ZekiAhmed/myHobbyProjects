@@ -45,6 +45,7 @@ export function proxy(request: NextRequest) {
   if (protectedRoutes.some(route => pathname.startsWith(route)) && !sessionCookie) {
     const signInUrl = new URL('/sign-in', request.url)
     signInUrl.searchParams.set('callbackUrl', pathname)
+    signInUrl.searchParams.set('sessionExpired', 'true')
     return NextResponse.redirect(signInUrl)
   }
 
