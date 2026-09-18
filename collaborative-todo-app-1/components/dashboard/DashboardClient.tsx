@@ -50,10 +50,10 @@ export function DashboardClient({ initialBoards, currentUserId }: { initialBoard
   const memberBoards = boards.filter((board) => board.ownerId !== currentUserId)
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-4 md:py-8 px-4 md:px-6">
       {/* Dashboard header with title and "New Board" button */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
         <NewBoardModal />
       </div>
 

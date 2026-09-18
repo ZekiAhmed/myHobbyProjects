@@ -10,8 +10,14 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetFooter,
 } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,8 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
-import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations } from '@/lib/types'
 
 interface BoardMember {
@@ -58,6 +64,7 @@ export function TodoSidePanel({
   tags,
 }: TodoSidePanelProps) {
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
   const isEditing = !!todo
 
   const [title, setTitle] = useState('')
@@ -195,6 +202,168 @@ export function TodoSidePanel({
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending
 
+  const formContent = (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
+      {/* Title */}
+      <div className="space-y-2">
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value)
+            if (titleError) setTitleError('')
+          }}
+          placeholder="Enter todo title..."
+          required
+          aria-invalid={!!titleError}
+          aria-describedby={titleError ? 'title-error' : undefined}
+        />
+        {titleError && (
+          <p id="title-error" className="text-sm text-destructive">
+            {titleError}
+          </p>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Add a description..."
+          rows={3}
+        />
+      </div>
+
+      {/* Status & Priority */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={status} onValueChange={(v) => v && setStatus(v as typeof status)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TO_DO">To Do</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="DONE">Done</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Priority</Label>
+          <Select value={priority} onValueChange={(v) => v && setPriority(v as typeof priority)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+              <SelectItem value="URGENT">Urgent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Due Date & Assignee */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="dueDate">Due Date</Label>
+          <Input
+            id="dueDate"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Assignee</Label>
+          <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v || 'none')}>
+            <SelectTrigger>
+              <SelectValue placeholder="Unassigned" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Unassigned</SelectItem>
+              {members.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div className="space-y-2">
+          <Label>Tags</Label>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => toggleTag(tag.id)}
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  selectedTagIds.includes(tag.id)
+                    ? 'ring-2 ring-primary'
+                    : 'opacity-60 hover:opacity-100'
+                }`}
+                style={{
+                  backgroundColor: tag.color + '20',
+                  color: tag.color,
+                }}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isEditing ? (
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={handleDelete}
+          disabled={isPending}
+          className="w-full sm:w-auto sm:mr-auto"
+        >
+          Delete Todo
+        </Button>
+      ) : null}
+      <Button type="submit" disabled={isPending || !title.trim()} className="w-full">
+        {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+      </Button>
+    </form>
+  )
+
+  // Mobile: full-screen dialog
+  if (isMobile) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-full h-[100dvh] sm:max-w-sm sm:h-auto sm:rounded-xl rounded-none top-0 left-0 -translate-x-0 -translate-y-0 flex flex-col p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle>{isEditing ? 'Edit Todo' : 'Create Todo'}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? 'Update the todo details below.' : 'Add a new todo to the board.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {formContent}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  // Desktop: slide-in sheet
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] sm:w-[540px]">
@@ -204,148 +373,7 @@ export function TodoSidePanel({
             {isEditing ? 'Update the todo details below.' : 'Add a new todo to the board.'}
           </SheetDescription>
         </SheetHeader>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value)
-                if (titleError) setTitleError('')
-              }}
-              placeholder="Enter todo title..."
-              required
-              aria-invalid={!!titleError}
-              aria-describedby={titleError ? 'title-error' : undefined}
-            />
-            {titleError && (
-              <p id="title-error" className="text-sm text-destructive">
-                {titleError}
-              </p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add a description..."
-              rows={3}
-            />
-          </div>
-
-          {/* Status & Priority */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => v && setStatus(v as typeof status)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TO_DO">To Do</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="DONE">Done</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={priority} onValueChange={(v) => v && setPriority(v as typeof priority)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="URGENT">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Due Date & Assignee */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Assignee</Label>
-              <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v || 'none')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
-                  {members.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => toggleTag(tag.id)}
-                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      selectedTagIds.includes(tag.id)
-                        ? 'ring-2 ring-primary'
-                        : 'opacity-60 hover:opacity-100'
-                    }`}
-                    style={{
-                      backgroundColor: tag.color + '20',
-                      color: tag.color,
-                    }}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <SheetFooter>
-            {isEditing && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isPending}
-                className="mr-auto"
-              >
-                Delete Todo
-              </Button>
-            )}
-            <Button type="submit" disabled={isPending || !title.trim()}>
-              {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-            </Button>
-          </SheetFooter>
-        </form>
+        {formContent}
       </SheetContent>
     </Sheet>
   )

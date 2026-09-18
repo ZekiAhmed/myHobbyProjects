@@ -46,10 +46,12 @@ import { FilterBar } from '@/components/board/FilterBar'
 import { TodoSidePanel } from '@/components/board/TodoSidePanel'
 import { Button } from '@/components/ui/button'
 import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { ArrowLeft, Settings } from 'lucide-react'
 import { generateKeyBetween } from 'fractional-indexing'
-import type { Todo, BoardMember, Tag } from '@/lib/generated/prisma/browser'
+import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations, BoardDetail } from '@/lib/types'
 
 /**
@@ -67,6 +69,7 @@ import type { TodoWithRelations, BoardDetail } from '@/lib/types'
  */
 export function KanbanBoard({ boardId, currentUserId }: { boardId: string; currentUserId: string }) {
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile()
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -343,21 +346,47 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
 
   return (
     <div className="flex flex-col h-full">
-      {/* Board header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
-        <div className="flex items-center gap-2">
-          {isOwner && (
-            <Link
-              href={`/boards/${boardId}/settings`}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Settings
-            </Link>
-          )}
-          <Button onClick={handleAddTodo}>Add Todo</Button>
+      {/* Mobile header */}
+      {isMobile ? (
+        <div className="flex items-center gap-3 mb-4 px-1">
+          <Link
+            href="/"
+            className="p-2 -ml-2 rounded-md hover:bg-muted transition-colors"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="text-lg font-bold truncate flex-1">{boardDetail?.name || 'Loading...'}</h1>
+          <div className="flex items-center gap-1">
+            {isOwner && (
+              <Link
+                href={`/boards/${boardId}/settings`}
+                className="p-2 rounded-md hover:bg-muted transition-colors"
+                aria-label="Board settings"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+            )}
+            <Button size="sm" onClick={handleAddTodo}>Add Todo</Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Desktop header */
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <Link
+                href={`/boards/${boardId}/settings`}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Settings
+              </Link>
+            )}
+            <Button onClick={handleAddTodo}>Add Todo</Button>
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <FilterBar
@@ -367,55 +396,90 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
         onFiltersChange={setFilters}
       />
 
-      {/* Kanban columns */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex gap-4 flex-1 overflow-x-auto pb-4">
-          <KanbanColumn
-            id="TO_DO"
-            title="To Do"
-            todos={todosByStatus.TO_DO}
-            activeId={activeId}
-            onQuickComplete={handleQuickComplete}
-            onTodoClick={handleTodoClick}
-          />
-          <KanbanColumn
-            id="IN_PROGRESS"
-            title="In Progress"
-            todos={todosByStatus.IN_PROGRESS}
-            activeId={activeId}
-            onQuickComplete={handleQuickComplete}
-            onTodoClick={handleTodoClick}
-          />
-          <KanbanColumn
-            id="DONE"
-            title="Done"
-            todos={todosByStatus.DONE}
-            activeId={activeId}
-            collapsible
-            onQuickComplete={handleQuickComplete}
-            onTodoClick={handleTodoClick}
-          />
-        </div>
+      {/* Desktop: Kanban columns with drag-and-drop */}
+      {!isMobile ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 flex-1 overflow-x-auto pb-4">
+            <KanbanColumn
+              id="TO_DO"
+              title="To Do"
+              todos={todosByStatus.TO_DO}
+              activeId={activeId}
+              onQuickComplete={handleQuickComplete}
+              onTodoClick={handleTodoClick}
+            />
+            <KanbanColumn
+              id="IN_PROGRESS"
+              title="In Progress"
+              todos={todosByStatus.IN_PROGRESS}
+              activeId={activeId}
+              onQuickComplete={handleQuickComplete}
+              onTodoClick={handleTodoClick}
+            />
+            <KanbanColumn
+              id="DONE"
+              title="Done"
+              todos={todosByStatus.DONE}
+              activeId={activeId}
+              collapsible
+              onQuickComplete={handleQuickComplete}
+              onTodoClick={handleTodoClick}
+            />
+          </div>
 
-        <DragOverlay>
-          {activeId ? (() => {
-            const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
-            return activeTodo ? (
-              <TodoCard
-                todo={activeTodo}
-                isActive={false}
-                isOverlay
-              />
-            ) : null
-          })() : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeId ? (() => {
+              const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
+              return activeTodo ? (
+                <TodoCard
+                  todo={activeTodo}
+                  isActive={false}
+                  isOverlay
+                />
+              ) : null
+            })() : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        /* Mobile: Stacked list view (no drag-and-drop) */
+        <div className="flex-1 overflow-y-auto pb-4 space-y-6">
+          {(['TO_DO', 'IN_PROGRESS', 'DONE'] as const).map((status) => {
+            const statusTodos = todosByStatus[status]
+            const title = status === 'TO_DO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'
+            return (
+              <section key={status}>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <h2 className="font-semibold text-sm text-muted-foreground">{title}</h2>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {statusTodos.length}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {statusTodos.length > 0 ? (
+                    statusTodos.map((todo) => (
+                      <TodoCard
+                        key={todo.id}
+                        todo={todo}
+                        isActive={false}
+                        onQuickComplete={handleQuickComplete}
+                        onClick={handleTodoClick}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No todos</p>
+                  )}
+                </div>
+              </section>
+            )
+          })}
+        </div>
+      )}
 
       {/* Side panel for create/edit */}
       <TodoSidePanel

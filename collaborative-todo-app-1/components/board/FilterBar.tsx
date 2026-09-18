@@ -10,17 +10,18 @@
  * - Tag filter (board tags)
  * - Due date filter (Overdue, Today, This Week)
  * - Clear all filters button
+ * - Responsive: collapsible on mobile, inline on desktop
  *
  * DESIGN:
  * - All filters operate on already-loaded data (no extra API calls)
  * - Uses controlled state from parent KanbanBoard component
- * - Responsive layout with horizontal scroll on mobile
  *
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates
  */
 
 'use client'
 
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,7 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { X } from 'lucide-react'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { X, SlidersHorizontal } from 'lucide-react'
 import type { Tag } from '@/lib/generated/prisma/browser'
 
 interface FilterBarProps {
@@ -64,70 +66,26 @@ const DUE_DATE_OPTIONS = [
 ]
 
 /**
- * FilterBar — renders filter controls for the Kanban board
- *
- * WHAT IT DOES:
- * 1. Renders filter dropdowns for priority, assignee, tag, and due date
- * 2. Shows active filters as badges
- * 3. Provides a "Clear all" button when filters are active
- *
- * @param members - Board members for assignee filter
- * @param tags - Board tags for tag filter
- * @param filters - Current filter state
- * @param onFiltersChange - Callback to update filters
+ * Shared filter controls — dropdowns, active badges, and clear button.
+ * Rendered by both mobile (collapsible) and desktop (inline) layouts.
  */
-export function FilterBar({
+function FilterControls({
   members,
   tags,
   filters,
   onFiltersChange,
-}: FilterBarProps) {
-  // Check if any filters are active
-  const hasActiveFilters =
-    filters.priority.length > 0 ||
-    filters.assignee.length > 0 ||
-    filters.tag.length > 0 ||
-    filters.dueDate !== null
-
-  /**
-   * Toggle a value in a multi-select filter
-   */
-  function toggleFilter(
-    filterType: 'priority' | 'assignee' | 'tag',
-    value: string
-  ) {
-    onFiltersChange({
-      ...filters,
-      [filterType]: filters[filterType].includes(value)
-        ? filters[filterType].filter((v) => v !== value)
-        : [...filters[filterType], value],
-    })
-  }
-
-  /**
-   * Set the due date filter
-   */
-  function setDueDateFilter(value: string | null) {
-    onFiltersChange({
-      ...filters,
-      dueDate: value,
-    })
-  }
-
-  /**
-   * Clear all filters
-   */
-  function clearAllFilters() {
-    onFiltersChange({
-      priority: [],
-      assignee: [],
-      tag: [],
-      dueDate: null,
-    })
-  }
-
+  hasActiveFilters,
+  toggleFilter,
+  setDueDateFilter,
+  clearAllFilters,
+}: FilterBarProps & {
+  hasActiveFilters: boolean
+  toggleFilter: (filterType: 'priority' | 'assignee' | 'tag', value: string) => void
+  setDueDateFilter: (value: string | null) => void
+  clearAllFilters: () => void
+}) {
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-4">
+    <>
       {/* Priority filter */}
       <Select
         value={filters.priority[0] || ''}
@@ -227,8 +185,7 @@ export function FilterBar({
       {hasActiveFilters && (
         <>
           <div className="h-4 w-px bg-border" />
-          
-          {/* Priority badges */}
+
           {filters.priority.map((p) => (
             <Badge
               key={`priority-${p}`}
@@ -245,7 +202,6 @@ export function FilterBar({
             </Badge>
           ))}
 
-          {/* Assignee badges */}
           {filters.assignee.map((a) => (
             <Badge
               key={`assignee-${a}`}
@@ -262,7 +218,6 @@ export function FilterBar({
             </Badge>
           ))}
 
-          {/* Tag badges */}
           {filters.tag.map((t) => (
             <Badge
               key={`tag-${t}`}
@@ -279,7 +234,6 @@ export function FilterBar({
             </Badge>
           ))}
 
-          {/* Due date badge */}
           {filters.dueDate && (
             <Badge variant="secondary" className="gap-1 text-xs">
               {DUE_DATE_OPTIONS.find((opt) => opt.value === filters.dueDate)?.label}
@@ -292,7 +246,6 @@ export function FilterBar({
             </Badge>
           )}
 
-          {/* Clear all button */}
           <Button
             variant="ghost"
             size="sm"
@@ -302,6 +255,107 @@ export function FilterBar({
             Clear all
           </Button>
         </>
+      )}
+    </>
+  )
+}
+
+/**
+ * FilterBar — renders filter controls for the Kanban board
+ *
+ * WHAT IT DOES:
+ * 1. Renders filter dropdowns for priority, assignee, tag, and due date
+ * 2. Shows active filters as badges
+ * 3. Provides a "Clear all" button when filters are active
+ * 4. On mobile: renders as a collapsible toggle
+ * 5. On desktop: renders as an inline horizontal bar
+ *
+ * @param members - Board members for assignee filter
+ * @param tags - Board tags for tag filter
+ * @param filters - Current filter state
+ * @param onFiltersChange - Callback to update filters
+ */
+export function FilterBar({
+  members,
+  tags,
+  filters,
+  onFiltersChange,
+}: FilterBarProps) {
+  const isMobile = useIsMobile()
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  const hasActiveFilters =
+    filters.priority.length > 0 ||
+    filters.assignee.length > 0 ||
+    filters.tag.length > 0 ||
+    filters.dueDate !== null
+
+  function toggleFilter(
+    filterType: 'priority' | 'assignee' | 'tag',
+    value: string
+  ) {
+    onFiltersChange({
+      ...filters,
+      [filterType]: filters[filterType].includes(value)
+        ? filters[filterType].filter((v) => v !== value)
+        : [...filters[filterType], value],
+    })
+  }
+
+  function setDueDateFilter(value: string | null) {
+    onFiltersChange({
+      ...filters,
+      dueDate: value,
+    })
+  }
+
+  function clearAllFilters() {
+    onFiltersChange({
+      priority: [],
+      assignee: [],
+      tag: [],
+      dueDate: null,
+    })
+  }
+
+  const sharedProps = {
+    members,
+    tags,
+    filters,
+    onFiltersChange,
+    hasActiveFilters,
+    toggleFilter,
+    setDueDateFilter,
+    clearAllFilters,
+  }
+
+  return (
+    <div className="mb-4">
+      {isMobile ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full px-1 py-1"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span>Filters</span>
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-auto text-xs">
+                {filters.priority.length + filters.assignee.length + filters.tag.length + (filters.dueDate ? 1 : 0)} active
+              </Badge>
+            )}
+          </button>
+          {isExpanded && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <FilterControls {...sharedProps} />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterControls {...sharedProps} />
+        </div>
       )}
     </div>
   )

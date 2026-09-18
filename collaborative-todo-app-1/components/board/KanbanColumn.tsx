@@ -89,7 +89,7 @@ export function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col w-72 shrink-0 rounded-lg border ${getColumnColor()} ${
+      className={`flex flex-col w-full md:w-72 shrink-0 rounded-lg border ${getColumnColor()} ${
         isOver ? 'ring-2 ring-primary/50' : ''
       }`}
     >
