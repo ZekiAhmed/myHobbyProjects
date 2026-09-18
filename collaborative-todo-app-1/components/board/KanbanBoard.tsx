@@ -89,7 +89,11 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
 
   // Quick-complete mutation
   const completeMutation = useMutation({
-    mutationFn: (todoId: string) => quickCompleteTodo(todoId),
+    mutationFn: async (todoId: string) => {
+      const result = await quickCompleteTodo(todoId)
+      if (!result.success) throw new Error(result.error.message)
+      return result
+    },
     onMutate: async (todoId) => {
       await queryClient.cancelQueries({ queryKey: boardKeys.todos(boardId) })
       const previous = queryClient.getQueryData(boardKeys.todos(boardId))
@@ -116,8 +120,11 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
 
   // Drag-and-drop mutation for status change
   const reorderMutation = useMutation({
-    mutationFn: ({ todoId, newStatus, newOrder }: { todoId: string; newStatus: string; newOrder: string }) =>
-      updateTodoStatusAndOrder(todoId, newStatus as 'TO_DO' | 'IN_PROGRESS' | 'DONE', newOrder),
+    mutationFn: async ({ todoId, newStatus, newOrder }: { todoId: string; newStatus: string; newOrder: string }) => {
+      const result = await updateTodoStatusAndOrder(todoId, newStatus as 'TO_DO' | 'IN_PROGRESS' | 'DONE', newOrder)
+      if (!result.success) throw new Error(result.error.message)
+      return result
+    },
     onMutate: async ({ todoId, newStatus, newOrder }) => {
       await queryClient.cancelQueries({ queryKey: boardKeys.todos(boardId) })
       const previous = queryClient.getQueryData(boardKeys.todos(boardId))
@@ -131,7 +138,7 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
 
       return { previous }
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       queryClient.setQueryData(boardKeys.todos(boardId), context?.previous)
       toast.error('Reorder failed — changes reverted')
     },
@@ -169,8 +176,9 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
     })
   )
 
-  // Track active drag item
+  // Track active drag item and its original status (before handleDragOver mutates cache)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeOriginalStatus, setActiveOriginalStatus] = useState<Todo['status'] | null>(null)
 
   // Apply filters to todos
   const filteredTodos = useMemo(() => {
@@ -232,6 +240,10 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
   function handleDragStart(event: DragStartEvent) {
     const { active } = event
     setActiveId(active.id as string)
+    // Capture original status BEFORE handleDragOver mutates the cache
+    const currentTodos = queryClient.getQueryData<TodoWithRelations[]>(boardKeys.todos(boardId))
+    const draggedTodo = currentTodos?.find((t) => t.id === active.id)
+    setActiveOriginalStatus(draggedTodo?.status ?? null)
   }
 
   /**
@@ -244,9 +256,10 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
     const activeId = active.id as string
     const overId = over.id as string
 
-    // Find the status of the active and over items
-    const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
-    const overTodo = (todos as TodoWithRelations[]).find((t) => t.id === overId)
+    // Read from the query cache (not the stale todos snapshot) to get current status
+    const currentTodos = queryClient.getQueryData<TodoWithRelations[]>(boardKeys.todos(boardId))
+    const activeTodo = currentTodos?.find((t) => t.id === activeId)
+    const overTodo = currentTodos?.find((t) => t.id === overId)
 
     if (!activeTodo) return
 
@@ -273,69 +286,77 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
     const { active, over } = event
     setActiveId(null)
 
-    if (!over) return
-
     const activeId = active.id as string
-    const overId = over.id as string
 
-    // Find the active and over todos
-    const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
-    const overTodo = (todos as TodoWithRelations[]).find((t) => t.id === overId)
+    // Read current cache state — handleDragOver may have moved the todo to a new column
+    const currentTodos = queryClient.getQueryData<TodoWithRelations[]>(boardKeys.todos(boardId)) as TodoWithRelations[] | undefined
+    const activeTodo = currentTodos?.find((t) => t.id === activeId)
 
     if (!activeTodo) return
 
-    // Determine the target status
-    const targetStatus = overTodo?.status || (['TO_DO', 'IN_PROGRESS', 'DONE'].includes(overId) ? overId as Todo['status'] : activeTodo.status)
-    if (!targetStatus) return
+    const currentStatus = activeTodo.status
 
-    // If dropping on the same position, do nothing
-    if (activeId === overId) return
+    // Cross-column move: original status differs from current cache status
+    // (handleDragOver already updated the cache during the drag)
+    if (activeOriginalStatus && currentStatus !== activeOriginalStatus) {
+      const columnTodos = (currentTodos ?? []).filter((t) => t.status === currentStatus)
+      const insertIndex = columnTodos.length // append to end of target column
 
-    // Reorder within the same column
-    if (activeTodo.status === targetStatus && overTodo) {
-      const columnTodos = filteredTodos.filter((t) => t.status === targetStatus)
+      // Generate new order key for server
+      const newOrderKey = generateKeyBetween(
+        insertIndex > 0 ? columnTodos[insertIndex - 1]?.order ?? null : null,
+        null
+      )
+
+      // Persist to server
+      reorderMutation.mutate({
+        todoId: activeId,
+        newStatus: currentStatus,
+        newOrder: newOrderKey,
+      })
+
+      setActiveOriginalStatus(null)
+      return
+    }
+
+    // Same-column reorder: use over target to determine position
+    const overId = over?.id as string
+    const overTodo = currentTodos?.find((t) => t.id === overId)
+
+    if (overId && activeId !== overId && overTodo && overTodo.status === currentStatus) {
+      const columnTodos = (currentTodos ?? []).filter((t) => t.status === currentStatus)
       const oldIndex = columnTodos.findIndex((t) => t.id === activeId)
       const newIndex = columnTodos.findIndex((t) => t.id === overId)
 
-      if (oldIndex !== newIndex) {
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const newOrder = arrayMove(columnTodos, oldIndex, newIndex)
-        
-        // Update the todos optimistically
+
         queryClient.setQueryData<TodoWithRelations[]>(boardKeys.todos(boardId), (old) => {
           if (!old) return old
-          
-          // Remove the active todo from its current position
           const withoutActive = old.filter((t) => t.id !== activeId)
-          
-          // Find the insertion point in the target column
-          const targetTodos = withoutActive.filter((t) => t.status === targetStatus)
-          const otherTodos = withoutActive.filter((t) => t.status !== targetStatus)
-          
-          const insertIndex = newOrder.findIndex((t) => t.id === activeId)
+          const targetTodos = withoutActive.filter((t) => t.status === currentStatus)
+          const otherTodos = withoutActive.filter((t) => t.status !== currentStatus)
+          const insertIdx = newOrder.findIndex((t) => t.id === activeId)
           const activeTodoData = old.find((t) => t.id === activeId)!
-          
-          // Insert at the correct position
-          targetTodos.splice(insertIndex, 0, { ...activeTodoData, status: targetStatus })
-          
+          targetTodos.splice(insertIdx, 0, { ...activeTodoData, status: currentStatus })
           return [...otherTodos, ...targetTodos]
         })
 
-        // Generate new order key for server
-        const columnTodosForOrder = (todos as TodoWithRelations[]).filter((t) => t.status === targetStatus)
-        const newOrderIndex = columnTodosForOrder.findIndex((t) => t.id === activeId)
+        const newOrderIndex = columnTodos.findIndex((t) => t.id === activeId)
         const newOrderKey = generateKeyBetween(
-          newOrderIndex > 0 ? columnTodosForOrder[newOrderIndex - 1]?.order : null,
-          newOrderIndex < columnTodosForOrder.length - 1 ? columnTodosForOrder[newOrderIndex + 1]?.order : null
+          newOrderIndex > 0 ? columnTodos[newOrderIndex - 1]?.order : null,
+          newOrderIndex < columnTodos.length - 1 ? columnTodos[newOrderIndex + 1]?.order : null
         )
 
-        // Persist to server
         reorderMutation.mutate({
           todoId: activeId,
-          newStatus: targetStatus,
+          newStatus: currentStatus,
           newOrder: newOrderKey,
         })
       }
     }
+
+    setActiveOriginalStatus(null)
   }
 
   // Get board members and tags for the filter bar
@@ -433,7 +454,7 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
             />
           </div>
 
-          <DragOverlay>
+          <DragOverlay style={{ pointerEvents: 'none' }}>
             {activeId ? (() => {
               const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
               return activeTodo ? (

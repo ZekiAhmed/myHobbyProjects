@@ -17,3 +17,20 @@
 - [ ] Rollback pattern — `onMutate` returns `{ previous }` context, `onError` restores previous cache state + shows toast
 - [ ] `onSettled` — always invalidate `boardKeys.todos(boardId)` after mutation completes (success or failure)
 - [ ] Drag overlay component — shows a copy of the card being dragged for visual feedback
+
+## Comments
+
+### 2026-09-19 — Debug: Cross-column drag reverts after ~8 seconds
+
+**Root cause:** Three compounding bugs in `components/board/KanbanBoard.tsx`:
+
+1. `<DragOverlay>` captured pointer-up events, preventing `handleDragEnd` from firing
+2. `over` target was the todo itself (not the column), causing `activeId === overId` early return
+3. `handleDragEnd` read from stale React closure instead of live query cache
+
+**Fix:** Added `pointerEvents: 'none'` to DragOverlay, cross-column detection via
+`activeOriginalStatus` vs current cache status, and `queryClient.getQueryData()` reads
+instead of closure variables. Also added throw-on-error pattern to mutation functions
+since server actions return errors instead of throwing.
+
+**Full post-mortem:** `docs/debugging/01-dnd-status-revert-bug.md`

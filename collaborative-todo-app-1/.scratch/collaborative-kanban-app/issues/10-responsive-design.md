@@ -4,14 +4,14 @@
 
 **Blocked by:** 04, 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Desktop layout — 3-column Kanban board with drag-and-drop, side panel, all features
-- [ ] Mobile layout — simplified list view of todos grouped by status, single column
-- [ ] Disable drag-and-drop on mobile — detect touch device or viewport width, disable DndContext
-- [ ] Mobile side panel — full-screen modal instead of slide-in panel
-- [ ] Mobile quick-complete — ✓ button works on mobile (no drag required)
-- [ ] Responsive breakpoints — Tailwind CSS v4 breakpoint utilities (`md:`, `lg:`)
-- [ ] Mobile navigation — board name, back to dashboard, settings (owner only)
-- [ ] Mobile filter bar — collapsible section instead of horizontal bar
-- [ ] Board card on dashboard — responsive grid (1 column mobile, 2 columns tablet, 3 columns desktop)
+- [x] Desktop layout — 3-column Kanban board with drag-and-drop, side panel, all features
+- [x] Mobile layout — simplified list view of todos grouped by status, single column
+- [x] Disable drag-and-drop on mobile — detect touch device or viewport width, disable DndContext
+- [x] Mobile side panel — full-screen modal instead of slide-in panel
+- [x] Mobile quick-complete — ✓ button works on mobile (no drag required)
+- [x] Responsive breakpoints — Tailwind CSS v4 breakpoint utilities (`md:`, `lg:`)
+- [x] Mobile navigation — board name, back to dashboard, settings (owner only)
+- [x] Mobile filter bar — collapsible section instead of horizontal bar
+- [x] Board card on dashboard — responsive grid (1 column mobile, 2 columns tablet, 3 columns desktop)
