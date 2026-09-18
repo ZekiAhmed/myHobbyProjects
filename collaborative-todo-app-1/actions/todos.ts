@@ -253,10 +253,12 @@ export async function updateTodoStatusAndOrder(
 
   await verifyBoardMembership(existingTodo.boardId, session.user.id)
 
-  const todo = await prisma.todo.update({
-    where: { id: todoId },
-    data: { status: newStatus, order: newOrder },
-    include: todoInclude,
+  const todo = await prisma.$transaction(async (tx) => {
+    return tx.todo.update({
+      where: { id: todoId },
+      data: { status: newStatus, order: newOrder },
+      include: todoInclude,
+    })
   })
 
   revalidateTag('todos', 'max')

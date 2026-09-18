@@ -27,6 +27,7 @@ import type { TodoWithRelations } from '@/lib/types'
 interface TodoCardProps {
   todo: TodoWithRelations
   isActive: boolean
+  isOverlay?: boolean
   onQuickComplete?: (todoId: string) => void
   onClick?: (todo: TodoWithRelations) => void
 }
@@ -90,7 +91,7 @@ function getInitials(name: string) {
  * @param todo - The todo data with relations
  * @param isActive - Whether this todo is currently being dragged
  */
-export function TodoCard({ todo, isActive, onQuickComplete, onClick }: TodoCardProps) {
+export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, onClick }: TodoCardProps) {
   const {
     attributes,
     listeners,
@@ -100,10 +101,12 @@ export function TodoCard({ todo, isActive, onQuickComplete, onClick }: TodoCardP
     isDragging,
   } = useSortable({ id: todo.id })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
+  const style = isOverlay
+    ? {}
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }
 
   const priorityInfo = getPriorityInfo(todo.priority)
   const dueDateInfo = getDueDateInfo(todo.dueDate)
@@ -119,15 +122,18 @@ export function TodoCard({ todo, isActive, onQuickComplete, onClick }: TodoCardP
     }
   }
 
+  const cardProps = isOverlay
+    ? {}
+    : { ref: setNodeRef, style, ...attributes, ...listeners }
+
   return (
     <Card
-      ref={setNodeRef}
-      style={style}
+      {...cardProps}
       className={`cursor-grab active:cursor-grabbing transition-shadow ${
-        isDragging ? 'opacity-50 shadow-lg' : ''
-      } ${isActive ? 'ring-2 ring-primary' : ''}`}
-      {...attributes}
-      {...listeners}
+        isDragging && !isOverlay ? 'opacity-50 shadow-lg' : ''
+      } ${isActive ? 'ring-2 ring-primary' : ''} ${
+        isOverlay ? 'shadow-xl rotate-2' : ''
+      }`}
       onClick={handleClick}
     >
       <div className="p-3 space-y-2">

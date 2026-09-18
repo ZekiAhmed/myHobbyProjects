@@ -24,6 +24,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import {
   DndContext,
+  DragOverlay,
   closestCorners,
   KeyboardSensor,
   PointerSensor,
@@ -40,6 +41,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { boardDetailQueryOptions, boardKeys, todosQueryOptions } from '@/lib/queries/board-keys'
 import { KanbanColumn } from '@/components/board/KanbanColumn'
+import { TodoCard } from '@/components/board/TodoCard'
 import { FilterBar } from '@/components/board/FilterBar'
 import { TodoSidePanel } from '@/components/board/TodoSidePanel'
 import { Button } from '@/components/ui/button'
@@ -387,6 +389,19 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
             onTodoClick={handleTodoClick}
           />
         </div>
+
+        <DragOverlay>
+          {activeId ? (() => {
+            const activeTodo = (todos as TodoWithRelations[]).find((t) => t.id === activeId)
+            return activeTodo ? (
+              <TodoCard
+                todo={activeTodo}
+                isActive={false}
+                isOverlay
+              />
+            ) : null
+          })() : null}
+        </DragOverlay>
       </DndContext>
 
       {/* Side panel for create/edit */}
