@@ -19,6 +19,7 @@ import { Suspense } from 'react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { boardDetailQueryOptions, todosQueryOptions } from '@/lib/queries/board-keys'
 import { KanbanBoard } from '@/components/board/KanbanBoard'
+import { getRequiredSession } from '@/lib/session'
 
 /**
  * Board Detail Page — Server Component
@@ -34,6 +35,7 @@ export default async function BoardPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const session = await getRequiredSession()
   const queryClient = new QueryClient()
 
   // Prefetch both board detail and todos in parallel
@@ -45,7 +47,7 @@ export default async function BoardPage({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<div>Loading board...</div>}>
-        <KanbanBoard boardId={id} />
+        <KanbanBoard boardId={id} currentUserId={session.user.id} />
       </Suspense>
     </HydrationBoundary>
   )

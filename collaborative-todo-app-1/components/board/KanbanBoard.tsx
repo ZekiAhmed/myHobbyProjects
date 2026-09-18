@@ -63,8 +63,9 @@ import type { TodoWithRelations, BoardDetail } from '@/lib/types'
  * 5. Provides FilterBar for client-side filtering
  *
  * @param boardId - The ID of the board to display
+ * @param currentUserId - The ID of the current user (used to show settings only for owner)
  */
-export function KanbanBoard({ boardId }: { boardId: string }) {
+export function KanbanBoard({ boardId, currentUserId }: { boardId: string; currentUserId: string }) {
   const queryClient = useQueryClient()
   
   // Filter state
@@ -338,6 +339,7 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
   const boardDetail = board as BoardDetail | undefined
   const members = boardDetail?.members?.map((m) => m.user) || []
   const tags = boardDetail?.tags || []
+  const isOwner = boardDetail?.ownerId === currentUserId
 
   return (
     <div className="flex flex-col h-full">
@@ -345,12 +347,14 @@ export function KanbanBoard({ boardId }: { boardId: string }) {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
         <div className="flex items-center gap-2">
-          <Link
-            href={`/boards/${boardId}/settings`}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Settings
-          </Link>
+          {isOwner && (
+            <Link
+              href={`/boards/${boardId}/settings`}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Settings
+            </Link>
+          )}
           <Button onClick={handleAddTodo}>Add Todo</Button>
         </div>
       </div>

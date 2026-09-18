@@ -176,3 +176,67 @@ export async function deleteBoard(boardId: string) {
   // Step 5: Invalidate the cache so the dashboard shows the updated list
   revalidateTag('boards', 'max')
 }
+
+/**
+ * Transfers board ownership to another member. Only the current owner can do this.
+ *
+ * WHAT HAPPENS:
+ * 1. Authenticates the user
+ * 2. Verifies the user is the current board owner
+ * 3. Verifies the new owner is a current member of the board
+ * 4. Updates the board's ownerId to the new owner
+ * 5. The old owner loses settings access (no longer the owner)
+ * 6. Invalidates both 'boards' and 'board-detail' cache tags
+ *
+ * AUTHORIZATION:
+ * Only the current owner can transfer ownership.
+ * The new owner must be an existing member of the board.
+ *
+ * @param boardId - The board to transfer ownership of
+ * @param newOwnerId - The ID of the member to transfer ownership to
+ * @throws {Error} If user is not the board owner
+ * @throws {Error} If newOwnerId is the same as current owner
+ * @throws {Error} If newOwnerId is not a member of the board
+ *
+ * @example
+ * await transferOwnership("board_abc", "user_xyz")
+ * // Board ownership transferred, old owner loses settings access
+ */
+export async function transferOwnership(boardId: string, newOwnerId: string) {
+  // Step 1: Authenticate
+  const session = await getRequiredSession()
+
+  // Step 2: Fetch the board to check ownership
+  const board = await prisma.board.findUniqueOrThrow({
+    where: { id: boardId },
+  })
+
+  // Step 3: Authorize — only the current owner can transfer
+  if (board.ownerId !== session.user.id) {
+    throw new Error('Forbidden: Only the board owner can transfer ownership')
+  }
+
+  // Step 4: Cannot transfer to yourself
+  if (newOwnerId === session.user.id) {
+    throw new Error('Cannot transfer ownership to yourself')
+  }
+
+  // Step 5: Verify the new owner is a member of the board
+  const member = await prisma.boardMember.findFirst({
+    where: { boardId, userId: newOwnerId },
+  })
+
+  if (!member) {
+    throw new Error('The user you are trying to transfer ownership to is not a member of this board')
+  }
+
+  // Step 6: Transfer ownership
+  await prisma.board.update({
+    where: { id: boardId },
+    data: { ownerId: newOwnerId },
+  })
+
+  // Step 7: Invalidate both cache tags
+  revalidateTag('boards', 'max')
+  revalidateTag('board-detail', 'max')
+}
