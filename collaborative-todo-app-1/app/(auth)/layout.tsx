@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { AuthPanel } from '@/components/AuthPanel'
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -10,11 +11,5 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-        {children}
-      </div>
-    </div>
-  )
+  return <AuthPanel>{children}</AuthPanel>
 }

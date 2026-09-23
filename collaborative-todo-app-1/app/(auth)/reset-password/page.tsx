@@ -30,6 +30,8 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 /**
  * Reset Password Page Component
@@ -74,12 +76,13 @@ export default function ResetPasswordPage() {
         <p className="text-gray-600 mb-6">
           This password reset link is invalid or has expired.
         </p>
-        <Link
-          href="/forgot-password"
-          className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+        <Button
+          render={<Link href="/forgot-password" />}
+          nativeButton={false}
+          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           Request a new reset link
-        </Link>
+        </Button>
       </div>
     )
   }
@@ -129,7 +132,7 @@ export default function ResetPasswordPage() {
         // Reset successful - redirect to sign-in with success message
         router.push('/sign-in?message=Password reset successful')
       }
-    } catch (err) {
+    } catch {
       // Unexpected error
       setError('An unexpected error occurred')
     } finally {
@@ -156,14 +159,13 @@ export default function ResetPasswordPage() {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             New Password
           </label>
-          <input
+          <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={12}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter new password (min 12 characters)"
           />
         </div>
@@ -173,32 +175,31 @@ export default function ResetPasswordPage() {
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
             Confirm Password
           </label>
-          <input
+          <Input
             id="confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={12}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Confirm new password"
           />
         </div>
 
         {/* Submit button */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
           {/* Show loading text while resetting */}
           {loading ? 'Resetting...' : 'Reset password'}
-        </button>
+        </Button>
       </form>
 
       {/* Link back to sign-in */}
       <p className="mt-4 text-center text-sm text-gray-600">
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-500">
+        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
           Back to sign in
         </Link>
       </p>

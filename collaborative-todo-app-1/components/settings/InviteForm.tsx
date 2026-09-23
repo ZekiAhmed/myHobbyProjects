@@ -5,6 +5,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { boardKeys, invitationsQueryOptions } from '@/lib/queries/board-keys'
 import { createInvitation, revokeInvitation } from '@/app/actions/invitations'
 import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface InviteFormProps {
   boardId: string
@@ -14,6 +26,7 @@ export function InviteForm({ boardId }: InviteFormProps) {
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [revokeTarget, setRevokeTarget] = useState<{ id: string; email: string } | null>(null)
 
   const { data: invitations = [] } = useQuery(invitationsQueryOptions(boardId))
 
@@ -47,6 +60,7 @@ export function InviteForm({ boardId }: InviteFormProps) {
     mutationFn: (invitationId: string) => revokeInvitation(invitationId),
     onSuccess: (result) => {
       if (result.success) {
+        setRevokeTarget(null)
         toast.success('Invitation revoked')
         queryClient.invalidateQueries({ queryKey: boardKeys.invitations(boardId) })
       } else {
@@ -72,11 +86,11 @@ export function InviteForm({ boardId }: InviteFormProps) {
 
   return (
     <div>
-      <h3 className="text-sm font-medium text-gray-900 mb-3">Invite by email</h3>
+      <h3 className="text-xl font-semibold text-gray-900 mb-3">Invite by email</h3>
 
       <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
         <div className="flex-1 space-y-1">
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => {
@@ -87,7 +101,6 @@ export function InviteForm({ boardId }: InviteFormProps) {
             required
             aria-invalid={!!emailError}
             aria-describedby={emailError ? 'email-error' : undefined}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           />
           {emailError && (
             <p id="email-error" className="text-sm text-destructive">
@@ -95,13 +108,13 @@ export function InviteForm({ boardId }: InviteFormProps) {
             </p>
           )}
         </div>
-        <button
+        <Button
           type="submit"
           disabled={inviteMutation.isPending}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 text-sm"
+          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           {inviteMutation.isPending ? 'Sending...' : 'Invite'}
-        </button>
+        </Button>
       </form>
 
       {invitations.length > 0 && (
@@ -121,18 +134,48 @@ export function InviteForm({ boardId }: InviteFormProps) {
                     Expires {new Date(invitation.expiresAt).toLocaleDateString()}
                   </p>
                 </div>
-                <button
-                  onClick={() => revokeMutation.mutate(invitation.id)}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setRevokeTarget({ id: invitation.id, email: invitation.email })}
                   disabled={revokeMutation.isPending}
-                  className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                 >
                   Revoke
-                </button>
+                </Button>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <AlertDialog
+        open={!!revokeTarget}
+        onOpenChange={(open) => {
+          if (!open) setRevokeTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Revoke the pending invitation for <strong>{revokeTarget?.email}</strong>? The
+              invite link will stop working immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (revokeTarget) revokeMutation.mutate(revokeTarget.id)
+              }}
+              disabled={revokeMutation.isPending}
+            >
+              {revokeMutation.isPending ? 'Revoking...' : 'Revoke invitation'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

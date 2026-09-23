@@ -105,7 +105,9 @@ describe('session helpers', () => {
 
       // Configure the mock to return our mock session
       const { auth } = await import('@/lib/auth')
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any)
+      vi.mocked(auth.api.getSession).mockResolvedValue(
+        mockSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>
+      )
 
       // Call the function we're testing
       const { getOptionalSession } = await import('@/lib/session')
@@ -163,7 +165,9 @@ describe('session helpers', () => {
 
       // Configure the mock to return our mock session
       const { auth } = await import('@/lib/auth')
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any)
+      vi.mocked(auth.api.getSession).mockResolvedValue(
+        mockSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>
+      )
 
       // Call the function we're testing
       const { getRequiredSession } = await import('@/lib/session')

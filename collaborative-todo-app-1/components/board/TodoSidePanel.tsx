@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { boardKeys } from '@/lib/queries/board-keys'
 import { createTodo, updateTodo, deleteTodo } from '@/actions/todos'
@@ -22,6 +22,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   Select,
   SelectContent,
@@ -75,8 +85,14 @@ export function TodoSidePanel({
   const [assigneeId, setAssigneeId] = useState<string>('none')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [titleError, setTitleError] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
-  useEffect(() => {
+  // Sync form fields from the selected todo (or reset for create mode).
+  // Adjusted during render per https://react.dev/learn/you-might-not-need-an-effect
+  const formSyncKey = `${open ? 'open' : 'closed'}:${todo?.id ?? 'create'}`
+  const [prevFormSyncKey, setPrevFormSyncKey] = useState(formSyncKey)
+  if (formSyncKey !== prevFormSyncKey) {
+    setPrevFormSyncKey(formSyncKey)
     if (todo) {
       setTitle(todo.title)
       setDescription(todo.description || '')
@@ -95,7 +111,7 @@ export function TodoSidePanel({
       setSelectedTagIds([])
     }
     setTitleError('')
-  }, [todo, open])
+  }
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -160,6 +176,7 @@ export function TodoSidePanel({
     mutationFn: () => deleteTodo(todo!.id),
     onSuccess: (result) => {
       if (result.success) {
+        setShowDeleteConfirm(false)
         queryClient.invalidateQueries({ queryKey: boardKeys.todos(boardId) })
         toast.success('Todo deleted')
         onOpenChange(false)
@@ -188,12 +205,6 @@ export function TodoSidePanel({
     }
   }
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this todo?')) {
-      deleteMutation.mutate()
-    }
-  }
-
   const toggleTag = (tagId: string) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
@@ -203,145 +214,170 @@ export function TodoSidePanel({
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
-      {/* Title */}
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value)
-            if (titleError) setTitleError('')
-          }}
-          placeholder="Enter todo title..."
-          required
-          aria-invalid={!!titleError}
-          aria-describedby={titleError ? 'title-error' : undefined}
-        />
-        {titleError && (
-          <p id="title-error" className="text-sm text-destructive">
-            {titleError}
-          </p>
-        )}
-      </div>
-
-      {/* Description */}
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add a description..."
-          rows={3}
-        />
-      </div>
-
-      {/* Status & Priority */}
-      <div className="grid grid-cols-2 gap-4">
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
+        {/* Title */}
         <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={status} onValueChange={(v) => v && setStatus(v as typeof status)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TO_DO">To Do</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="DONE">Done</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Priority</Label>
-          <Select value={priority} onValueChange={(v) => v && setPriority(v as typeof priority)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Due Date & Assignee */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="dueDate">Due Date</Label>
+          <Label htmlFor="title">Title</Label>
           <Input
-            id="dueDate"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            id="title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              if (titleError) setTitleError('')
+            }}
+            placeholder="Enter todo title..."
+            required
+            aria-invalid={!!titleError}
+            aria-describedby={titleError ? 'title-error' : undefined}
+          />
+          {titleError && (
+            <p id="title-error" className="text-sm text-destructive">
+              {titleError}
+            </p>
+          )}
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description..."
+            rows={3}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Assignee</Label>
-          <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v || 'none')}>
-            <SelectTrigger>
-              <SelectValue placeholder="Unassigned" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Unassigned</SelectItem>
-              {members.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+        {/* Status & Priority */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => v && setStatus(v as typeof status)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TO_DO">To Do</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="DONE">Done</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="space-y-2">
-          <Label>Tags</Label>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  selectedTagIds.includes(tag.id)
-                    ? 'ring-2 ring-primary'
-                    : 'opacity-60 hover:opacity-100'
-                }`}
-                style={{
-                  backgroundColor: tag.color + '20',
-                  color: tag.color,
-                }}
-              >
-                {tag.name}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={(v) => v && setPriority(v as typeof priority)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LOW">Low</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="URGENT">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      )}
 
-      {isEditing ? (
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={isPending}
-          className="w-full sm:w-auto sm:mr-auto"
-        >
-          Delete Todo
+        {/* Due Date & Assignee */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Assignee</Label>
+            <Select value={assigneeId} onValueChange={(v) => setAssigneeId(v || 'none')}>
+              <SelectTrigger>
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleTag(tag.id)}
+                  aria-pressed={selectedTagIds.includes(tag.id)}
+                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    selectedTagIds.includes(tag.id)
+                      ? 'ring-2 ring-primary'
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  style={{
+                    backgroundColor: tag.color + '20',
+                    color: tag.color,
+                  }}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isEditing ? (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isPending}
+            className="w-full sm:w-auto sm:mr-auto"
+          >
+            Delete Todo
+          </Button>
+        ) : null}
+        <Button type="submit" disabled={isPending || !title.trim()} className="w-full">
+          {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
         </Button>
-      ) : null}
-      <Button type="submit" disabled={isPending || !title.trim()} className="w-full">
-        {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-      </Button>
-    </form>
+      </form>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete todo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete <strong>&ldquo;{todo?.title}&rdquo;</strong>? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              type="button"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete todo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 
   // Mobile: full-screen dialog

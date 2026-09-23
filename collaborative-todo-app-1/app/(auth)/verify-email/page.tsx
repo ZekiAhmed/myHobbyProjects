@@ -24,11 +24,13 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { sendVerificationEmail, authClient } from '@/lib/auth-client'
+import { sendVerificationEmail } from '@/lib/auth-client'
 import { acceptInvitation } from '@/app/actions/invitations'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 /**
  * Email Verification Page Component
@@ -53,8 +55,9 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState('') // Success message
   const [error, setError] = useState('') // Error message
   const [loading, setLoading] = useState(false) // Disable form during submission
-  const [verifying, setVerifying] = useState(false) // True while verifying token
+  const [verifying, setVerifying] = useState(Boolean(token)) // True while verifying token
   const [verified, setVerified] = useState(false) // True after successful verification
+  const verifyStartedRef = useRef(false)
 
   /**
    * Effect to verify email when token is present.
@@ -67,26 +70,27 @@ export default function VerifyEmailPage() {
    * 5. User sees success message
    */
   useEffect(() => {
-    if (token && !verified && !verifying) {
-      setVerifying(true)
-      
-      fetch(`/api/auth/verify-email?token=${token}`)
-        .then(response => {
-          if (response.ok) {
-            setVerified(true)
-            setMessage('Email verified successfully! You can now sign in.')
-          } else {
-            setError('Invalid or expired verification link.')
-          }
-        })
-        .catch(() => {
-          setError('Failed to verify email. Please try again.')
-        })
-        .finally(() => {
-          setVerifying(false)
-        })
+    if (!token || verified || verifyStartedRef.current) {
+      return
     }
-  }, [token, verified, verifying])
+    verifyStartedRef.current = true
+
+    fetch(`/api/auth/verify-email?token=${token}`)
+      .then((response) => {
+        if (response.ok) {
+          setVerified(true)
+          setMessage('Email verified successfully! You can now sign in.')
+        } else {
+          setError('Invalid or expired verification link.')
+        }
+      })
+      .catch(() => {
+        setError('Failed to verify email. Please try again.')
+      })
+      .finally(() => {
+        setVerifying(false)
+      })
+  }, [token, verified])
 
   useEffect(() => {
     if (verified) {
@@ -132,7 +136,7 @@ export default function VerifyEmailPage() {
         // Email sent successfully
         setMessage('Verification email sent! Please check your inbox.')
       }
-    } catch (err) {
+    } catch {
       // Unexpected error
       setError('An unexpected error occurred')
     } finally {
@@ -178,12 +182,13 @@ export default function VerifyEmailPage() {
           </div>
         )}
         
-        <Link
-          href="/sign-in"
-          className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+        <Button
+          render={<Link href="/sign-in" />}
+          nativeButton={false}
+          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           Sign in to your account
-        </Link>
+        </Button>
       </div>
     )
   }
@@ -199,7 +204,7 @@ export default function VerifyEmailPage() {
       <h1 className="text-2xl font-bold text-center mb-6">Check your inbox</h1>
       
       <p className="text-gray-600 text-center mb-6">
-        We've sent you a verification email. Please check your inbox and click the link to verify your email address.
+        We&apos;ve sent you a verification email. Please check your inbox and click the link to verify your email address.
       </p>
 
       {/* Success message (shown after resend) */}
@@ -220,32 +225,31 @@ export default function VerifyEmailPage() {
       <form onSubmit={handleResend} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Didn't receive the email?
+            Didn&apos;t receive the email?
           </label>
-          <input
+          <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your email to resend"
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
           {/* Show loading text while sending */}
           {loading ? 'Sending...' : 'Resend verification email'}
-        </button>
+        </Button>
       </form>
 
       {/* Link back to sign-in */}
       <p className="mt-4 text-center text-sm text-gray-600">
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-500">
+        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
           Back to sign in
         </Link>
       </p>

@@ -27,6 +27,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 /**
  * Forgot Password Page Component
@@ -91,7 +93,7 @@ export default function ForgotPasswordPage() {
         // Note: Same message whether email exists or not (prevents email enumeration)
         setMessage('Password reset email sent! Please check your inbox.')
       }
-    } catch (err) {
+    } catch {
       // Unexpected error
       setError('An unexpected error occurred')
     } finally {
@@ -105,7 +107,7 @@ export default function ForgotPasswordPage() {
       <h1 className="text-2xl font-bold text-center mb-6">Forgot your password?</h1>
       
       <p className="text-gray-600 text-center mb-6">
-        Enter your email address and we'll send you a link to reset your password.
+        Enter your email address and we&apos;ll send you a link to reset your password.
       </p>
 
       {/* Success message (shown after sending email) */}
@@ -128,31 +130,30 @@ export default function ForgotPasswordPage() {
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email
           </label>
-          <input
+          <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your email"
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
           {/* Show loading text while sending */}
           {loading ? 'Sending...' : 'Send reset link'}
-        </button>
+        </Button>
       </form>
 
       {/* Link back to sign-in */}
       <p className="mt-4 text-center text-sm text-gray-600">
         Remember your password?{' '}
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-500">
+        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
           Sign in
         </Link>
       </p>

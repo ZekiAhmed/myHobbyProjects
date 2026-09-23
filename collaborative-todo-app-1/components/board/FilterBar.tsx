@@ -194,7 +194,9 @@ function FilterControls({
             >
               {PRIORITIES.find((pr) => pr.value === p)?.label}
               <button
+                type="button"
                 onClick={() => toggleFilter('priority', p)}
+                aria-label={`Remove priority filter: ${PRIORITIES.find((pr) => pr.value === p)?.label}`}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -210,7 +212,9 @@ function FilterControls({
             >
               {members.find((m) => m.id === a)?.name}
               <button
+                type="button"
                 onClick={() => toggleFilter('assignee', a)}
+                aria-label={`Remove assignee filter: ${members.find((m) => m.id === a)?.name}`}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -226,7 +230,9 @@ function FilterControls({
             >
               {tags.find((tag) => tag.id === t)?.name}
               <button
+                type="button"
                 onClick={() => toggleFilter('tag', t)}
+                aria-label={`Remove tag filter: ${tags.find((tag) => tag.id === t)?.name}`}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -238,7 +244,9 @@ function FilterControls({
             <Badge variant="secondary" className="gap-1 text-xs">
               {DUE_DATE_OPTIONS.find((opt) => opt.value === filters.dueDate)?.label}
               <button
+                type="button"
                 onClick={() => setDueDateFilter(null)}
+                aria-label="Remove due date filter"
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
@@ -333,10 +341,12 @@ export function FilterBar({
     <div className="mb-4">
       {isMobile ? (
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full px-1 py-1"
+            aria-expanded={isExpanded}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span>Filters</span>
@@ -345,7 +355,7 @@ export function FilterBar({
                 {filters.priority.length + filters.assignee.length + filters.tag.length + (filters.dueDate ? 1 : 0)} active
               </Badge>
             )}
-          </button>
+          </Button>
           {isExpanded && (
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <FilterControls {...sharedProps} />

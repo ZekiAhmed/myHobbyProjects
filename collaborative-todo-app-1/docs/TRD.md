@@ -882,7 +882,7 @@ export async function GET() {
 | Encryption at rest | Neon/Supabase/Railway encrypt Postgres volumes at rest by default |
 | Password hashing | bcrypt via Better Auth |
 | Auth rate limiting | Better Auth built-in `rateLimit` on all `/api/auth/*` endpoints |
-| Audit logging | Post-MVP — `AuditLog` model (`userId`, `action`, `resourceType`, `resourceId`, `timestamp`, `ipAddress`). Server Actions designed to accept optional audit context so this can be added without refactoring |
+| Audit logging | Post-MVP — `Activity` model (see §12; formerly referred to here as `AuditLog`). User-feed taxonomy per ADR-0002, with `ipAddress` retained for compliance. Server Actions designed to accept optional audit context so this can be added without refactoring |
 | Session visibility + revocation | Post-MVP — Better Auth `listSessions()` + `revokeSession()` in account Security tab |
 
 ---
@@ -919,3 +919,103 @@ export async function GET() {
 | 3 | Activity feed — MVP or post-MVP? | Firmly post-MVP. But add `AuditLog` model to schema in the first post-launch migration — retrofitting is painful |
 | 4 | Vercel Cron for Invitation cleanup — Pro plan required? | Yes, Vercel Cron requires Pro plan ($20/month). Alternative: a scheduled GitHub Action hitting `/api/admin/cleanup` with a secret header. Decide before M3 |
 | 5 | `proxy.ts` vs `middleware.ts` — will all contributors know this? | Document prominently in README. Add a comment at the top of `proxy.ts`: `// This file is intentionally named proxy.ts, not middleware.ts — see README for why` |
+
+---
+
+## 12. Post-MVP Schema (Designed — Not Yet Migrated)
+
+> Design record only. These models ship in the **first post-launch migration**. Decisions: `docs/adr/0001-comments-hard-delete.md`, `docs/adr/0002-activity-log-user-feed-not-audit-trail.md`, glossary in `CONTEXT.md`, product specs in PRD §4.
+
+### 12.1 New models
+
+```prisma
+// ============================================
+// POST-MVP MODELS
+// ============================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String   @db.Text
+  todoId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  todo    Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  author  User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([todoId])
+  @@index([authorId])
+}
+
+model Activity {
+  id           String   @id @default(cuid())
+  boardId      String
+  actorId      String?                 // null after actor account deletion → "Former member"
+  action       String                  // String (not enum): taxonomy widens without migration (ADR-0002)
+  resourceType String                  // e.g. "TODO" | "COMMENT" | "MEMBER" | "BOARD" | "TAG"
+  resourceId   String
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  board         Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  actor         User?  @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([boardId, createdAt(sort: Desc)])
+  @@index([actorId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           // recipient
+  actorId   String?          // who caused it (assignment self → null/omitted)
+  type      NotificationType
+  boardId   String
+  todoId    String
+  readAt    DateTime?        // null = unread → unread count
+  createdAt DateTime         @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor  User?  @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  board  Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  todo   Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([todoId])
+}
+
+enum NotificationType {
+  ASSIGNED
+  COMMENTED
+}
+```
+
+### 12.2 Additions to existing models
+
+```prisma
+// model User — add:
+  authoredComments   Comment[]
+  activities         Activity[]           @relation("ActivityActor")
+  notifications      Notification[]       @relation("NotificationRecipient")
+  actedNotifications Notification[]       @relation("NotificationActor")
+
+// model Board — add:
+  activity       Activity[]
+  notifications  Notification[]
+
+// model Todo — add:
+  comments       Comment[]
+  notifications  Notification[]
+```
+
+### 12.3 Design constraints baked into the schema
+
+| Decision | Schema expression | Ref |
+|----------|-------------------|-----|
+| Comments hard-deleted | No `deletedAt`; plain `onDelete: Cascade` | ADR-0001 |
+| Activity taxonomy widens without migration | `action` / `resourceType` are `String`, not enums | ADR-0002 |
+| Actor erased with account, entry persists | `actorId String?` + `onDelete: SetNull` | PRD §4.2 |
+| Unread = null `readAt` | Partial-query friendly `@@index([userId, readAt])` | PRD §4.5 |
+| Notifications die with board/todo/recipient | `Cascade` on all three FKs | PRD §4.5 |
+| No email channel / no due-date type | `NotificationType` enum has exactly `ASSIGNED`, `COMMENTED` | PRD §4.5 |

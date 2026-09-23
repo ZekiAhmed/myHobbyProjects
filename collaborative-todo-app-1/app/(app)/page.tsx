@@ -40,7 +40,11 @@ export default async function DashboardPage() {
 
   // Step 3: Pass the data to the Client Component as props
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+      }
+    >
       <DashboardClient initialBoards={boards} currentUserId={session.user.id} />
     </Suspense>
   )

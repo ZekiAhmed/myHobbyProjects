@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T00:00:00.000Z",
+  "title": "Design System: Collaborative Kanban Todo App",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.97 0 0)"]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Near Black",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": ["oklch(0.145 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.6 0 0)", "oklch(0.75 0 0)", "oklch(0.9 0 0)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Card Paper",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.985 0 0)"]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Quiet Gray",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.92 0 0)", "oklch(0.97 0 0)"]
+      },
+      "mist": {
+        "role": "neutral",
+        "displayName": "Mist Wash",
+        "canonical": "#f9fafb",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.88 0 0)", "oklch(0.98 0 0)"]
+      },
+      "muted-fg": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(0.556 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.95 0 0)"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.7 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.922 0 0)"]
+      },
+      "ring": {
+        "role": "neutral",
+        "displayName": "Focus Gray",
+        "canonical": "oklch(0.708 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.65 0 0)", "oklch(0.708 0 0)", "oklch(0.82 0 0)", "oklch(0.93 0 0)"]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "oklch(0.205 0 0)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.93 0 0)"]
+      },
+      "on-ink": {
+        "role": "neutral",
+        "displayName": "On Ink",
+        "canonical": "oklch(0.985 0 0)",
+        "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.94 0 0)", "oklch(0.985 0 0)"]
+      },
+      "action-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#2563eb",
+        "tonalRamp": ["oklch(0.25 0.1 262)", "oklch(0.32 0.12 262)", "oklch(0.4 0.14 262)", "oklch(0.48 0.16 262)", "oklch(0.55 0.18 262)", "oklch(0.62 0.17 262)", "oklch(0.75 0.12 262)", "oklch(0.9 0.06 262)"]
+      },
+      "action-blue-deep": {
+        "role": "primary",
+        "displayName": "Signal Blue Deep",
+        "canonical": "#1d4ed8",
+        "tonalRamp": ["oklch(0.22 0.1 262)", "oklch(0.28 0.12 262)", "oklch(0.35 0.14 262)", "oklch(0.42 0.15 262)", "oklch(0.5 0.17 262)", "oklch(0.6 0.16 262)", "oklch(0.75 0.11 262)", "oklch(0.9 0.05 262)"]
+      },
+      "focus-blue": {
+        "role": "primary",
+        "displayName": "Focus Blue",
+        "canonical": "#3b82f6",
+        "tonalRamp": ["oklch(0.28 0.1 262)", "oklch(0.35 0.12 262)", "oklch(0.42 0.14 262)", "oklch(0.5 0.16 262)", "oklch(0.58 0.17 262)", "oklch(0.66 0.15 262)", "oklch(0.8 0.1 262)", "oklch(0.92 0.05 262)"]
+      },
+      "on-action": {
+        "role": "neutral",
+        "displayName": "On Action",
+        "canonical": "#ffffff",
+        "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.95 0 0)", "oklch(1 0 0)"]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Urgent Red",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.5 0.22 27)", "oklch(0.577 0.245 27.325)", "oklch(0.72 0.18 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+      },
+      "status-amber": {
+        "role": "secondary",
+        "displayName": "Due Amber",
+        "canonical": "#d97706",
+        "tonalRamp": ["oklch(0.25 0.08 70)", "oklch(0.35 0.11 70)", "oklch(0.45 0.13 70)", "oklch(0.55 0.14 70)", "oklch(0.66 0.15 70)", "oklch(0.76 0.13 70)", "oklch(0.87 0.08 70)", "oklch(0.95 0.04 70)"]
+      },
+      "status-red": {
+        "role": "tertiary",
+        "displayName": "Overdue Red",
+        "canonical": "#dc2626",
+        "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.32 0.15 27)", "oklch(0.42 0.19 27)", "oklch(0.52 0.22 27)", "oklch(0.6 0.22 27)", "oklch(0.72 0.17 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+      },
+      "status-green": {
+        "role": "secondary",
+        "displayName": "Done Green",
+        "canonical": "#16a34a",
+        "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.32 0.1 150)", "oklch(0.42 0.12 150)", "oklch(0.52 0.14 150)", "oklch(0.6 0.14 150)", "oklch(0.72 0.12 150)", "oklch(0.85 0.08 150)", "oklch(0.95 0.03 150)"]
+      },
+      "success-soft": {
+        "role": "secondary",
+        "displayName": "Complete Wash",
+        "canonical": "#dcfce7",
+        "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.35 0.1 150)", "oklch(0.48 0.12 150)", "oklch(0.62 0.12 150)", "oklch(0.75 0.1 150)", "oklch(0.85 0.07 150)", "oklch(0.92 0.05 150)", "oklch(0.97 0.02 150)"]
+      },
+      "error-surface": {
+        "role": "tertiary",
+        "displayName": "Error Wash",
+        "canonical": "#fef2f2",
+        "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.35 0.14 27)", "oklch(0.5 0.18 27)", "oklch(0.65 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.87 0.06 27)", "oklch(0.94 0.03 27)", "oklch(0.98 0.01 27)"]
+      },
+      "error-border": {
+        "role": "tertiary",
+        "displayName": "Error Border",
+        "canonical": "#fecaca",
+        "tonalRamp": ["oklch(0.25 0.1 27)", "oklch(0.4 0.15 27)", "oklch(0.55 0.18 27)", "oklch(0.68 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.86 0.07 27)", "oklch(0.92 0.04 27)", "oklch(0.97 0.02 27)"]
+      },
+      "error-ink": {
+        "role": "tertiary",
+        "displayName": "Error Ink",
+        "canonical": "#b91c1c",
+        "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.48 0.2 27)", "oklch(0.55 0.2 27)", "oklch(0.7 0.16 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+      },
+      "column-todo": {
+        "role": "neutral",
+        "displayName": "To Do Slate",
+        "canonical": "#f1f5f9",
+        "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.25 0.01 250)", "oklch(0.4 0.015 250)", "oklch(0.55 0.015 250)", "oklch(0.7 0.015 250)", "oklch(0.82 0.01 250)", "oklch(0.92 0.008 250)", "oklch(0.97 0.005 250)"]
+      },
+      "column-todo-border": {
+        "role": "neutral",
+        "displayName": "To Do Slate Border",
+        "canonical": "#e2e8f0",
+        "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.28 0.01 250)", "oklch(0.42 0.015 250)", "oklch(0.58 0.015 250)", "oklch(0.72 0.012 250)", "oklch(0.84 0.01 250)", "oklch(0.91 0.006 250)", "oklch(0.95 0.004 250)"]
+      },
+      "column-progress": {
+        "role": "secondary",
+        "displayName": "Progress Sky",
+        "canonical": "#eff6ff",
+        "tonalRamp": ["oklch(0.2 0.05 255)", "oklch(0.32 0.08 255)", "oklch(0.45 0.1 255)", "oklch(0.6 0.1 255)", "oklch(0.75 0.08 255)", "oklch(0.86 0.05 255)", "oklch(0.94 0.02 255)", "oklch(0.98 0.008 255)"]
+      },
+      "column-progress-border": {
+        "role": "secondary",
+        "displayName": "Progress Sky Border",
+        "canonical": "#bfdbfe",
+        "tonalRamp": ["oklch(0.22 0.06 255)", "oklch(0.35 0.09 255)", "oklch(0.5 0.11 255)", "oklch(0.65 0.11 255)", "oklch(0.78 0.09 255)", "oklch(0.87 0.06 255)", "oklch(0.93 0.035 255)", "oklch(0.97 0.015 255)"]
+      },
+      "column-done": {
+        "role": "secondary",
+        "displayName": "Done Mint",
+        "canonical": "#f0fdf4",
+        "tonalRamp": ["oklch(0.2 0.05 155)", "oklch(0.32 0.08 155)", "oklch(0.45 0.1 155)", "oklch(0.6 0.1 155)", "oklch(0.75 0.08 155)", "oklch(0.87 0.05 155)", "oklch(0.95 0.02 155)", "oklch(0.98 0.008 155)"]
+      },
+      "column-done-border": {
+        "role": "secondary",
+        "displayName": "Done Mint Border",
+        "canonical": "#bbf7d0",
+        "tonalRamp": ["oklch(0.22 0.06 155)", "oklch(0.35 0.09 155)", "oklch(0.5 0.11 155)", "oklch(0.65 0.11 155)", "oklch(0.78 0.09 155)", "oklch(0.88 0.06 155)", "oklch(0.94 0.035 155)", "oklch(0.97 0.015 155)"]
+      },
+      "avatar-wash": {
+        "role": "secondary",
+        "displayName": "Avatar Wash",
+        "canonical": "#dbeafe",
+        "tonalRamp": ["oklch(0.22 0.06 255)", "oklch(0.35 0.09 255)", "oklch(0.5 0.11 255)", "oklch(0.65 0.11 255)", "oklch(0.78 0.09 255)", "oklch(0.87 0.06 255)", "oklch(0.94 0.035 255)", "oklch(0.98 0.01 255)"]
+      },
+      "avatar-ink": {
+        "role": "secondary",
+        "displayName": "Avatar Ink",
+        "canonical": "#2563eb",
+        "tonalRamp": ["oklch(0.25 0.1 262)", "oklch(0.32 0.12 262)", "oklch(0.4 0.14 262)", "oklch(0.48 0.16 262)", "oklch(0.55 0.18 262)", "oklch(0.7 0.14 262)", "oklch(0.85 0.08 262)", "oklch(0.93 0.04 262)"]
+      }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Page headers — Dashboard, Board Settings, auth headings." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers — Boards I Own, settings groups." },
+      "body": { "displayName": "Body", "purpose": "Default work text, todo titles, descriptions — 14px dense reading." },
+      "label": { "displayName": "Label", "purpose": "Form labels, buttons, field labels — 14px medium." },
+      "micro": { "displayName": "Micro", "purpose": "Badges, chips, due dates, counts — 12px meta." }
+    },
+    "shadows": [
+      { "name": "hover-lift", "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", "purpose": "BoardCard and auth panel hover — interactive lift only, never at rest." },
+      { "name": "drag-source", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Todo being dragged (with 50% opacity)." },
+      { "name": "drag-overlay", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "DragOverlay floating copy (with 2° rotation)." },
+      { "name": "rest", "value": "none", "purpose": "Flat-By-Default: cards/columns/inputs separate via ring-1 and tone, not shadow." }
+    ],
+    "motion": [
+      { "name": "transition-shadow", "value": "box-shadow 150ms ease", "purpose": "Card hover lift feedback." },
+      { "name": "transition-colors", "value": "background-color 150ms ease, color 150ms ease", "purpose": "Button/badge state changes." },
+      { "name": "drag-transition", "value": "transform 200ms ease (dnd-kit CSS.Transform)", "purpose": "Sortable drag reflow." },
+      { "name": "active-press", "value": "transform 100ms ease, translateY(1px)", "purpose": "Button active press." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "Solid Signal Blue CTA — auth submit, New Board; the only primary-action color.",
+      "html": "<button class=\"ds-btn-action\">Sign in</button>",
+      "css": ".ds-btn-action { background: #2563eb; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-action:hover { background: #1d4ed8; } .ds-btn-action:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ink Button (kit default)",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "shadcn default solid button — near-black Ink fill for kit-level primary actions.",
+      "html": "<button class=\"ds-btn-ink\">Continue</button>",
+      "css": ".ds-btn-ink { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-ink:hover { opacity: 0.8; } .ds-btn-ink:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-ink:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Quiet bordered button for secondary actions — paper fill, hairline border, muted hover.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-outline:hover { background: oklch(0.97 0 0); color: oklch(0.145 0 0); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); border-color: oklch(0.708 0 0); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Compact 32px field — paper fill, hairline border, 3px focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Enter your email\" />",
+      "css": ".ds-input { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 1.5; height: 32px; width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; transition: border-color 150ms ease, box-shadow 150ms ease; box-sizing: border-box; } .ds-input::placeholder { color: oklch(0.556 0 0); } .ds-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-input:disabled { opacity: 0.5; background: oklch(0.97 0 0); cursor: not-allowed; }"
+    },
+    {
+      "name": "Todo / Board Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat ring-bordered card — the resting surface for todos and board tiles.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Draft Q3 plan</p></div>",
+      "css": ".ds-card { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; padding: 16px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgb(14.5% 0 0 / 0.1); transition: box-shadow 150ms ease; } .ds-card:hover { box-shadow: inset 0 0 0 1px rgb(14.5% 0 0 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-card-title { font-size: 14px; font-weight: 500; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }"
+    },
+    {
+      "name": "Priority Badge",
+      "kind": "chip",
+      "refersTo": "chip-priority-urgent",
+      "description": "Pill priority chip — Urgent soft-red variant shown; High is Ink, Medium muted, Low outline.",
+      "html": "<span class=\"ds-badge-urgent\">Urgent</span>",
+      "css": ".ds-badge-urgent { display: inline-flex; align-items: center; height: 20px; width: fit-content; padding: 2px 8px; background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.577 0.245 27.325); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border: 1px solid transparent; border-radius: 9999px; white-space: nowrap; }"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "chip-tag",
+      "description": "Small 6px-radius tag with owner color at 20% alpha background.",
+      "html": "<span class=\"ds-chip-tag\">design</span>",
+      "css": ".ds-chip-tag { display: inline-flex; align-items: center; padding: 2px 6px; background: oklch(0.97 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border-radius: 6px; } .ds-chip-tag:hover { background: oklch(0.922 0 0); }"
+    },
+    {
+      "name": "Kanban Column",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature status column — fixed 288px, status wash + 1px border, header with count pill, card stack body.",
+      "html": "<div class=\"ds-column\"><div class=\"ds-column-header\"><span class=\"ds-column-title\">In Progress</span><span class=\"ds-column-count\">4</span></div><div class=\"ds-column-body\"><div class=\"ds-column-empty\">No todos</div></div></div>",
+      "css": ".ds-column { width: 288px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-column-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #bfdbfe; } .ds-column-title { font-size: 14px; font-weight: 600; color: oklch(0.145 0 0); } .ds-column-count { font-size: 12px; font-weight: 500; color: oklch(0.556 0 0); background: oklch(0.97 0 0); padding: 2px 8px; border-radius: 9999px; } .ds-column-body { flex: 1; padding: 8px; min-height: 200px; display: flex; flex-direction: column; gap: 8px; } .ds-column-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: oklch(0.556 0 0); } .ds-column:focus-within, .ds-column:hover { box-shadow: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Control Room",
+    "overview": "This is a calm operations console for small teams: neutral paper surfaces do the heavy lifting, and color only fires for action, priority, and status. The mood is calm and utilitarian — unpretentious, efficient, built for scanning a board in seconds rather than admiring chrome. Depth comes from light tonal shifts and thin rings, not decoration; the interface recedes so todos, assignments, and movement lead.\n\nThe system is a hybrid of two observed layers that already coexist: a shadcn/ui base-nova neutral token layer (pure OKLCH grays, compact controls, ring-bordered cards) and a functional Tailwind palette layer used directly on feature screens (Signal Blue CTAs, status reds/amber/greens, soft column washes). New screens should treat both as one vocabulary: chrome stays quiet; hue is earned by meaning.\n\nThe confirmed visual anti-reference is enterprise project-management chrome — Jira/Asana density, heavy borders, loud gradients, configuration-first surfaces. Product principle \"and nothing more\" is a visual principle here too: if an element isn't helping someone scan, act, or coordinate, it doesn't ship.",
+    "keyCharacteristics": [
+      "Neutral, near-monochrome chrome; hue reserved for action and status",
+      "Compact controls (32px default button/input height) and dense 14px work text",
+      "Flat at rest (ring borders); shadows only as feedback (hover, dialog, drag)",
+      "Soft status washes on Kanban columns; pill badges for priority",
+      "Single system sans — functional hierarchy, no display face"
+    ],
+    "rules": [
+      { "name": "The Signal-Only Rule", "body": "Hue appears only for action, status, priority, or focus. Everything else — nav, structure, chrome — stays in the neutral stack. If a new color can't answer \"what does this mean?\", it doesn't belong.", "section": "colors" },
+      { "name": "The Single-Action Rule", "body": "Signal Blue is the sole primary-action color. Don't introduce green/amber/purple buttons for ordinary CTAs; green and amber are reserved for status meaning.", "section": "colors" },
+      { "name": "The One-Family Rule", "body": "Hierarchy is size and weight only (700 titles → 600 headlines → 500 labels → 400 body). Don't introduce a second family or decorative styling to make text \"pop.\"", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, drag, overlay presence) — never as permanent card styling.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep chrome neutral: paper surfaces, hairline borders, Ink/Muted text — let board content and status washes carry the color.",
+      "Do use Signal Blue (#2563eb) for every primary action and link; deepen to #1d4ed8 on hover.",
+      "Do apply the column washes exactly: Slate To Do, Sky In Progress, Mint Done, each with its 1px matching border.",
+      "Do keep controls compact (32px default height) and cards flat at rest (ring-1, no shadow).",
+      "Do show shadows only as feedback: shadow-md hover on clickable cards, shadow-lg/shadow-xl during drag, overlay shadows on dialogs.",
+      "Do mark urgency with the status trio: red overdue/Urgent, amber due-today, green complete — text and soft badges, not full-bleed fills.",
+      "Do use pill shapes for badges, counts, and avatars; 8–10px corners for controls; 14px for cards.",
+      "Do keep page titles bold at 24–30px and work text at 14px in the single system sans."
+    ],
+    "donts": [
+      "Don't add decorative color — gradients, brand-tinted section backgrounds, colored nav bars — or repurpose green/amber/purple for non-status CTAs.",
+      "Don't put permanent drop shadows on resting cards or columns; rest is flat by rule.",
+      "Don't reintroduce enterprise-PM chrome: heavy borders, dense toolbar walls, or configuration-first surfaces (anti-reference: Jira/Asana).",
+      "Don't introduce a second font family, display face, or uppercase-everything labeling scheme.",
+      "Don't soften the compact density into large airy paddings (32px+ control heights, 24px card gaps) — the system stays scannable and tight.",
+      "Don't stack multiple saturated colors in one card; a todo card may show one priority signal, status text colors, and owner-tag hues — nothing else."
+    ]
+  }
+}

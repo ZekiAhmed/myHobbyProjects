@@ -24,9 +24,12 @@
  */
 
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { getOptionalSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { isTokenExpired } from '@/lib/utils/invite-tokens'
+import { AuthPanel } from '@/components/AuthPanel'
+import { Button } from '@/components/ui/button'
 import InviteClient from './InviteClient'
 
 export default async function InvitePage({
@@ -39,19 +42,30 @@ export default async function InvitePage({
   const session = await getOptionalSession()
 
   if (session) {
+    let boardId: string | null = null
+    let failure: string | null = null
     try {
       const { acceptInvitation } = await import('@/app/actions/invitations')
       const result = await acceptInvitation(token)
       if (result.success) {
-        redirect(`/boards/${result.data.boardId}`)
+        boardId = result.data.boardId
       } else {
-        // If invitation consumption fails, show error via client component
-        return <InviteClient token={token} />
+        failure = result.error.message
       }
     } catch {
-      // If invitation consumption fails, show error via client component
-      return <InviteClient token={token} />
+      failure = 'Something went wrong while accepting this invitation. Please try again.'
     }
+
+    if (boardId) {
+      redirect(`/boards/${boardId}`)
+    }
+
+    // Invitation consumption failed — show error via client component
+    return (
+      <AuthPanel>
+        <InviteClient token={token} error={failure ?? undefined} />
+      </AuthPanel>
+    )
   }
 
   const invitation = await prisma.invitation.findUnique({
@@ -68,72 +82,86 @@ export default async function InvitePage({
 
   if (!invitation) {
     return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Invalid</h1>
-        <p className="text-gray-600 mb-6">This invite link is invalid.</p>
-        <a
-          href="/"
-          className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-        >
-          Go to Dashboard
-        </a>
-      </div>
+      <AuthPanel>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Invalid</h1>
+          <p className="text-gray-600 mb-6">This invite link is invalid.</p>
+          <Button
+            render={<Link href="/" />}
+            nativeButton={false}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </AuthPanel>
     )
   }
 
   if (invitation.status !== 'PENDING') {
     return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Used</h1>
-        <p className="text-gray-600 mb-6">This invitation has already been used.</p>
-        <a
-          href="/"
-          className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-        >
-          Go to Dashboard
-        </a>
-      </div>
+      <AuthPanel>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Used</h1>
+          <p className="text-gray-600 mb-6">This invitation has already been used.</p>
+          <Button
+            render={<Link href="/" />}
+            nativeButton={false}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </AuthPanel>
     )
   }
 
   if (isTokenExpired(invitation.expiresAt)) {
     return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Expired</h1>
-        <p className="text-gray-600 mb-6">
-          This invitation link has expired. Ask the board owner to send a new one.
-        </p>
-        <a
-          href="/"
-          className="inline-block bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-        >
-          Go to Dashboard
-        </a>
-      </div>
+      <AuthPanel>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Expired</h1>
+          <p className="text-gray-600 mb-6">
+            This invitation link has expired. Ask the board owner to send a new one.
+          </p>
+          <Button
+            render={<Link href="/" />}
+            nativeButton={false}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </AuthPanel>
     )
   }
 
   return (
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;ve been invited!</h1>
-      <p className="text-gray-600 mb-6">
-        Join <span className="font-semibold">{invitation.board.name}</span> on Kanban
-      </p>
+    <AuthPanel>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;ve been invited!</h1>
+        <p className="text-gray-600 mb-6">
+          Join <span className="font-semibold">{invitation.board.name}</span> on Kanban
+        </p>
 
-      <div className="space-y-3">
-        <a
-          href={`/sign-in?inviteToken=${token}`}
-          className="block w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-        >
-          Sign in to join
-        </a>
-        <a
-          href={`/sign-up?inviteToken=${token}`}
-          className="block w-full bg-white text-blue-600 border border-blue-600 py-2 px-4 rounded-md hover:bg-blue-50"
-        >
-          Create an account to join
-        </a>
+        <div className="space-y-3">
+          <Button
+            render={<Link href={`/sign-in?inviteToken=${token}`} />}
+            nativeButton={false}
+            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Sign in to join
+          </Button>
+          <Button
+            render={<Link href={`/sign-up?inviteToken=${token}`} />}
+            nativeButton={false}
+            variant="outline"
+            className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            Create an account to join
+          </Button>
+        </div>
       </div>
-    </div>
+    </AuthPanel>
   )
 }

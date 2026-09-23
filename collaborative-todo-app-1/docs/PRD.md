@@ -72,11 +72,48 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
 
 ### 🔜 Should Have (Post-MVP)
 
-- Todo comments (paginated feed)
-- Activity log per board
-- Session enumeration UI ("Security" tab — view and revoke active sessions)
-- Data export (`GET /api/me/export`) for GDPR right-to-access
-- Notifications + unread counts
+> Design status: fully specified below (design session, glossary in `CONTEXT.md`, decisions in `docs/adr/0001`–`0002`). Implement after MVP launch.
+
+#### 1. Todo comments (paginated feed)
+
+- Flat, plain-text (newline-preserving) comments on **todos only** — no board-level discussion, no reply threads
+- Every board member can comment; author may edit/delete own comment; board Owner may delete any comment
+- Deletion is **hard delete** — no tombstones; removal is recorded as an Activity event (ADR-0001)
+- **Comment feed:** oldest → newest, 20/page, `useInfiniteQuery`, explicit **"Load older"** button at the top of the feed
+
+#### 2. Activity log per board
+
+- Per-board **Activity feed** of high-signal collaboration events only: board renamed · member invited/joined/removed/left · todo created/deleted/status changed/assignee changed · comment created/deleted · tag created/deleted — **no** field-level edit noise (ADR-0002)
+- Stores `resourceType`, `resourceId`, `actorId`, `createdAt`, `ipAddress` from day one — widening the taxonomy for compliance is a code change, never a migration
+- All board members; dedicated page `/boards/[id]/activity`; newest → oldest, 20/page; entries cascade with the board
+- Actor resolves to **"Former member"** after account deletion (`SetNull`); members removed from the board only keep their names
+- **Resolves former Open Question #3:** model is named **`Activity`** (not the interim `AuditLog` placeholder); first post-launch migration adds it
+
+#### 3. Session enumeration UI ("Security" tab)
+
+- **Security** tab in Account settings: lists each **Active session** with device label (user-agent), IP address, created-at, expires-at
+- Current session flagged **"This device"** — shown but not individually revocable (use existing Sign out)
+- Any other session: individual revoke · bulk **"Sign out all other sessions"**
+- Strictly self-service — users only ever see/revoke their own sessions; no admin view
+
+#### 4. Data export (`GET /api/me/export`)
+
+- **"Export my data"** button in Account settings → synchronous JSON download (`Content-Disposition: attachment`)
+- **Includes:** profile · account metadata · session metadata · owned boards + memberships · todos assigned to them + all todos on boards they own · comments they authored · notifications addressed to them · Activity entries where they are the actor · invitations addressed to their email
+- **Redacts (secrets, not personal data):** password hashes, session tokens, invite tokens
+- **Accepted gap:** `Todo` has no `createdBy` — export cannot include "todos I created" on boards they don't own; adding `createdBy` is future schema work, not blocking
+
+#### 5. Notifications + unread counts
+
+- **Targeted only** — a Notification exists only when it needs *your* attention:
+  | Event | Recipients |
+  |-------|-----------|
+  | Todo assigned to you | Assignee |
+  | New comment on a todo | Assignee + prior commenters on that todo (minus actor) |
+- **Not notifiable:** comment edits · status changes · membership/tag/rename events (Activity log's job) · board invites (invite email already transactional) · due-date reminders (no scheduling infra) · board-wide broadcasts
+- **No email channel** — Resend stays transactional (verify, reset, invite); in-app only
+- Global nav **bell + dropdown** (latest 20) with **unread count** (`readAt IS NULL`); click → open that todo's side panel + mark read; **mark-all-read** server action
+- Polls on the same **8s cadence** as todos while authenticated
 
 ### 💡 Could Have (Future)
 
@@ -91,11 +128,8 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
 
 | Feature | Reason |
 |---------|--------|
-| Comments on todos | Post-MVP — adds significant complexity (`useInfiniteQuery`, schema changes) |
-| Activity log / audit trail | Post-MVP — needs `AuditLog` model; flag before first post-launch migration |
 | File attachments | Post-MVP — requires S3/R2 integration |
 | Sub-tasks / nested todos | Not in scope — keeps the data model clean |
-| Notifications system | Post-MVP |
 | WebSocket real-time | Polling covers MVP needs; WebSocket is a scaling upgrade |
 | Multiple board owners / admin roles | Single owner per board — clean authorization model |
 | Mobile native app | Web only |
@@ -104,6 +138,8 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
 | Kanban customization (custom columns, WIP limits) | Post-MVP |
 | i18n | Not scoped — flag if non-English audience is confirmed |
 | Public marketing landing page | `/` is the auth-gated dashboard for now |
+
+> **Note:** Comments, Activity log, and Notifications were formerly listed here as "Post-MVP" *and* in §4 Should Have. They now live **only** in §4, where their designs are specified.
 
 ---
 
@@ -310,7 +346,7 @@ Near-real-time:
 |---|----------|---------------------|
 | 1 | What happens to DONE todos — always visible or collapsed/archived? | Collapse DONE column after 10 items with "View all" expand |
 | 2 | Todos assigned to a removed member — unassign or transfer to owner? | `SetNull` (unassign) — already in schema; confirm this is acceptable |
-| 3 | Activity feed (who changed what) — MVP or firmly post-MVP? | Firmly post-MVP — but add `AuditLog` model to schema in first post-launch migration |
+| 3 | Activity feed (who changed what) — MVP or firmly post-MVP? | **Resolved — firmly post-MVP, now fully specified in §4.2.** Model named `Activity` (not `AuditLog`); added in first post-launch migration; taxonomy fixed by ADR-0002 |
 
 ---
 

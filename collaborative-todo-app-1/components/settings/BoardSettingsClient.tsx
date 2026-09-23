@@ -10,7 +10,27 @@ import { InviteForm } from '@/components/settings/InviteForm'
 import { TagManager } from '@/components/settings/TagManager'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
+import { PageShell } from '@/components/PageShell'
 
 type Member = {
   id: string
@@ -158,13 +178,23 @@ export function BoardSettingsClient({
     .map((m) => m.user)
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Board Settings</h1>
-
+    <PageShell
+      title="Board Settings"
+      narrow
+      leading={
+        <Link
+          href={`/boards/${boardId}`}
+          className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Back to board"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+      }
+    >
       <div className="space-y-8">
         {/* Rename Section */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Board Name</h3>
+        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+          <h3 className="text-xl font-semibold text-gray-900 mb-3">Board Name</h3>
           {isEditingName ? (
             <div className="space-y-2">
               <div className="flex gap-2">
@@ -220,7 +250,7 @@ export function BoardSettingsClient({
         </section>
 
         {/* Member Management */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6">
+        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
           <MemberList
             boardId={boardId}
             currentUserId={currentUserId}
@@ -231,66 +261,73 @@ export function BoardSettingsClient({
         </section>
 
         {/* Invite Form */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6">
+        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
           <InviteForm boardId={boardId} />
         </section>
 
         {/* Tag Management */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6">
+        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
           <TagManager boardId={boardId} tags={tags} />
         </section>
 
         {/* Transfer Ownership Section */}
         {transferableMembers.length > 0 && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Transfer Ownership</h3>
+          <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">Transfer Ownership</h3>
             <p className="text-sm text-gray-500 mb-4">
               Transfer board ownership to another member. You will become a regular member and lose settings access.
             </p>
 
             {showTransferConfirm ? (
-              <div className="space-y-4">
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-800">
-                    Are you sure you want to transfer ownership to{' '}
-                    <strong>
-                      {transferableMembers.find((m) => m.id === selectedMemberId)?.name}
-                    </strong>
-                    ? You will lose settings access.
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleTransfer}
-                    disabled={transferMutation.isPending}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    {transferMutation.isPending ? 'Transferring...' : 'Confirm Transfer'}
-                  </Button>
-                  <Button
-                    onClick={() => setShowTransferConfirm(false)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
+              <AlertDialog
+                open={showTransferConfirm}
+                onOpenChange={(open) => setShowTransferConfirm(open)}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Transfer ownership?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to transfer ownership to{' '}
+                      <strong>
+                        {transferableMembers.find((m) => m.id === selectedMemberId)?.name}
+                      </strong>
+                      ? You will lose settings access.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={handleTransfer}
+                      disabled={transferMutation.isPending}
+                    >
+                      {transferMutation.isPending ? 'Transferring...' : 'Confirm Transfer'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             ) : (
               <div className="flex gap-2">
-                <select
-                  value={selectedMemberId}
-                  onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                <Select
+                  value={selectedMemberId || null}
+                  onValueChange={(v) => setSelectedMemberId(v ?? '')}
                 >
-                  <option value="">Select a member</option>
-                  {transferableMembers.map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.name} ({member.email})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue>
+                      {(value) => {
+                        const member = transferableMembers.find((m) => m.id === value)
+                        return member ? `${member.name} (${member.email})` : 'Select a member'
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transferableMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name} ({member.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button
                   onClick={() => {
                     if (selectedMemberId) {
@@ -309,8 +346,8 @@ export function BoardSettingsClient({
         )}
 
         {/* Danger Zone */}
-        <section className="bg-white rounded-lg border border-red-200 p-6">
-          <h3 className="text-sm font-medium text-red-900 mb-3">Danger Zone</h3>
+          <section className="bg-white rounded-xl ring-1 ring-red-200 p-4">
+          <h3 className="text-xl font-semibold text-red-900 mb-3">Danger Zone</h3>
           <p className="text-sm text-gray-500 mb-4">
             Permanently delete this board and all its data. This action cannot be undone.
           </p>
@@ -318,7 +355,7 @@ export function BoardSettingsClient({
           {showDeleteConfirm ? (
             <div className="space-y-4">
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-800">
+                <p className="text-sm text-red-700">
                   Type <strong>{boardName}</strong> to confirm deletion:
                 </p>
               </div>
@@ -360,6 +397,6 @@ export function BoardSettingsClient({
           )}
         </section>
       </div>
-    </div>
+    </PageShell>
   )
 }

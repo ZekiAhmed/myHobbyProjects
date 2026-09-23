@@ -22,6 +22,7 @@
 
 import { BoardCard } from '@/components/dashboard/BoardCard'
 import { NewBoardModal } from '@/components/dashboard/NewBoardModal'
+import { PageShell } from '@/components/PageShell'
 import type { Board } from '@/lib/types'
 
 /**
@@ -50,13 +51,7 @@ export function DashboardClient({ initialBoards, currentUserId }: { initialBoard
   const memberBoards = boards.filter((board) => board.ownerId !== currentUserId)
 
   return (
-    <div className="container mx-auto py-4 md:py-8 px-4 md:px-6">
-      {/* Dashboard header with title and "New Board" button */}
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-        <NewBoardModal />
-      </div>
-
+    <PageShell title="Dashboard" actions={<NewBoardModal />}>
       <div className="space-y-8">
         {/* "Boards I Own" section — only shown if user owns any boards */}
         {ownedBoards.length > 0 && (
@@ -91,6 +86,6 @@ export function DashboardClient({ initialBoards, currentUserId }: { initialBoard
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   )
 }

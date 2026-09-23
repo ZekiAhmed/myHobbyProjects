@@ -1,0 +1,3 @@
+# Comments are hard-deleted; removal is recorded as an Activity event
+
+Comment lifecycle allows the author to edit or delete their own comment, and the board Owner to delete any comment — but deletion is permanent: the row is removed outright, with no tombstone or soft-delete flag. Rationale: the board Activity log records *that* a removal happened (who, when, which todo), so auditability lives in one place, while comment queries and GDPR erasure stay trivial cascades. Soft delete was rejected — tombstones complicate every comment-feed query and split the audit trail across two mechanisms; retrofitting soft delete later cannot recover already-deleted bodies, which is accepted.

@@ -26,6 +26,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, authClient } from '@/lib/auth-client'
 import { acceptInvitation } from '@/app/actions/invitations'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 /**
  * Sign-In Page Component
@@ -47,14 +49,10 @@ export default function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   
-  const [error, setError] = useState('')
+  const [error, setError] = useState(
+    sessionExpired ? 'Your session has expired. Please sign in again.' : ''
+  )
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (sessionExpired) {
-      setError('Your session has expired. Please sign in again.')
-    }
-  }, [sessionExpired])
 
   useEffect(() => {
     const checkSession = async () => {
@@ -127,7 +125,7 @@ export default function SignInPage() {
         }
         router.push(callbackUrl)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
@@ -151,13 +149,12 @@ export default function SignInPage() {
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email
           </label>
-          <input
+          <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your email"
           />
         </div>
@@ -167,13 +164,12 @@ export default function SignInPage() {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             Password
           </label>
-          <input
+          <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your password"
           />
         </div>
@@ -182,27 +178,27 @@ export default function SignInPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:text-blue-500"
+            className="text-sm text-blue-600 hover:text-blue-700"
           >
             Forgot password?
           </Link>
         </div>
 
         {/* Submit button */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white hover:bg-blue-700"
         >
           {/* Show loading text while submitting */}
           {loading ? 'Signing in...' : 'Sign in'}
-        </button>
+        </Button>
       </form>
 
       {/* Link to sign-up page */}
       <p className="mt-4 text-center text-sm text-gray-600">
-        Don't have an account?{' '}
-        <Link href="/sign-up" className="text-blue-600 hover:text-blue-500">
+        Don&apos;t have an account?{' '}
+        <Link href="/sign-up" className="text-blue-600 hover:text-blue-700">
           Sign up
         </Link>
       </p>

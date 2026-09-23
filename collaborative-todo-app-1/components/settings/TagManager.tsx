@@ -7,6 +7,16 @@ import { createTag, deleteTag } from '@/actions/tags'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 
 interface Tag {
@@ -36,6 +46,7 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
   const [nameError, setNameError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
 
   const createMutation = useMutation({
     mutationFn: () => createTag({ boardId, name, color }),
@@ -65,6 +76,7 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
     mutationFn: (tagId: string) => deleteTag(tagId),
     onSuccess: (result) => {
       if (result.success) {
+        setDeleteTarget(null)
         queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardId) })
         toast.success('Tag deleted')
       } else {
@@ -88,15 +100,9 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
     createMutation.mutate()
   }
 
-  const handleDelete = (tagId: string) => {
-    if (confirm('Delete this tag? Todos with this tag will keep their other tags.')) {
-      deleteMutation.mutate(tagId)
-    }
-  }
-
   return (
     <div>
-      <h3 className="text-sm font-medium text-gray-900 mb-3">Tags</h3>
+      <h3 className="text-xl font-semibold text-gray-900 mb-3">Tags</h3>
 
       {/* Existing tags */}
       <div className="space-y-2 mb-4">
@@ -115,16 +121,46 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
               />
               <span className="text-sm text-gray-900">{tag.name}</span>
             </div>
-            <button
-              onClick={() => handleDelete(tag.id)}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteTarget(tag)}
               disabled={deleteMutation.isPending}
-              className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
             >
               Delete
-            </button>
+            </Button>
           </div>
         ))}
       </div>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete tag?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete <strong>{deleteTarget?.name}</strong>? Todos with this tag will keep their
+              other tags.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id)
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete tag'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Create new tag form */}
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -153,11 +189,15 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
           <Label>Color</Label>
           <div className="flex gap-2">
             {PRESET_COLORS.map((presetColor) => (
-              <button
+              <Button
                 key={presetColor}
                 type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`Select color ${presetColor}`}
+                aria-pressed={color === presetColor}
                 onClick={() => setColor(presetColor)}
-                className={`h-6 w-6 rounded-full transition-transform ${
+                className={`rounded-full ${
                   color === presetColor
                     ? 'ring-2 ring-offset-2 ring-gray-400 scale-110'
                     : 'hover:scale-105'

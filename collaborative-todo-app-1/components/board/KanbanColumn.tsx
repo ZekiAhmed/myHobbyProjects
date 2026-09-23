@@ -23,7 +23,6 @@ import {
 import { useDroppable } from '@dnd-kit/core'
 import { TodoCard } from '@/components/board/TodoCard'
 import { Button } from '@/components/ui/button'
-import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations } from '@/lib/types'
 
 interface KanbanColumnProps {

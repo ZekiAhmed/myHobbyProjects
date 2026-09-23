@@ -44,6 +44,7 @@ import { KanbanColumn } from '@/components/board/KanbanColumn'
 import { TodoCard } from '@/components/board/TodoCard'
 import { FilterBar } from '@/components/board/FilterBar'
 import { TodoSidePanel } from '@/components/board/TodoSidePanel'
+import { PageShell } from '@/components/PageShell'
 import { Button } from '@/components/ui/button'
 import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -366,56 +367,48 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
   const isOwner = boardDetail?.ownerId === currentUserId
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Mobile header */}
-      {isMobile ? (
-        <div className="flex items-center gap-3 mb-4 px-1">
+    <PageShell
+      title={boardDetail?.name || 'Loading...'}
+      leading={
+        isMobile ? (
           <Link
             href="/"
-            className="p-2 -ml-2 rounded-md hover:bg-muted transition-colors"
+            className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Back to dashboard"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-bold truncate flex-1">{boardDetail?.name || 'Loading...'}</h1>
-          <div className="flex items-center gap-1">
-            {isOwner && (
-              <Link
-                href={`/boards/${boardId}/settings`}
-                className="p-2 rounded-md hover:bg-muted transition-colors"
-                aria-label="Board settings"
-              >
-                <Settings className="h-5 w-5" />
-              </Link>
-            )}
-            <Button size="sm" onClick={handleAddTodo}>Add Todo</Button>
-          </div>
+        ) : undefined
+      }
+      actions={
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <Link
+              href={`/boards/${boardId}/settings`}
+              className={
+                isMobile
+                  ? 'rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                  : 'text-sm text-muted-foreground transition-colors hover:text-foreground'
+              }
+              aria-label="Board settings"
+            >
+              {isMobile ? <Settings className="h-5 w-5" /> : 'Settings'}
+            </Link>
+          )}
+          <Button size={isMobile ? 'sm' : 'default'} onClick={handleAddTodo}>
+            Add Todo
+          </Button>
         </div>
-      ) : (
-        /* Desktop header */
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">{boardDetail?.name || 'Loading...'}</h1>
-          <div className="flex items-center gap-2">
-            {isOwner && (
-              <Link
-                href={`/boards/${boardId}/settings`}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Settings
-              </Link>
-            )}
-            <Button onClick={handleAddTodo}>Add Todo</Button>
-          </div>
-        </div>
-      )}
-
-      {/* Filter bar */}
-      <FilterBar
-        members={members}
-        tags={tags}
-        filters={filters}
-        onFiltersChange={setFilters}
-      />
+      }
+    >
+      <div className="flex flex-col">
+        {/* Filter bar */}
+        <FilterBar
+          members={members}
+          tags={tags}
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
 
       {/* Desktop: Kanban columns with drag-and-drop */}
       {!isMobile ? (
@@ -511,6 +504,7 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
         members={members}
         tags={tags}
       />
-    </div>
+      </div>
+    </PageShell>
   )
 }

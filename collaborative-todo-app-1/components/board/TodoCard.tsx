@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card } from '@/components/ui/card'
 import { format, isPast, isToday } from 'date-fns'
-import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations } from '@/lib/types'
 
 interface TodoCardProps {
@@ -182,6 +181,7 @@ export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, o
                     ? 'bg-green-100 text-green-600 hover:bg-green-200'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                 }`}
+                aria-label={todo.status === 'DONE' ? 'Mark as incomplete' : 'Mark as complete'}
                 title={todo.status === 'DONE' ? 'Mark as incomplete' : 'Mark as complete'}
               >
                 <svg
