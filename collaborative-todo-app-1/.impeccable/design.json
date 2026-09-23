@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-23T00:00:00.000Z",
+  "generatedAt": "2026-09-23T17:12:19.760+03:00",
   "title": "Design System: Collaborative Kanban Todo App",
   "extensions": {
     "colorMeta": {
@@ -63,6 +63,12 @@
         "displayName": "On Ink",
         "canonical": "oklch(0.985 0 0)",
         "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.94 0 0)", "oklch(0.985 0 0)"]
+      },
+      "hard-black": {
+        "role": "neutral",
+        "displayName": "Hard Black",
+        "canonical": "#000000",
+        "tonalRamp": ["oklch(0 0 0)", "oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.8 0 0)", "oklch(0.97 0 0)"]
       },
       "action-blue": {
         "role": "primary",
@@ -201,6 +207,7 @@
     "motion": [
       { "name": "transition-shadow", "value": "box-shadow 150ms ease", "purpose": "Card hover lift feedback." },
       { "name": "transition-colors", "value": "background-color 150ms ease, color 150ms ease", "purpose": "Button/badge state changes." },
+      { "name": "toolbar-invert", "value": "transform 100ms ease, background-color 100ms ease, color 100ms ease", "purpose": "Toolbar secondary white↔black invert hover/active." },
       { "name": "drag-transition", "value": "transform 200ms ease (dnd-kit CSS.Transform)", "purpose": "Sortable drag reflow." },
       { "name": "active-press", "value": "transform 100ms ease, translateY(1px)", "purpose": "Button active press." }
     ],
@@ -215,7 +222,7 @@
       "name": "Primary Action Button",
       "kind": "button",
       "refersTo": "button-action",
-      "description": "Solid Signal Blue CTA — auth submit, New Board; the only primary-action color.",
+      "description": "Solid Signal Blue CTA — auth submit; the only blue primary-action color outside the toolbar.",
       "html": "<button class=\"ds-btn-action\">Sign in</button>",
       "css": ".ds-btn-action { background: #2563eb; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-action:hover { background: #1d4ed8; } .ds-btn-action:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
@@ -223,15 +230,31 @@
       "name": "Ink Button (kit default)",
       "kind": "button",
       "refersTo": "button-ink",
-      "description": "shadcn default solid button — near-black Ink fill for kit-level primary actions.",
+      "description": "shadcn default solid button — near-black Ink fill for kit-level primary actions (New Board, dialog submits).",
       "html": "<button class=\"ds-btn-ink\">Continue</button>",
       "css": ".ds-btn-ink { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-ink:hover { opacity: 0.8; } .ds-btn-ink:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-ink:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Toolbar Secondary Button",
+      "kind": "button",
+      "refersTo": "button-toolbar",
+      "description": "Unified page-header toolbar control (Settings, Sign out) — white fill, Hard Black 1px border, invert hover.",
+      "html": "<button class=\"ds-btn-toolbar\">Sign out</button>",
+      "css": ".ds-btn-toolbar { background: #ffffff; color: #000000; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: 0.01em; padding: 8px 16px; height: 32px; border: 1px solid #000000; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: transform 100ms ease, background-color 100ms ease, color 100ms ease; } .ds-btn-toolbar:hover { background: #000000; color: #ffffff; } .ds-btn-toolbar:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-toolbar:active { transform: translateY(1px); } .ds-btn-toolbar:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }"
+    },
+    {
+      "name": "Toolbar Primary Button (Add Todo)",
+      "kind": "button",
+      "refersTo": "button-toolbar-primary",
+      "description": "Ink solid primary in toolbar geometry — Add Todo; min-width 136px, 4px radius, centered label.",
+      "html": "<button class=\"ds-btn-toolbar-primary\">Add Todo</button>",
+      "css": ".ds-btn-toolbar-primary { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; min-width: 136px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; text-align: center; transition: all 150ms ease; } .ds-btn-toolbar-primary:hover { opacity: 0.8; } .ds-btn-toolbar-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-toolbar-primary:active { transform: translateY(1px); } .ds-btn-toolbar-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Quiet bordered button for secondary actions — paper fill, hairline border, muted hover.",
+      "description": "Quiet kit outline for in-panel secondary actions (Cancel, dialogs) — paper fill, hairline border; not the toolbar Hard Black border.",
       "html": "<button class=\"ds-btn-outline\">Cancel</button>",
       "css": ".ds-btn-outline { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-outline:hover { background: oklch(0.97 0 0); color: oklch(0.145 0 0); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); border-color: oklch(0.708 0 0); }"
     },
@@ -282,6 +305,7 @@
     "keyCharacteristics": [
       "Neutral, near-monochrome chrome; hue reserved for action and status",
       "Compact controls (32px default button/input height) and dense 14px work text",
+      "Monochrome page-header toolbar family: white/black-border secondary, Ink solid primary, 4px radius",
       "Flat at rest (ring borders); shadows only as feedback (hover, dialog, drag)",
       "Soft status washes on Kanban columns; pill badges for priority",
       "Single system sans — functional hierarchy, no display face"
@@ -289,21 +313,25 @@
     "rules": [
       { "name": "The Signal-Only Rule", "body": "Hue appears only for action, status, priority, or focus. Everything else — nav, structure, chrome — stays in the neutral stack. If a new color can't answer \"what does this mean?\", it doesn't belong.", "section": "colors" },
       { "name": "The Single-Action Rule", "body": "Signal Blue is the sole primary-action color. Don't introduce green/amber/purple buttons for ordinary CTAs; green and amber are reserved for status meaning.", "section": "colors" },
+      { "name": "The Monochrome Toolbar Rule", "body": "Page-header toolbar actions (Add Todo, Settings, Sign out) stay black/white only — white with Hard Black border for secondary, Ink solid for primary — never Signal Blue. Geometry is locked to 4px radius / 32px height / 16px horizontal padding.", "section": "colors" },
       { "name": "The One-Family Rule", "body": "Hierarchy is size and weight only (700 titles → 600 headlines → 500 labels → 400 body). Don't introduce a second family or decorative styling to make text \"pop.\"", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, drag, overlay presence) — never as permanent card styling.", "section": "elevation" }
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, drag, overlay presence) — never as permanent card styling.", "section": "elevation" },
+      { "name": "The Toolbar Radius Rule", "body": "4px is exclusive to page-header toolbar controls (Add Todo, Settings, Sign out). Don't spread 4px onto dialogs, inputs, cards, or kit outline buttons — those keep 8–10px.", "section": "shapes" }
     ],
     "dos": [
       "Do keep chrome neutral: paper surfaces, hairline borders, Ink/Muted text — let board content and status washes carry the color.",
-      "Do use Signal Blue (#2563eb) for every primary action and link; deepen to #1d4ed8 on hover.",
+      "Do use Signal Blue (`#2563eb`) for primary form CTAs and links; deepen to `#1d4ed8` on hover.",
+      "Do build page-header toolbar actions (Add Todo, Settings, Sign out) as the monochrome family: 4px radius, 32px height, `px-4`, white/Hard-Black-border secondary with invert hover, Ink solid primary — never Signal Blue on the toolbar.",
       "Do apply the column washes exactly: Slate To Do, Sky In Progress, Mint Done, each with its 1px matching border.",
-      "Do keep controls compact (32px default height) and cards flat at rest (ring-1, no shadow).",
-      "Do show shadows only as feedback: shadow-md hover on clickable cards, shadow-lg/shadow-xl during drag, overlay shadows on dialogs.",
+      "Do keep controls compact (32px default height) and cards flat at rest (`ring-1`, no shadow).",
+      "Do show shadows only as feedback: `shadow-md` hover on clickable cards, `shadow-lg`/`shadow-xl` during drag, overlay shadows on dialogs.",
       "Do mark urgency with the status trio: red overdue/Urgent, amber due-today, green complete — text and soft badges, not full-bleed fills.",
-      "Do use pill shapes for badges, counts, and avatars; 8–10px corners for controls; 14px for cards.",
+      "Do use pill shapes for badges, counts, and avatars; 8–10px corners for kit controls; 4px for the page-header toolbar; 14px for cards.",
       "Do keep page titles bold at 24–30px and work text at 14px in the single system sans."
     ],
     "donts": [
       "Don't add decorative color — gradients, brand-tinted section backgrounds, colored nav bars — or repurpose green/amber/purple for non-status CTAs.",
+      "Don't paint page-header toolbar controls Signal Blue or spread their 4px radius / Hard Black border onto dialogs, inputs, cards, or kit outline buttons.",
       "Don't put permanent drop shadows on resting cards or columns; rest is flat by rule.",
       "Don't reintroduce enterprise-PM chrome: heavy borders, dense toolbar walls, or configuration-first surfaces (anti-reference: Jira/Asana).",
       "Don't introduce a second font family, display face, or uppercase-everything labeling scheme.",

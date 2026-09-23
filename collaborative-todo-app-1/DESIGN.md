@@ -32,6 +32,7 @@ colors:
   column-done-border: "#bbf7d0"
   avatar-wash: "#dbeafe"
   avatar-ink: "#2563eb"
+  hard-black: "#000000"
 typography:
   title:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
@@ -59,6 +60,7 @@ typography:
     fontWeight: 500
     lineHeight: 1.4
 rounded:
+  xs: "4px"
   sm: "6px"
   md: "8px"
   lg: "10px"
@@ -98,6 +100,25 @@ components:
     textColor: "{colors.foreground}"
     rounded: "{rounded.lg}"
     padding: "8px 10px"
+    typography: "{typography.label}"
+    height: "32px"
+  button-toolbar:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.hard-black}"
+    rounded: "{rounded.xs}"
+    padding: "8px 16px"
+    typography: "{typography.label}"
+    height: "32px"
+  button-toolbar-hover:
+    backgroundColor: "{colors.hard-black}"
+    textColor: "{colors.on-action}"
+    rounded: "{rounded.xs}"
+    padding: "8px 16px"
+  button-toolbar-primary:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.on-ink}"
+    rounded: "{rounded.xs}"
+    padding: "8px 16px"
     typography: "{typography.label}"
     height: "32px"
   input:
@@ -142,6 +163,7 @@ The confirmed visual anti-reference is enterprise project-management chrome — 
 **Key Characteristics:**
 - Neutral, near-monochrome chrome; hue reserved for action and status
 - Compact controls (32px default button/input height) and dense 14px work text
+- Monochrome page-header toolbar family: white/black-border secondary, Ink solid primary, 4px radius
 - Flat at rest (ring borders); shadows only as feedback (hover, dialog, drag)
 - Soft status washes on Kanban columns; pill badges for priority
 - Single system sans — functional hierarchy, no display face
@@ -161,6 +183,7 @@ The palette is neutral-first: paper whites and ink grays form every surface, wit
 - **Muted Ink** (`oklch(0.556 0 0)`): Secondary text — counts, timestamps, placeholders, column metadata.
 - **Hairline** (`oklch(0.922 0 0)`): Borders and dividers on tokens; raw inputs use gray-300 (`#d1d5db`).
 - **Focus Gray** (`oklch(0.708 0 0)`): Token focus ring; raw forms use Focus Blue.
+- **Hard Black** (`#000000`): Pure black for the unified toolbar control family — Settings and Sign out borders/text at rest, invert fill on hover. Distinct from near-black Ink; do not soften it to gray.
 
 ### Status & Semantic
 - **Urgent Red** (`oklch(0.577 0.245 27.325)` / `#dc2626`): Destructive token, Urgent badge, overdue dates, Danger Zone accents.
@@ -176,6 +199,7 @@ The palette is neutral-first: paper whites and ink grays form every surface, wit
 ### Named Rules
 **The Signal-Only Rule.** Hue appears only for action, status, priority, or focus. Everything else — nav, structure, chrome — stays in the neutral stack. If a new color can't answer "what does this mean?", it doesn't belong.
 **The Single-Action Rule.** Signal Blue is the sole primary-action color. Don't introduce green/amber/purple buttons for ordinary CTAs; green and amber are reserved for status meaning.
+**The Monochrome Toolbar Rule.** Page-header toolbar actions (Add Todo, Settings, Sign out) stay black/white only — white with Hard Black border for secondary, Ink solid for primary — never Signal Blue. Geometry is locked to 4px radius / 32px height / 16px horizontal padding.
 
 ## Typography
 
@@ -218,17 +242,20 @@ Flat at rest, shadow as feedback. Surfaces separate with hairline borders and `r
 
 ## Shapes
 
-Gently rounded utility geometry driven by one base radius (`--radius: 10px`). Controls (buttons, inputs) use 8–10px corners (`rounded-md`/`rounded-lg`); cards and panels use 14px (`rounded-xl`); badges, count pills, avatars, and quick-complete buttons are full pills (`rounded-full` / `rounded-4xl`); small tag chips use 6px (`rounded`). Borders are 1px hairlines; there is no double-border or heavy-outline language. Columns share the control radius (8–10px) with 1px status-tinted borders.
+Gently rounded utility geometry driven by one base radius (`--radius: 10px`). Kit controls (buttons, inputs) use 8–10px corners (`rounded-md`/`rounded-lg`); the unified page-header toolbar family deliberately tightens to 4px (`rounded-[4px]`) for a sharper action edge; cards and panels use 14px (`rounded-xl`); badges, count pills, avatars, and quick-complete buttons are full pills (`rounded-full` / `rounded-4xl`); small tag chips use 6px (`rounded`). Borders are 1px hairlines; the toolbar family alone uses a full-strength Hard Black 1px border on white. Columns share the kit control radius (8–10px) with 1px status-tinted borders.
+
+**The Toolbar Radius Rule.** 4px is exclusive to page-header toolbar controls (Add Todo, Settings, Sign out). Don't spread 4px onto dialogs, inputs, cards, or kit outline buttons — those keep 8–10px.
 
 ## Components
 
 The kit is quiet and compact: 32px controls, semantic badge variants, ring-bordered cards — content leads, chrome stays back.
 
 ### Buttons
-- **Shape:** Gently rounded (8px auth/raw `rounded-md`; 10px kit default `rounded-lg`). Default height 32px (`h-8`); xs 24px, sm 28px, lg 36px.
+- **Shape:** Gently rounded (8px auth/raw `rounded-md`; 10px kit default `rounded-lg`; 4px page-header toolbar only). Default height 32px (`h-8`); xs 24px, sm 28px, lg 36px.
 - **Primary (Action):** Solid Signal Blue (`#2563eb`) on white text, `py-2 px-4` on auth forms; hover deepens to `#1d4ed8`. Kit default is Ink solid (`oklch(0.205 0 0)`) with hover at 80% opacity.
-- **Outline / Secondary / Ghost:** Paper background with hairline border (hover fills Muted); secondary fills `surface-muted`; ghost appears on hover only (expand Done, toolbar actions). Destructive kit variant is soft: 10% destructive wash with destructive text — not a solid red slab.
-- **Focus:** 3px ring at 50% (token ring or destructive ring); raw forms use `focus:ring-2 focus:ring-blue-500`.
+- **Toolbar family (page-header actions):** Unified monochrome controls at 4px radius, 32px height, `px-4`, 14px medium, `tracking-[0.01em]`. **Secondary form** (Settings, Sign out): Paper White fill, 1px Hard Black (`#000000`) border, black text; hover inverts to black fill / white text over 100ms. **Primary form** (Add Todo): Ink solid fill in the same geometry, min-width 136px (`min-w-[8.5rem]`), centered label. Active presses down 1px.
+- **Outline / Secondary / Ghost:** Paper background with hairline border (hover fills Muted); secondary fills `surface-muted`; ghost appears on hover only (expand Done). Destructive kit variant is soft: 10% destructive wash with destructive text — not a solid red slab. Kit outline remains hairline gray for in-panel Cancel/dialog actions — not the toolbar Hard Black border.
+- **Focus:** 3px ring at 50% (token ring or destructive ring); raw forms use `focus:ring-2 focus:ring-blue-500`; toolbar controls use `ring-3 ring-ring/50`.
 - **Active:** 1px translate-down; disabled at 50% opacity.
 
 ### Chips (badges & tags)
@@ -251,7 +278,7 @@ The kit is quiet and compact: 32px controls, semantic badge variants, ring-borde
 - **Focus rings on any control:** 3px ring-ring/50 (kit) or blue-500 (raw) — never remove the visible focus indicator.
 
 ### Navigation
-- **App shell:** A persistent top nav — neutral paper bar with a bottom hairline: the "Kanban" wordmark linking home on the left; the signed-in user's email (muted, truncated) and an outline Sign out button on the right corner. Page headers sit below it: back + settings icon actions on the board; Dashboard title + New Board.
+- **App shell:** A persistent top nav — neutral paper bar with a bottom hairline: the "Kanban" wordmark linking home on the left; the signed-in user's email (muted, truncated) and the white/Hard-Black-border Sign out toolbar control on the right (inverts to black/white on hover). Page headers sit below it via PageShell: board gets mobile back chevron + toolbar Settings + Ink-solid Add Todo (min-width 136px); Dashboard title + kit Ink New Board.
 - **Links:** Signal Blue with hover deepen; footer prompts (sign-up swap) stay 14px neutral text + blue link.
 - **Auth layout:** Centered single card on Mist — the whole "navigation" is text links under the form. The invite landing uses the same panel.
 
@@ -262,16 +289,18 @@ The three status columns are the product's face: fixed 288px width (stacked full
 
 ### Do:
 - **Do** keep chrome neutral: paper surfaces, hairline borders, Ink/Muted text — let board content and status washes carry the color.
-- **Do** use Signal Blue (`#2563eb`) for every primary action and link; deepen to `#1d4ed8` on hover.
+- **Do** use Signal Blue (`#2563eb`) for primary form CTAs and links; deepen to `#1d4ed8` on hover.
+- **Do** build page-header toolbar actions (Add Todo, Settings, Sign out) as the monochrome family: 4px radius, 32px height, `px-4`, white/Hard-Black-border secondary with invert hover, Ink solid primary — never Signal Blue on the toolbar.
 - **Do** apply the column washes exactly: Slate To Do, Sky In Progress, Mint Done, each with its 1px matching border.
 - **Do** keep controls compact (32px default height) and cards flat at rest (`ring-1`, no shadow).
 - **Do** show shadows only as feedback: `shadow-md` hover on clickable cards, `shadow-lg`/`shadow-xl` during drag, overlay shadows on dialogs.
 - **Do** mark urgency with the status trio: red overdue/Urgent, amber due-today, green complete — text and soft badges, not full-bleed fills.
-- **Do** use pill shapes for badges, counts, and avatars; 8–10px corners for controls; 14px for cards.
+- **Do** use pill shapes for badges, counts, and avatars; 8–10px corners for kit controls; 4px for the page-header toolbar; 14px for cards.
 - **Do** keep page titles bold at 24–30px and work text at 14px in the single system sans.
 
 ### Don't:
 - **Don't** add decorative color — gradients, brand-tinted section backgrounds, colored nav bars — or repurpose green/amber/purple for non-status CTAs.
+- **Don't** paint page-header toolbar controls Signal Blue or spread their 4px radius / Hard Black border onto dialogs, inputs, cards, or kit outline buttons.
 - **Don't** put permanent drop shadows on resting cards or columns; rest is flat by rule.
 - **Don't** reintroduce enterprise-PM chrome: heavy borders, dense toolbar walls, or configuration-first surfaces (anti-reference: Jira/Asana).
 - **Don't** introduce a second font family, display face, or uppercase-everything labeling scheme.

@@ -16,16 +16,22 @@
  */
 
 import { Suspense } from 'react'
+import { notFound } from 'next/navigation'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { boardDetailQueryOptions, todosQueryOptions } from '@/lib/queries/board-keys'
 import { KanbanBoard } from '@/components/board/KanbanBoard'
 import { getRequiredSession } from '@/lib/session'
+import { prisma } from '@/lib/db'
 
 /**
  * Board Detail Page — Server Component
  *
- * This component runs on the server and prefetches board data.
- * It passes the dehydrated state to the client via HydrationBoundary.
+ * WHAT IT DOES:
+ * 1. Authenticates (redirects to sign-in if no session)
+ * 2. Authorizes — owner OR member, same rule as GET /api/boards/[id]
+ *    (without this, a stranger got a 200 shell while APIs returned 403)
+ * 3. Prefetches board detail + todos into the React Query cache
+ * 4. Renders KanbanBoard
  *
  * @returns The Kanban board UI
  */
@@ -36,6 +42,25 @@ export default async function BoardPage({
 }) {
   const { id } = await params
   const session = await getRequiredSession()
+
+  // Authorize — match API owner-or-member rule (hypothesis #1 fix)
+  const board = await prisma.board.findUnique({
+    where: { id },
+    select: {
+      ownerId: true,
+      members: { select: { userId: true } },
+    },
+  })
+  if (!board) {
+    notFound()
+  }
+  const isOwner = board.ownerId === session.user.id
+  const isMember = board.members.some((m) => m.userId === session.user.id)
+  if (!isOwner && !isMember) {
+    // Same denial as API 403 — do not render the board shell
+    notFound()
+  }
+
   const queryClient = new QueryClient()
 
   // Prefetch both board detail and todos in parallel

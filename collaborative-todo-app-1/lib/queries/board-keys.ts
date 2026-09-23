@@ -13,6 +13,31 @@
  */
 
 import { queryOptions } from '@tanstack/react-query'
+import type { Board, BoardDetail, TodoWithRelations } from '@/lib/types'
+
+/**
+ * Fetch JSON and fail loudly on non-2xx responses.
+ *
+ * WHY: `fetch().then(r => r.json())` treats a 403/500 JSON error body as
+ * success data. TanStack Query then stores that object, and consumers that
+ * assume an array (e.g. KanbanBoard's todos.filter) crash with
+ * "todos.filter is not a function". Rejecting keeps query data undefined
+ * so default fallbacks ([] / null) apply and errors surface via isError.
+ */
+async function fetchJson<T = unknown>(url: string): Promise<T> {
+  const res = await fetch(url)
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const body = (await res.json()) as { error?: string; message?: string }
+      detail = body.error || body.message || ''
+    } catch {
+      // non-JSON error body — status alone is enough
+    }
+    throw new Error(detail || `Request failed with status ${res.status}`)
+  }
+  return res.json() as Promise<T>
+}
 
 /**
  * Query Key Factory for Board Data
@@ -78,7 +103,7 @@ export const boardKeys = {
 export const boardsQueryOptions = () =>
   queryOptions({
     queryKey:  boardKeys.all(),
-    queryFn:   () => fetch('/api/boards').then(r => r.json()),
+    queryFn:   () => fetchJson<Board[]>('/api/boards'),
     staleTime: 30_000, // 30 seconds — boards don't change frequently
     gcTime:    300_000, // 5 minutes — keep in cache for quick navigation
   })
@@ -101,7 +126,7 @@ export const boardsQueryOptions = () =>
 export const boardDetailQueryOptions = (id: string) =>
   queryOptions({
     queryKey:  boardKeys.detail(id),
-    queryFn:   () => fetch(`/api/boards/${id}`).then(r => r.json()),
+    queryFn:   () => fetchJson<BoardDetail>(`/api/boards/${id}`),
     staleTime: 30_000,
     gcTime:    300_000,
   })
@@ -128,7 +153,10 @@ export const boardDetailQueryOptions = (id: string) =>
 export const invitationsQueryOptions = (id: string) =>
   queryOptions({
     queryKey:  boardKeys.invitations(id),
-    queryFn:   () => fetch(`/api/invitations?boardId=${id}`).then(r => r.json()),
+    queryFn:   () =>
+      fetchJson<{ id: string; email: string; expiresAt: string }[]>(
+        `/api/invitations?boardId=${id}`
+      ),
     staleTime: 10_000,
     gcTime:    300_000,
   })
@@ -165,7 +193,7 @@ export const invitationsQueryOptions = (id: string) =>
 export const todosQueryOptions = (id: string) =>
   queryOptions({
     queryKey:        boardKeys.todos(id),
-    queryFn:         () => fetch(`/api/boards/${id}/todos`).then(r => r.json()),
+    queryFn:         () => fetchJson<TodoWithRelations[]>(`/api/boards/${id}/todos`),
     staleTime:       0,
     gcTime:          300_000,
     refetchInterval: 8_000,

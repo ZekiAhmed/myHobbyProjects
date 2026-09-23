@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-type Member = {
+export type Member = {
   id: string
   name: string
   email: string
@@ -29,6 +29,33 @@ type BoardMember = {
   userId: string
   joinedAt: Date
   user: Member
+}
+
+export type BoardMemberRow = BoardMember
+
+export type MemberRow = Member & {
+  joinedAt: Date | null
+  isOwner: boolean
+}
+
+/**
+ * Build the flat row list rendered by MemberList (owner first, then members).
+ * Exported for tests — React keys are row.id, so ids MUST be unique.
+ *
+ * WHY DEDUPE: transferOwnership only updates Board.ownerId and leaves the
+ * new owner's BoardMember row in place, so owner can appear in `members`.
+ * Rendering both produced React's "two children with the same key" error.
+ */
+export function buildMemberRows(owner: Member, members: BoardMember[]): MemberRow[] {
+  const ownerRow: MemberRow = { ...owner, joinedAt: null, isOwner: true }
+  const seen = new Set<string>([owner.id])
+  const memberRows: MemberRow[] = []
+  for (const m of members) {
+    if (seen.has(m.user.id)) continue
+    seen.add(m.user.id)
+    memberRows.push({ ...m.user, joinedAt: m.joinedAt, isOwner: false })
+  }
+  return [ownerRow, ...memberRows]
 }
 
 interface MemberListProps {
@@ -83,10 +110,7 @@ export function MemberList({
     },
   })
 
-  const allMembers = [
-    { ...owner, joinedAt: null, isOwner: true },
-    ...members.map((m) => ({ ...m.user, joinedAt: m.joinedAt, isOwner: false })),
-  ]
+  const allMembers = buildMemberRows(owner, members)
 
   return (
     <div>

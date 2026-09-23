@@ -128,8 +128,8 @@ export function NewBoardModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button>New Board</Button>} />
-      
+      <DialogTrigger render={<Button className="min-w-[8.5rem] justify-center rounded-[4px] px-4 text-center tracking-[0.01em] active:translate-y-px">New Board</Button>} />
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Board</DialogTitle>
@@ -137,7 +137,7 @@ export function NewBoardModal() {
             Enter a name for your new board.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
@@ -147,7 +147,7 @@ export function NewBoardModal() {
               autoFocus
             />
           </div>
-          
+
           <DialogFooter className="mt-4">
             <Button
               type="button"

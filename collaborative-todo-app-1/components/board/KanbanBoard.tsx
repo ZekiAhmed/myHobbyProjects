@@ -385,17 +385,16 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
           {isOwner && (
             <Link
               href={`/boards/${boardId}/settings`}
-              className={
-                isMobile
-                  ? 'rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-                  : 'text-sm text-muted-foreground transition-colors hover:text-foreground'
-              }
+              className="inline-flex h-8 items-center justify-center rounded-[4px] border border-black bg-white px-4 text-sm font-medium tracking-[0.01em] text-black no-underline transition-[transform,background-color,color] duration-100 hover:bg-black hover:text-white active:translate-y-px"
               aria-label="Board settings"
             >
               {isMobile ? <Settings className="h-5 w-5" /> : 'Settings'}
             </Link>
           )}
-          <Button size={isMobile ? 'sm' : 'default'} onClick={handleAddTodo}>
+          <Button
+            className="min-w-[8.5rem] justify-center rounded-[4px] text-center"
+            onClick={handleAddTodo}
+          >
             Add Todo
           </Button>
         </div>
