@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
     const checkSession = async () => {
       const { data } = await authClient.getSession()
       if (data?.session) {
-        router.push('/')
+        router.push('/boards')
       }
     }
     checkSession()

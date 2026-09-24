@@ -25,20 +25,20 @@
  * @see https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions
  */
 
-'use server' // Marks ALL exported functions in this file as Server Actions (server-only)
+"use server"; // Marks ALL exported functions in this file as Server Actions (server-only)
 
-import { revalidateTag } from 'next/cache'
-import { prisma } from '@/lib/db'
-import { getRequiredSession } from '@/lib/session'
-import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { revalidateTag } from "next/cache";
+import { prisma } from "@/lib/db";
+import { getRequiredSession } from "@/lib/session";
+import { actionSuccess, actionError, type ActionResult } from "@/lib/errors";
 
 type BoardData = {
-  id: string
-  name: string
-  ownerId: string
-  createdAt: Date
-  updatedAt: Date
-}
+  id: string;
+  name: string;
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 /**
  * Creates a new board with the current user as the owner.
@@ -60,13 +60,15 @@ type BoardData = {
  *   router.push(`/boards/${result.data.id}`)
  * }
  */
-export async function createBoard(name: string): Promise<ActionResult<BoardData>> {
+export async function createBoard(
+  name: string,
+): Promise<ActionResult<BoardData>> {
   try {
     // Step 1: Authenticate — getRequiredSession() throws a redirect to /sign-in if no session
-    const session = await getRequiredSession()
+    const session = await getRequiredSession();
 
     if (!name.trim()) {
-      return actionError('validation', 'Board name is required')
+      return actionError("validation", "Board name is required");
     }
 
     // Step 2: Create the board in the database
@@ -76,17 +78,17 @@ export async function createBoard(name: string): Promise<ActionResult<BoardData>
         name: name.trim(),
         ownerId: session.user.id, // Owner is always the user who creates the board
       },
-    })
+    });
 
     // Step 3: Invalidate the 'boards' cache tag
     // 'max' means stale content can be served for up to 1 year while revalidation runs
     // This ensures the dashboard will fetch fresh data on the next request
-    revalidateTag('boards', 'max')
+    revalidateTag("boards", "max");
 
     // Return the board so the client can use it (e.g., redirect to the new board)
-    return actionSuccess(board)
+    return actionSuccess(board);
   } catch {
-    return actionError('server', 'Failed to create board')
+    return actionError("server", "Failed to create board");
   }
 }
 
@@ -115,42 +117,48 @@ export async function createBoard(name: string): Promise<ActionResult<BoardData>
  *   // Board renamed successfully
  * }
  */
-export async function renameBoard(boardId: string, name: string): Promise<ActionResult<BoardData>> {
+export async function renameBoard(
+  boardId: string,
+  name: string,
+): Promise<ActionResult<BoardData>> {
   try {
     // Step 1: Authenticate
-    const session = await getRequiredSession()
+    const session = await getRequiredSession();
 
     if (!name.trim()) {
-      return actionError('validation', 'Board name is required')
+      return actionError("validation", "Board name is required");
     }
 
     // Step 2: Fetch the board to check ownership
     const board = await prisma.board.findUniqueOrThrow({
       where: { id: boardId },
-    })
+    });
 
     // Step 3: Authorize — only the owner can rename
     // This is a critical security check. Without it, any member could rename any board.
     if (board.ownerId !== session.user.id) {
-      return actionError('authorization', 'Only the board owner can rename the board')
+      return actionError(
+        "authorization",
+        "Only the board owner can rename the board",
+      );
     }
 
     // Step 4: Update the board name in the database
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: { name: name.trim() },
-    })
+    });
 
     // Step 5: Invalidate both cache tags
     // 'boards' — affects the dashboard list of boards
     // 'board-detail' — affects the individual board page (name displayed there)
-    revalidateTag('boards', 'max')
-    revalidateTag('board-detail', 'max')
+    revalidateTag("boards", "max");
+    revalidateTag("board-detail", "max");
 
     // Return the updated board for the client to use
-    return actionSuccess(updatedBoard)
+    return actionSuccess(updatedBoard);
   } catch {
-    return actionError('server', 'Failed to rename board')
+    return actionError("server", "Failed to rename board");
   }
 }
 
@@ -180,33 +188,38 @@ export async function renameBoard(boardId: string, name: string): Promise<Action
  * const result = await deleteBoard("clx1234567890")
  * // Board and all its data are permanently deleted
  */
-export async function deleteBoard(boardId: string): Promise<ActionResult<{ success: true }>> {
+export async function deleteBoard(
+  boardId: string,
+): Promise<ActionResult<{ success: true }>> {
   try {
     // Step 1: Authenticate
-    const session = await getRequiredSession()
+    const session = await getRequiredSession();
 
     // Step 2: Fetch the board to check ownership
     const board = await prisma.board.findUniqueOrThrow({
       where: { id: boardId },
-    })
+    });
 
     // Step 3: Authorize — only the owner can delete
     // This is a destructive action, so we're extra careful
     if (board.ownerId !== session.user.id) {
-      return actionError('authorization', 'Only the board owner can delete the board')
+      return actionError(
+        "authorization",
+        "Only the board owner can delete the board",
+      );
     }
 
     // Step 4: Delete the board (and all related data via cascade)
     await prisma.board.delete({
       where: { id: boardId },
-    })
+    });
 
     // Step 5: Invalidate the cache so the dashboard shows the updated list
-    revalidateTag('boards', 'max')
+    revalidateTag("boards", "max");
 
-    return actionSuccess({ success: true as const })
+    return actionSuccess({ success: true as const });
   } catch {
-    return actionError('server', 'Failed to delete board')
+    return actionError("server", "Failed to delete board");
   }
 }
 
@@ -232,47 +245,56 @@ export async function deleteBoard(boardId: string): Promise<ActionResult<{ succe
  * const result = await transferOwnership("board_abc", "user_xyz")
  * // Board ownership transferred, old owner loses settings access
  */
-export async function transferOwnership(boardId: string, newOwnerId: string): Promise<ActionResult<{ success: true }>> {
+export async function transferOwnership(
+  boardId: string,
+  newOwnerId: string,
+): Promise<ActionResult<{ success: true }>> {
   try {
     // Step 1: Authenticate
-    const session = await getRequiredSession()
+    const session = await getRequiredSession();
 
     // Step 2: Fetch the board to check ownership
     const board = await prisma.board.findUniqueOrThrow({
       where: { id: boardId },
-    })
+    });
 
     // Step 3: Authorize — only the current owner can transfer
     if (board.ownerId !== session.user.id) {
-      return actionError('authorization', 'Only the board owner can transfer ownership')
+      return actionError(
+        "authorization",
+        "Only the board owner can transfer ownership",
+      );
     }
 
     // Step 4: Cannot transfer to yourself
     if (newOwnerId === session.user.id) {
-      return actionError('validation', 'Cannot transfer ownership to yourself')
+      return actionError("validation", "Cannot transfer ownership to yourself");
     }
 
     // Step 5: Verify the new owner is a member of the board
     const member = await prisma.boardMember.findFirst({
       where: { boardId, userId: newOwnerId },
-    })
+    });
 
     if (!member) {
-      return actionError('validation', 'The user you are trying to transfer ownership to is not a member of this board')
+      return actionError(
+        "validation",
+        "The user you are trying to transfer ownership to is not a member of this board",
+      );
     }
 
     // Step 6: Transfer ownership
     await prisma.board.update({
       where: { id: boardId },
       data: { ownerId: newOwnerId },
-    })
+    });
 
     // Step 7: Invalidate both cache tags
-    revalidateTag('boards', 'max')
-    revalidateTag('board-detail', 'max')
+    revalidateTag("boards", "max");
+    revalidateTag("board-detail", "max");
 
-    return actionSuccess({ success: true as const })
+    return actionSuccess({ success: true as const });
   } catch {
-    return actionError('server', 'Failed to transfer ownership')
+    return actionError("server", "Failed to transfer ownership");
   }
 }

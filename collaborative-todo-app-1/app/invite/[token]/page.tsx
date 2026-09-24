@@ -87,7 +87,7 @@ export default async function InvitePage({
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Invalid</h1>
           <p className="text-gray-600 mb-6">This invite link is invalid.</p>
           <Button
-            render={<Link href="/" />}
+            render={<Link href="/boards" />}
             nativeButton={false}
             className="bg-blue-600 text-white hover:bg-blue-700"
           >
@@ -105,7 +105,7 @@ export default async function InvitePage({
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Used</h1>
           <p className="text-gray-600 mb-6">This invitation has already been used.</p>
           <Button
-            render={<Link href="/" />}
+            render={<Link href="/boards" />}
             nativeButton={false}
             className="bg-blue-600 text-white hover:bg-blue-700"
           >
@@ -125,7 +125,7 @@ export default async function InvitePage({
             This invitation link has expired. Ask the board owner to send a new one.
           </p>
           <Button
-            render={<Link href="/" />}
+            render={<Link href="/boards" />}
             nativeButton={false}
             className="bg-blue-600 text-white hover:bg-blue-700"
           >

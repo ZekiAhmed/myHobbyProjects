@@ -26,7 +26,7 @@ The gap between heavyweight project management software and personal todo apps: 
 
 - Modern desktop browsers are the primary scene (React 19 + dnd-kit); mobile web uses a responsive stacked single-column view — there is no native app.
 - Email is the transactional channel only (verification, password reset, invitations via Resend); no marketing or in-app email channel.
-- Fully auth-gated: no anonymous, guest, or public experience; `/` is the auth-gated dashboard (no public marketing landing page).
+- Public surface is a minimal landing page at `/` (hero + CTA) plus the auth pages; the app itself stays auth-gated — the dashboard lives at `/boards`, with no anonymous/guest access to app data.
 - Deployment target: Vercel + Prisma Accelerate + Postgres + Upstash rate limiting.
 - Core workflows: sign-up/verify/sign-in/reset; invite accept (new user, signed-out existing, already signed in, invalid/expired); dashboard of owned/member boards; Kanban board (3 columns, side-panel CRUD, drag-and-drop, filters); board settings (owner); account settings.
 - Collaboration model: last-write-wins on concurrent edits, self-healed by the 8s poll — a documented known limitation until WebSocket (post-MVP).
@@ -37,7 +37,7 @@ The gap between heavyweight project management software and personal todo apps: 
 
 **Specified post-MVP (design done, not built):** todo comments (flat, hard-delete, paginated oldest-first); per-board Activity log (high-signal events only, ADR-0002); Security tab (session enumeration/revoke); data export `GET /api/me/export`; targeted in-app notifications (assignee + commenters) with bell + unread count, 8s poll.
 
-**Out of scope:** file attachments, sub-tasks/nested todos, WebSocket real-time (MVP), multiple board owners/admin roles, mobile native app, public/guest access, third-party integrations, custom Kanban columns/WIP limits, i18n, public marketing landing page.
+**Out of scope:** file attachments, sub-tasks/nested todos, WebSocket real-time (MVP), multiple board owners/admin roles, mobile native app, public/guest access to app data, third-party integrations, custom Kanban columns/WIP limits, i18n, full marketing site beyond the minimal `/` landing (pricing, docs, blog).
 
 **Durable product facts:**
 

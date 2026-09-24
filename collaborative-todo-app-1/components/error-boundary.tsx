@@ -106,7 +106,7 @@ export function PageErrorFallback({
         <Button onClick={reset} variant="outline">
           Try again
         </Button>
-        <Button onClick={() => router.push('/')} variant="default">
+        <Button onClick={() => router.push('/boards')} variant="default">
           Go to Dashboard
         </Button>
       </div>

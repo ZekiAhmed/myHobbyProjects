@@ -12,6 +12,6 @@
 - [ ] Rename section — inline edit for board name, save button
 - [ ] Members section — `MemberList` component (view all, remove button) + `InviteForm` component (invite by email, revoke pending)
 - [ ] Tags section — `TagManager` component (create, delete)
-- [ ] Danger Zone section — "Delete Board" button with confirmation dialog, redirects to `/` after deletion
+- [ ] Danger Zone section — "Delete Board" button with confirmation dialog, redirects to `/boards` after deletion
 - [ ] Transfer ownership section — dropdown of all members, "Transfer" button with confirmation dialog ("You will become a regular member and lose settings access")
 - [ ] Settings gear icon — only rendered for board owner on the board detail page

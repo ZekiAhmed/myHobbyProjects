@@ -372,7 +372,7 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
       leading={
         isMobile ? (
           <Link
-            href="/"
+            href="/boards"
             className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Back to dashboard"
           >

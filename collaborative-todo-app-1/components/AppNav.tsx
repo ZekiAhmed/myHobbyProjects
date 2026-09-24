@@ -6,7 +6,7 @@ export function AppNav({ email }: { email: string }) {
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="container mx-auto flex h-12 items-center justify-between gap-4 px-4 md:px-6">
         <Link
-          href="/"
+          href="/boards"
           className="text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground"
         >
           Kanban

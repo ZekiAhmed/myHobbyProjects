@@ -214,7 +214,7 @@ A focused, collaborative Kanban todo app called "Collaborative Kanban Todo App" 
 - Third-party integrations (post-MVP)
 - Kanban customization — custom columns, WIP limits (post-MVP)
 - i18n / multi-language support (not scoped)
-- Public marketing landing page (`/` is the auth-gated dashboard)
+- Public marketing landing page — shipped post-scope: minimal landing at `/`, dashboard moved to `/boards`
 - Configurable columns per board (post-MVP)
 - Global tags shared across boards (per-board for MVP)
 - Deduplication for concurrent optimistic updates (rare edge case, self-heals)

@@ -7,7 +7,7 @@
  * 1. Displays a form with email and password fields
  * 2. Validates input (required fields)
  * 3. Calls Better Auth's signIn.email() to authenticate
- * 4. Redirects to callbackUrl on success (or / by default)
+ * 4. Redirects to callbackUrl on success (or /boards by default)
  * 5. Shows error message on failure
  * 
  * CALLBACK URL:
@@ -42,7 +42,7 @@ import { Button } from '@/components/ui/button'
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl = searchParams.get('callbackUrl') || '/boards'
   const inviteToken = searchParams.get('inviteToken')
   const sessionExpired = searchParams.get('sessionExpired') === 'true'
   

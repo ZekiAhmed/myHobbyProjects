@@ -15,7 +15,7 @@ export default function InviteClient({ error }: InviteClientProps) {
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Error</h1>
         <p className="text-gray-600 mb-6">{error}</p>
         <Button
-          render={<Link href="/" />}
+          render={<Link href="/boards" />}
           nativeButton={false}
           className="bg-blue-600 text-white hover:bg-blue-700"
         >

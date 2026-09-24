@@ -89,10 +89,13 @@
 │   │   │   └── page.tsx
 │   │   └── verify-email/
 │   │       └── page.tsx
+│   ├── (marketing)/                        ← Route group — public landing, no auth
+│   │   ├── layout.tsx                      ← Landing nav + footer + metadata
+│   │   └── page.tsx                        ← Public landing hero (/, getOptionalSession CTA)
 │   ├── (app)/                             ← Route group — shared authed shell layout
 │   │   ├── layout.tsx                     ← QueryProvider + global nav
-│   │   ├── page.tsx                       ← Dashboard (prefetchQuery boards)
 │   │   └── boards/
+│   │       ├── page.tsx                   ← Dashboard — list of boards (prefetchQuery boards)
 │   │       └── [id]/
 │   │           ├── page.tsx               ← Kanban board (prefetchQuery detail + todos)
 │   │           └── settings/
@@ -608,7 +611,7 @@ export const todosQueryOptions = (id: string) =>
 ### Prefetch Points (Server Components)
 
 ```typescript
-// app/(app)/page.tsx — Dashboard
+// app/(app)/boards/page.tsx — Dashboard
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 
 export default async function DashboardPage() {

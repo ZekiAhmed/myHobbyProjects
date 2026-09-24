@@ -137,7 +137,8 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
 | Third-party integrations | Post-MVP |
 | Kanban customization (custom columns, WIP limits) | Post-MVP |
 | i18n | Not scoped — flag if non-English audience is confirmed |
-| Public marketing landing page | `/` is the auth-gated dashboard for now |
+
+> **Note:** A minimal public landing page now exists at `/` (shipped after initial MVP scope); the dashboard lives at `/boards`.
 
 > **Note:** Comments, Activity log, and Notifications were formerly listed here as "Post-MVP" *and* in §4 Should Have. They now live **only** in §4, where their designs are specified.
 
@@ -155,8 +156,8 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
   → Resend sends verification email
   → redirect to /verify-email ("Check your inbox")
   → user clicks link in email
-  → account verified
-  → redirect to / (dashboard)
+  → account verified → success message "Email verified successfully! You can now sign in."
+    (pending invite: accept it and → /boards/[id])
 ```
 
 #### Sign In
@@ -165,7 +166,7 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
   → enter email + password
   → if unverified: show "Please verify your email" + "Resend verification email" link
   → if verified: session created (7-day sliding)
-  → redirect to / (dashboard)
+  → redirect to /boards (dashboard)
     or to ?callbackUrl= destination if redirected from a protected route
 ```
 
@@ -228,7 +229,7 @@ Invitee clicks link → /invite/[token]:
 ### Dashboard Flow
 
 ```text
-/ (dashboard)
+/boards (dashboard)
   → Two sections:
     "Boards I Own" | "Boards I'm a Member of"
   → Each card: board name, member count, open todo count
@@ -281,7 +282,7 @@ Near-real-time:
   → Tags: create new tag (name + color), delete tag
   → Members: view all, remove a member, invite new member by email
   → Danger zone: "Delete Board" → confirm dialog → deletes board + all todos
-    → redirect to /
+    → redirect to /boards
 ```
 
 ---
@@ -307,13 +308,14 @@ Near-real-time:
 
 | Route | Auth Required | Notes |
 |-------|:-------------:|-------|
-| `/sign-in` | ❌ | Redirect to `/` if already authed |
-| `/sign-up` | ❌ | Redirect to `/` if already authed |
+| `/sign-in` | ❌ | Redirect to `/boards` if already authed |
+| `/sign-up` | ❌ | Redirect to `/boards` if already authed |
 | `/forgot-password` | ❌ | |
 | `/reset-password` | ❌ | Token validated server-side |
 | `/verify-email` | ❌ | |
 | `/invite/[token]` | ❌ Semi-public | Accessible without auth; token preserved through sign-in/sign-up |
-| `/` (dashboard) | ✅ | `getRequiredSession()` |
+| `/` (public landing) | ❌ | Minimal hero + CTA; CTA branches on session (signed-in → `/boards`) |
+| `/boards` (dashboard) | ✅ | `getRequiredSession()` + `proxy.ts` |
 | `/boards/[id]` | ✅ | `getRequiredSession()` + membership check |
 | `/boards/[id]/settings` | ✅ | `getRequiredSession()` + owner check |
 

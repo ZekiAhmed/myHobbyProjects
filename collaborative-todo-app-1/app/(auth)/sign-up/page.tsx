@@ -61,7 +61,7 @@ export default function SignUpPage() {
         if (inviteToken) {
           router.push(`/invite/${inviteToken}`)
         } else {
-          router.push('/')
+          router.push('/boards')
         }
       }
     }

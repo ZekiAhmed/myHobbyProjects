@@ -116,7 +116,7 @@ export function BoardSettingsClient({
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: boardKeys.all() })
         toast.success('Board deleted')
-        router.push('/')
+        router.push('/boards')
       } else {
         toast.error(result.error.message)
       }

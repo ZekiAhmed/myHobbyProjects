@@ -278,7 +278,7 @@ The kit is quiet and compact: 32px controls, semantic badge variants, ring-borde
 - **Focus rings on any control:** 3px ring-ring/50 (kit) or blue-500 (raw) — never remove the visible focus indicator.
 
 ### Navigation
-- **App shell:** A persistent top nav — neutral paper bar with a bottom hairline: the "Kanban" wordmark linking home on the left; the signed-in user's email (muted, truncated) and the white/Hard-Black-border Sign out toolbar control on the right (inverts to black/white on hover). Page headers sit below it via PageShell: board gets mobile back chevron + toolbar Settings + Ink-solid Add Todo (min-width 136px); Dashboard title + kit Ink New Board.
+- **App shell:** A persistent top nav — neutral paper bar with a bottom hairline: the "Kanban" wordmark linking to the dashboard (`/boards`) on the left; the signed-in user's email (muted, truncated) and the white/Hard-Black-border Sign out toolbar control on the right (inverts to black/white on hover). Page headers sit below it via PageShell: board gets mobile back chevron + toolbar Settings + Ink-solid Add Todo (min-width 136px); Dashboard title + kit Ink New Board.
 - **Links:** Signal Blue with hover deepen; footer prompts (sign-up swap) stay 14px neutral text + blue link.
 - **Auth layout:** Centered single card on Mist — the whole "navigation" is text links under the form. The invite landing uses the same panel.
 
