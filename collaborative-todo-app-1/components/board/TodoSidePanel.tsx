@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { boardKeys } from '@/lib/queries/board-keys'
 import { createTodo, updateTodo, deleteTodo } from '@/actions/todos'
+import { CommentFeed } from '@/components/board/CommentFeed'
 import {
   Sheet,
   SheetContent,
@@ -355,6 +356,10 @@ export function TodoSidePanel({
           {isPending ? 'Saving...' : isEditing ? 'Update' : 'Create'}
         </Button>
       </form>
+
+      {isEditing ? (
+        <CommentFeed key={todo.id} boardId={boardId} todoId={todo.id} />
+      ) : null}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

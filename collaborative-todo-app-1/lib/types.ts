@@ -5,7 +5,7 @@
  * Centralizing types prevents duplication and ensures consistency.
  */
 
-import type { Todo, BoardMember, Tag } from '@/lib/generated/prisma/browser'
+import type { Todo, BoardMember, Tag, Comment } from '@/lib/generated/prisma/browser'
 
 /**
  * Board type definition — matches the shape returned by Prisma
@@ -52,4 +52,23 @@ export type BoardDetail = {
     user: { id: string; name: string; email: string; image: string | null }
   })[]
   tags: Tag[]
+}
+
+/**
+ * Comment with its author — used by the Comment feed in TodoSidePanel
+ */
+export type CommentWithAuthor = Comment & {
+  author: { id: string; name: string; image: string | null }
+}
+
+/**
+ * One page of a Todo's Comment feed (GET /api/todos/[id]/comments).
+ *
+ * Comments inside a page are ordered oldest → newest.
+ * `nextCursor` is the id of the oldest returned comment when older pages
+ * exist (drives the "Load older" control), otherwise null.
+ */
+export type CommentFeedPage = {
+  comments: CommentWithAuthor[]
+  nextCursor: string | null
 }

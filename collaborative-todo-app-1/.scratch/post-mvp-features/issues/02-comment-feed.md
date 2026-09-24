@@ -4,12 +4,19 @@
 
 **Blocked by:** 01 — Post-launch schema
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Any board Member (and Owner) can create a plain-text Comment on a Todo via a server entrypoint; newline-preserving body stored
-- [ ] Comment feed read is membership-gated (same check as board detail); non-members cannot list or post even with a valid Todo id
-- [ ] Feed returns oldest → newest, 20 per page, with a continuation contract for "Load older" (infinite/progressive loading — never full-list fetch)
-- [ ] Feed renders inside the Todo side panel with the "Load older" control when more pages exist
-- [ ] Comment creation atomically emits an Activity row (comment created, actor, resource) alongside the domain write
-- [ ] Server-entrypoint tests cover: authorized create, rejected non-member create, page order and boundary, membership rejection on read — external behavior only, dependencies mocked per prior art
-- [ ] Mutations follow the two-cache invalidation rule (server revalidate + client invalidate) so the feed cannot go stale
+- [x] Any board Member (and Owner) can create a plain-text Comment on a Todo via a server entrypoint; newline-preserving body stored
+- [x] Comment feed read is membership-gated (same check as board detail); non-members cannot list or post even with a valid Todo id
+- [x] Feed returns oldest → newest, 20 per page, with a continuation contract for "Load older" (infinite/progressive loading — never full-list fetch)
+- [x] Feed renders inside the Todo side panel with the "Load older" control when more pages exist
+- [x] Comment creation atomically emits an Activity row (comment created, actor, resource) alongside the domain write
+- [x] Server-entrypoint tests cover: authorized create, rejected non-member create, page order and boundary, membership rejection on read — external behavior only, dependencies mocked per prior art
+- [x] Mutations follow the two-cache invalidation rule (server revalidate + client invalidate) so the feed cannot go stale
+
+## Comments
+
+- **Pagination direction:** "first 20 loaded with an explicit 'Load older' control for the rest" pairs with PRD §4.1 ("oldest → newest, 20/page … 'Load older' button at the top of the feed") only if page one is the newest 20-comment window and "Load older" prepends the previous window. User story 9's literal "load the oldest 20 first" is self-contradictory with a top "Load older" control (nothing older would exist to load) and with its own rationale ("page back through history deliberately"), so the ticket is implemented as: newest window first, items displayed oldest → newest, older pages prepended.
+- **Validation:** whitespace-only bodies rejected server-side; no body length cap (spec is silent — pasted logs/story 3 must not be truncated).
+- **Cursor scoping:** `?before=` cursors are looked up scoped to the todo, so a cursor id from another todo returns 400 rather than skewing pages.
+- **Shipped:** `actions/comments.ts` (createComment), `app/api/todos/[id]/comments/route.ts` (feed read), `components/board/CommentFeed.tsx` (feed + composer in the side panel), `commentFeedQueryOptions` in `lib/queries/board-keys.ts`. 14 new tests at the server-entrypoint seam; `npx tsc --noEmit`, `npx eslint`, and the full Vitest suite (65 tests) pass.

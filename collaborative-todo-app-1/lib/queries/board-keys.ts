@@ -12,8 +12,8 @@
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/query-options
  */
 
-import { queryOptions } from '@tanstack/react-query'
-import type { Board, BoardDetail, TodoWithRelations } from '@/lib/types'
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
+import type { Board, BoardDetail, CommentFeedPage, TodoWithRelations } from '@/lib/types'
 
 /**
  * Fetch JSON and fail loudly on non-2xx responses.
@@ -53,6 +53,7 @@ async function fetchJson<T = unknown>(url: string): Promise<T> {
  * - boardKeys.detail(id)        → ['boards', boardId]                (single board details)
  * - boardKeys.todos(id)         → ['boards', boardId, 'todos']       (todos for a board)
  * - boardKeys.invitations(id)   → ['boards', boardId, 'invitations'] (pending invitations)
+ * - boardKeys.comments(b, t)    → ['boards', b, 'todos', t, 'comments'] (Comment feed of one todo)
  *
  * The nested structure allows TanStack Query to invalidate related queries:
  * - Invalidating ['boards'] invalidates ALL board queries
@@ -74,6 +75,9 @@ export const boardKeys = {
   todos:  (id: string) => ['boards', id, 'todos']  as const,
   /** Pending invitations for a board query key — used in the InviteForm */
   invitations: (id: string) => ['boards', id, 'invitations'] as const,
+  /** Comment feed for a single todo — used by the Todo side panel */
+  comments: (boardId: string, todoId: string) =>
+    ['boards', boardId, 'todos', todoId, 'comments'] as const,
 }
 
 /**
@@ -198,4 +202,42 @@ export const todosQueryOptions = (id: string) =>
     gcTime:          300_000,
     refetchInterval: 8_000,
     retry:           3,
+  })
+
+/**
+ * Infinite query options for a Todo's Comment feed (20 per page, oldest → newest)
+ *
+ * WHAT IT DOES:
+ * - First page: GET /api/todos/[id]/comments → the newest 20 comments,
+ *   returned oldest → newest within the page
+ * - "Load older": GET /api/todos/[id]/comments?before=<nextCursor> → the
+ *   previous 20 comments (never a full-list fetch — spec "Pagination rule")
+ * - nextCursor === null means the start of the feed is reached
+ *
+ * CONFIGURATION:
+ * - staleTime: 0 — the feed is revalidated by the two-cache invalidation rule
+ *   after every comment mutation (server revalidateTag + client invalidate)
+ * - No polling: unlike todos, comment feeds are mutation-driven
+ *
+ * USAGE:
+ * - Client: useInfiniteQuery(commentFeedQueryOptions(boardId, todoId))
+ *
+ * @example
+ * const { data, fetchNextPage, hasNextPage } =
+ *   useInfiniteQuery(commentFeedQueryOptions('board1', 'todo1'))
+ */
+export const commentFeedQueryOptions = (boardId: string, todoId: string) =>
+  infiniteQueryOptions({
+    queryKey:        boardKeys.comments(boardId, todoId),
+    queryFn:         ({ pageParam }) =>
+      fetchJson<CommentFeedPage>(
+        `/api/todos/${todoId}/comments${
+          pageParam ? `?before=${encodeURIComponent(pageParam)}` : ''
+        }`
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: CommentFeedPage) => lastPage.nextCursor,
+    staleTime:        0,
+    gcTime:           300_000,
+    retry:            3,
   })
