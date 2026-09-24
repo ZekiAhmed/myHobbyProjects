@@ -64,6 +64,10 @@ interface TodoSidePanelProps {
   todo?: TodoWithRelations | null
   members: BoardMember[]
   tags: BoardTag[]
+  /** Signed-in user — Comment feed shows Edit only on their own Comments */
+  currentUserId: string
+  /** Board Owner — Comment feed shows Delete on any Comment (ADR-0001) */
+  isOwner: boolean
 }
 
 export function TodoSidePanel({
@@ -73,6 +77,8 @@ export function TodoSidePanel({
   todo,
   members,
   tags,
+  currentUserId,
+  isOwner,
 }: TodoSidePanelProps) {
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
@@ -358,7 +364,13 @@ export function TodoSidePanel({
       </form>
 
       {isEditing ? (
-        <CommentFeed key={todo.id} boardId={boardId} todoId={todo.id} />
+        <CommentFeed
+          key={todo.id}
+          boardId={boardId}
+          todoId={todo.id}
+          currentUserId={currentUserId}
+          isOwner={isOwner}
+        />
       ) : null}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

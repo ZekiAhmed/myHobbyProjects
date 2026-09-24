@@ -502,6 +502,8 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
         todo={selectedTodo}
         members={members}
         tags={tags}
+        currentUserId={currentUserId}
+        isOwner={isOwner}
       />
       </div>
     </PageShell>
