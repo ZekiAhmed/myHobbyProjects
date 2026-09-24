@@ -4,11 +4,11 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Comment model exists: todo relation (cascade), author relation (cascade), plain-text body, timestamps; no soft-delete/tombstone column (ADR-0001)
-- [ ] Activity model exists: board cascade, nullable actor with `SetNull`, free-string action and resource type (not enums — ADR-0002), nullable IP address, board+time index
-- [ ] Notification model exists: recipient cascade, nullable actor `SetNull`, board cascade, todo cascade, nullable `readAt`, type enum limited to assignment and comment events, unread and recency indexes
-- [ ] Back-relations added on User (authored comments, acted Activity, received/perpetrated Notifications), Board (Activity, Notifications), Todo (comments, Notifications)
-- [ ] Single migration applies cleanly on a fresh database and on an existing MVP database; generated client typechecks
-- [ ] Existing test suite still passes with zero behavior changes
+- [x] Comment model exists: todo relation (cascade), author relation (cascade), plain-text body, timestamps; no soft-delete/tombstone column (ADR-0001)
+- [x] Activity model exists: board cascade, nullable actor with `SetNull`, free-string action and resource type (not enums — ADR-0002), nullable IP address, board+time index
+- [x] Notification model exists: recipient cascade, nullable actor `SetNull`, board cascade, todo cascade, nullable `readAt`, type enum limited to assignment and comment events, unread and recency indexes
+- [x] Back-relations added on User (authored comments, acted Activity, received/perpetrated Notifications), Board (Activity, Notifications), Todo (comments, Notifications)
+- [x] Single migration applies cleanly on a fresh database and on an existing MVP database; generated client typechecks
+- [x] Existing test suite still passes with zero behavior changes
