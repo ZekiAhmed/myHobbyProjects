@@ -136,3 +136,23 @@ export type NotificationFeedPage = {
   nextCursor: string | null
   unreadCount: number
 }
+
+/**
+ * One Active session of the acting user's Account Security tab
+ * (listActiveSessions).
+ *
+ * The row is Better Auth's own Session record, rendered for self-service
+ * only: device is the human label parsed from the stored user agent, ip
+ * falls back to `"Unknown IP"` when Better Auth captured none, and
+ * isCurrent marks the session making the call. Session tokens are
+ * deliberately absent - the tab revokes by row id, so tokens never reach
+ * the client.
+ */
+export type ActiveSession = {
+  id: string
+  device: string
+  ip: string
+  createdAt: Date | string
+  expiresAt: Date | string
+  isCurrent: boolean
+}

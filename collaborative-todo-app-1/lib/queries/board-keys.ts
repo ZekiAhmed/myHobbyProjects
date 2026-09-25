@@ -2,7 +2,8 @@
  * @fileoverview Board Query Keys & Client-Side Query Options
  *
  * This file contains:
- * 1. Query Key Factory — consistent cache keys for board data
+ * 1. Query Key Factories — consistent cache keys for board data, the
+ *    acting user's Notifications, and their Active sessions
  * 2. TanStack Query Options — client-side fetch configuration
  *
  * IMPORTANT: This is a CLIENT-SAFE file.
@@ -101,6 +102,19 @@ export const boardKeys = {
 export const notificationKeys = {
   /** The bell's single feed query (page + unread count) */
   all: () => ['notifications'] as const,
+}
+
+/**
+ * Query Key Factory for the acting user's Active sessions (Account
+ * Security tab).
+ *
+ * Self-scoped by design — `listActiveSessions` only ever returns the
+ * signed-in user's rows, so there is no per-user argument. Invalidating
+ * `sessionKeys.all()` refetches the list after any revoke.
+ */
+export const sessionKeys = {
+  /** The Security tab's single Active sessions query */
+  all: () => ['sessions'] as const,
 }
 
 /**

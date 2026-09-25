@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Settings } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { NotificationBell } from '@/components/NotificationBell'
 
@@ -20,6 +21,13 @@ export function AppNav({ email }: { email: string }) {
             {email}
           </span>
           <NotificationBell />
+          <Link
+            href="/settings"
+            aria-label="Account settings"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[4px] border border-transparent text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <Settings className="h-4 w-4" aria-hidden="true" />
+          </Link>
           <SignOutButton />
         </div>
       </div>
