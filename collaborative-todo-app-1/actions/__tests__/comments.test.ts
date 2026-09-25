@@ -7,6 +7,11 @@
  * 2. A non-member is rejected with an authorization error even with a valid Todo id
  * 3. Comment creation atomically emits an Activity row (comment created, actor, resource)
  *
+ * Notifications (ticket 06): createComment also fans out COMMENTED rows to
+ * the Todo's assignee and each prior commenter — that recipient matrix is
+ * asserted in actions/__tests__/notifications.test.ts. Edits and deletes
+ * assert here that they emit NO Notification row.
+ *
  * updateComment:
  * 4. The author can edit their own Comment body (feed reflects the new text/updatedAt)
  * 5. Only the author — a non-author Member AND the board Owner are rejected
@@ -32,11 +37,15 @@ const prismaMock = vi.hoisted(() => ({
   boardMember: { findFirst: vi.fn() },
   comment: {
     create: vi.fn(),
+    findMany: vi.fn(),
     findUnique: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
   },
   activity: { create: vi.fn() },
+  // createComment also fans out COMMENTED Notifications (ticket 06) inside
+  // the same transaction — mocked so the domain write still succeeds here.
+  notification: { create: vi.fn() },
   $transaction: vi.fn(),
 }))
 const revalidateTagMock = vi.hoisted(() => vi.fn())
@@ -114,8 +123,12 @@ beforeEach(() => {
         delete: prismaMock.comment.delete,
       },
       activity: { create: prismaMock.activity.create },
+      notification: { create: prismaMock.notification.create },
     })
   )
+  // No prior Commenters unless a test primes them — the default feed state
+  // is an unassigned Todo with nobody talking yet.
+  prismaMock.comment.findMany.mockResolvedValue([])
   prismaMock.comment.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
     id: 'comment_1',
     body: data.body,
@@ -335,6 +348,19 @@ describe('updateComment — Activity and cache', () => {
     expect(prismaMock.activity.create).not.toHaveBeenCalled()
   })
 
+  it('emits no Notification rows — an edit notifies no one (ticket 06)', async () => {
+    signIn(MEMBER_ID)
+    primeComment({ authorId: MEMBER_ID })
+    primeBoardOwnedBy(OWNER_ID)
+    primeMembership([MEMBER_ID])
+
+    const result = await updateComment({ commentId: 'comment_1', body: 'Rewritten' })
+
+    expect(result.success).toBe(true)
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+    expect(revalidateTagMock).not.toHaveBeenCalledWith('notifications', 'max')
+  })
+
   it('revalidates the server cache for the Comment feed (two-cache rule)', async () => {
     signIn(MEMBER_ID)
     primeComment({ authorId: MEMBER_ID })
@@ -449,6 +475,19 @@ describe('deleteComment — Activity emission', () => {
       })
     )
     expect(prismaMock.activity.create.mock.calls[0][0].data).not.toHaveProperty('body')
+  })
+
+  it('emits no Notification rows — a deletion only affects Activity (ticket 06)', async () => {
+    signIn(MEMBER_ID)
+    primeComment({ authorId: MEMBER_ID })
+    primeBoardOwnedBy(OWNER_ID)
+    primeMembership([MEMBER_ID])
+
+    const result = await deleteComment('comment_1')
+
+    expect(result.success).toBe(true)
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+    expect(revalidateTagMock).not.toHaveBeenCalledWith('notifications', 'max')
   })
 
   it('revalidates the server cache for the Comment feed (two-cache rule)', async () => {

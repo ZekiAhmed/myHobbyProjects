@@ -6,6 +6,7 @@ import { getRequiredSession } from '@/lib/session'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
+import { commentNotifications } from '@/lib/notifications'
 import type { CommentWithAuthor } from '@/lib/types'
 
 /** Plain-text body rule shared by create and edit: non-blank, no length cap. */
@@ -42,6 +43,16 @@ async function verifyBoardMembership(boardId: string, userId: string) {
   return { isOwner, error: null }
 }
 
+/**
+ * Create a Comment on a Todo — board members and the board Owner alike.
+ *
+ * The write emits two rows atomically with the Comment itself: the
+ * `comment.created` Activity entry (ADR-0002) and one `COMMENTED`
+ * Notification per recipient — the Todo's assignee and each prior
+ * commenter, minus the author and minus duplicates (ticket 06). A sole
+ * commenter on an unassigned Todo therefore emits Notifications for nobody,
+ * and the `notifications` cache tag is revalidated only when a row landed.
+ */
 export async function createComment(input: {
   todoId: string
   body: string
@@ -57,13 +68,29 @@ export async function createComment(input: {
 
     const existingTodo = await prisma.todo.findUnique({
       where: { id: parsed.data.todoId },
-      select: { boardId: true },
+      select: { boardId: true, assigneeId: true },
     })
 
     if (!existingTodo) return actionError('server', 'Todo not found')
 
     const membershipResult = await verifyBoardMembership(existingTodo.boardId, session.user.id)
     if (membershipResult.error) return membershipResult
+
+    // Prior Comment authors, read before the new Comment is written: the
+    // recipient set is exactly "who already spoke on this Todo".
+    const priorCommenters = await prisma.comment.findMany({
+      where: { todoId: parsed.data.todoId },
+      distinct: ['authorId'],
+      select: { authorId: true },
+    })
+
+    const notificationRows = commentNotifications({
+      assigneeId: existingTodo.assigneeId,
+      priorCommenterIds: priorCommenters.map((prior) => prior.authorId),
+      actorId: session.user.id,
+      boardId: existingTodo.boardId,
+      todoId: parsed.data.todoId,
+    })
 
     const ipAddress = await getBestEffortIp()
 
@@ -88,11 +115,16 @@ export async function createComment(input: {
         }),
       })
 
+      for (const data of notificationRows) {
+        await tx.notification.create({ data })
+      }
+
       return created
     })
 
     revalidateTag('comments', 'max')
     revalidateTag('activity', 'max')
+    if (notificationRows.length > 0) revalidateTag('notifications', 'max')
 
     return actionSuccess(comment)
   } catch {
