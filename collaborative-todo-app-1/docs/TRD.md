@@ -488,6 +488,7 @@ export const config = {
 | `GET` | `/api/boards` | `getRequiredSession()` | `findMany` where `ownerId = userId` OR `members.some({ userId })`. Include `_count` for member + open todo counts. |
 | `GET` | `/api/boards/[id]` | `getRequiredSession()` + membership check | `$transaction([findBoard, findMembers, findTags])` — one DB round-trip for all board metadata |
 | `GET` | `/api/boards/[id]/todos` | `getRequiredSession()` + membership check | `findMany` where `boardId`. Include `assignee: { select: { id, name, image } }` and `tags`. Supports optional `?status=` filter param. `orderBy: { order: 'asc' }` |
+| `GET` | `/api/notifications` | `getRequiredSession()` | `count` (unread, `readAt: null`) + `findMany` where `userId`, newest-first, `take: PAGE_SIZE + 1` with `?before=` keyset cursor. Returns `{ notifications, nextCursor, unreadCount }` |
 | `GET` | `/api/health` | None | `db.$queryRaw\`SELECT 1\`` — returns `200 OK` or `503` |
 
 **Membership check pattern** (used in `/api/boards/[id]` and `/api/boards/[id]/todos`):

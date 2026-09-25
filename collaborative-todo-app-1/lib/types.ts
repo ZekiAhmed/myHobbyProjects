@@ -103,3 +103,36 @@ export type ActivityFeedPage = {
   activities: ActivityWithActor[]
   nextCursor: string | null
 }
+
+/**
+ * One Notification for the dropdown — the recipient's row with its actor and
+ * Todo resolved.
+ *
+ * `actor` is null once the account that caused it is erased (`Notification.
+ * actorId` is `SetNull`). Only the addressed user ever reads their rows:
+ * the bell is self-scoped, with no board-level view.
+ */
+export type NotificationWithRefs = {
+  id: string
+  type: 'ASSIGNED' | 'COMMENTED'
+  readAt: Date | string | null
+  createdAt: Date | string
+  boardId: string
+  actor: { id: string; name: string; image: string | null } | null
+  todo: { id: string; title: string }
+}
+
+/**
+ * One page of the acting user's Notification dropdown
+ * (GET /api/notifications).
+ *
+ * Rows are newest → oldest (the dropdown's display order). `nextCursor` is
+ * the id of the oldest returned row when older pages exist, otherwise null.
+ * `unreadCount` is the bell badge value — the count of this user's rows with
+ * `readAt` null — so one poll refreshes badge and list together.
+ */
+export type NotificationFeedPage = {
+  notifications: NotificationWithRefs[]
+  nextCursor: string | null
+  unreadCount: number
+}

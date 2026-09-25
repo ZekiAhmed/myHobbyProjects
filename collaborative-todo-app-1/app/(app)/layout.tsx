@@ -15,10 +15,12 @@ export default async function AppLayout({
 }) {
   const session = await getRequiredSession()
 
+  // AppNav must live inside QueryProvider: the global Notification bell it
+  // renders reads TanStack Query (badge + dropdown poll).
   return (
-    <>
+    <QueryProvider>
       <AppNav email={session.user.email} />
-      <QueryProvider>{children}</QueryProvider>
-    </>
+      {children}
+    </QueryProvider>
   )
 }

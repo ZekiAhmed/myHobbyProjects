@@ -18,6 +18,7 @@ import type {
   Board,
   BoardDetail,
   CommentFeedPage,
+  NotificationFeedPage,
   TodoWithRelations,
 } from '@/lib/types'
 
@@ -87,6 +88,19 @@ export const boardKeys = {
   /** Comment feed for a single todo — used by the Todo side panel */
   comments: (boardId: string, todoId: string) =>
     ['boards', boardId, 'todos', todoId, 'comments'] as const,
+}
+
+/**
+ * Query Key Factory for the acting user's Notification dropdown.
+ *
+ * Self-scoped by design — there is no per-board or per-user argument because
+ * GET /api/notifications only ever returns the signed-in user's rows.
+ * Invalidating `notificationKeys.all()` invalidates the whole bell surface
+ * (badge + list), which is what every Notification mutation needs.
+ */
+export const notificationKeys = {
+  /** The bell's single feed query (page + unread count) */
+  all: () => ['notifications'] as const,
 }
 
 /**
@@ -286,5 +300,43 @@ export const activityFeedQueryOptions = (boardId: string) =>
     getNextPageParam: (lastPage: ActivityFeedPage) => lastPage.nextCursor,
     staleTime:        0,
     gcTime:           300_000,
+    retry:            3,
+  })
+
+/**
+ * Infinite query options for the Notification dropdown (20 per page,
+ * newest → oldest)
+ *
+ * WHAT IT DOES:
+ * - First page: GET /api/notifications → the newest 20 Notifications plus
+ *   the badge value (`unreadCount`)
+ * - "Load more": GET /api/notifications?before=<nextCursor> → the previous
+ *   20 rows (never a full-list fetch — spec "Pagination rule")
+ * - nextCursor === null means the start of the list is reached
+ *
+ * CONFIGURATION:
+ * - refetchInterval: 8_000ms — the same poll cadence as todos, so a
+ *   teammate's assignment appears without a manual refresh (spec req 41)
+ * - staleTime: 0 — the feed and badge are revalidated by the two-cache
+ *   invalidation rule after every Notification mutation
+ *
+ * USAGE:
+ * - Client: useInfiniteQuery(notificationsQueryOptions())
+ *
+ * @example
+ * const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(notificationsQueryOptions())
+ */
+export const notificationsQueryOptions = () =>
+  infiniteQueryOptions({
+    queryKey:        notificationKeys.all(),
+    queryFn:         ({ pageParam }) =>
+      fetchJson<NotificationFeedPage>(
+        `/api/notifications${pageParam ? `?before=${encodeURIComponent(pageParam)}` : ''}`
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: NotificationFeedPage) => lastPage.nextCursor,
+    staleTime:        0,
+    gcTime:           300_000,
+    refetchInterval:  8_000,
     retry:            3,
   })

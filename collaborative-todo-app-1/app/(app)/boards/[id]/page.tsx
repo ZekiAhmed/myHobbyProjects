@@ -37,10 +37,14 @@ import { prisma } from '@/lib/db'
  */
 export default async function BoardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ todo?: string | string[] }>
 }) {
   const { id } = await params
+  const sp = await searchParams
+  const focusTodoId = Array.isArray(sp?.todo) ? sp.todo[0] : sp?.todo
   const session = await getRequiredSession()
 
   // Authorize — match API owner-or-member rule (hypothesis #1 fix)
@@ -72,7 +76,11 @@ export default async function BoardPage({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Suspense fallback={<div>Loading board...</div>}>
-        <KanbanBoard boardId={id} currentUserId={session.user.id} />
+        <KanbanBoard
+          boardId={id}
+          currentUserId={session.user.id}
+          focusTodoId={focusTodoId ?? null}
+        />
       </Suspense>
     </HydrationBoundary>
   )

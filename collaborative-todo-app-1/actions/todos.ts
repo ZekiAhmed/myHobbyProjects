@@ -7,6 +7,7 @@ import { generateKeyBetween } from 'fractional-indexing'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
+import { assignmentNotificationData, isAssignedToSomeoneElse } from '@/lib/notifications'
 
 const CreateTodoSchema = z.object({
   boardId: z.string(),
@@ -118,6 +119,12 @@ export async function createTodo(input: {
     const status = parsed.data.status ?? 'TO_DO'
     const order = await getOrderForPosition(parsed.data.boardId, status)
     const ipAddress = await getBestEffortIp()
+    // A Todo created already assigned is an assignment: the assignee is told,
+    // except when the creator assigns themself (spec — targeted only).
+    const assignedToSomeoneElse = isAssignedToSomeoneElse(
+      parsed.data.assigneeId,
+      session.user.id
+    )
 
     const todo = await prisma.$transaction(async (tx) => {
       const created = await tx.todo.create({
@@ -148,11 +155,23 @@ export async function createTodo(input: {
         }),
       })
 
+      if (assignedToSomeoneElse) {
+        await tx.notification.create({
+          data: assignmentNotificationData({
+            assigneeId: parsed.data.assigneeId,
+            actorId: session.user.id,
+            boardId: parsed.data.boardId,
+            todoId: created.id,
+          }),
+        })
+      }
+
       return created
     })
 
     revalidateTag('todos', 'max')
     revalidateTag('activity', 'max')
+    if (assignedToSomeoneElse) revalidateTag('notifications', 'max')
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {
@@ -208,6 +227,11 @@ export async function updateTodo(
     const assigneeChanged =
       parsed.data.assigneeId !== undefined &&
       parsed.data.assigneeId !== existingTodo.assigneeId
+    // Targeted-only emission: the new assignee is notified, except on
+    // self-assignment. Bystanders (owner, other members) never get a row.
+    const assignedToSomeoneElse =
+      assigneeChanged &&
+      isAssignedToSomeoneElse(parsed.data.assigneeId, session.user.id)
     const ipAddress =
       statusChanged || assigneeChanged ? await getBestEffortIp() : null
 
@@ -253,6 +277,17 @@ export async function updateTodo(
         })
       }
 
+      if (assignedToSomeoneElse) {
+        await tx.notification.create({
+          data: assignmentNotificationData({
+            assigneeId: parsed.data.assigneeId,
+            actorId: session.user.id,
+            boardId: existingTodo.boardId,
+            todoId,
+          }),
+        })
+      }
+
       return updated
     })
 
@@ -260,6 +295,7 @@ export async function updateTodo(
     if (statusChanged || assigneeChanged) {
       revalidateTag('activity', 'max')
     }
+    if (assignedToSomeoneElse) revalidateTag('notifications', 'max')
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {

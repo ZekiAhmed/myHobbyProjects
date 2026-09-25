@@ -21,7 +21,7 @@
 
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -52,6 +52,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { ArrowLeft, Activity as ActivityIcon, Settings } from 'lucide-react'
 import { generateKeyBetween } from 'fractional-indexing'
+import { onFocusTodo } from '@/lib/focus-todo'
 import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations, BoardDetail } from '@/lib/types'
 
@@ -67,8 +68,18 @@ import type { TodoWithRelations, BoardDetail } from '@/lib/types'
  *
  * @param boardId - The ID of the board to display
  * @param currentUserId - The ID of the current user (used to show settings only for owner)
+ * @param focusTodoId - Todo id from a `?todo=` deep link (Notification
+ *   click-through) — opens the side panel on that Todo once it is loaded
  */
-export function KanbanBoard({ boardId, currentUserId }: { boardId: string; currentUserId: string }) {
+export function KanbanBoard({
+  boardId,
+  currentUserId,
+  focusTodoId = null,
+}: {
+  boardId: string
+  currentUserId: string
+  focusTodoId?: string | null
+}) {
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   
@@ -87,6 +98,39 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
   // Fetch board detail and todos
   const { data: board } = useQuery(boardDetailQueryOptions(boardId) as ReturnType<typeof boardDetailQueryOptions> & { queryKey: readonly ["boards", string] })
   const { data: todos = [] } = useQuery(todosQueryOptions(boardId) as ReturnType<typeof todosQueryOptions> & { queryKey: readonly ["boards", string, "todos"] })
+
+  // Deep link (?todo=<id>): Notification click-through lands here with the
+  // side panel focused on that Todo. Adjusted during render per
+  // https://react.dev/learn/you-might-not-need-an-effect — once per id, so
+  // closing the panel doesn't reopen it, while a new click-through id does.
+  const [handledFocusId, setHandledFocusId] = useState<string | null>(null)
+  if (focusTodoId && handledFocusId !== focusTodoId) {
+    const target = todos.find((todo) => todo.id === focusTodoId)
+    if (target) {
+      setHandledFocusId(focusTodoId)
+      setSelectedTodo(target)
+      setSidePanelOpen(true)
+    } else if (todos.length > 0) {
+      // The query has landed but the id isn't on this board (deleted Todo)
+      setHandledFocusId(focusTodoId)
+    }
+  }
+
+  // Same-Todo repeat click-through: the bell's `?todo=` URL is identical to
+  // the current one, so navigation is a no-op and the block above never
+  // re-runs. The bell emits an event in that case; answer it here (a browser
+  // event, so setState inside the handler is legal).
+  useEffect(
+    () =>
+      onFocusTodo((todoId) => {
+        const target = todos.find((todo) => todo.id === todoId)
+        if (!target) return
+        setHandledFocusId(todoId)
+        setSelectedTodo(target)
+        setSidePanelOpen(true)
+      }),
+    [todos]
+  )
 
   // Quick-complete mutation
   const completeMutation = useMutation({

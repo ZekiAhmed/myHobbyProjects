@@ -44,6 +44,9 @@ const prismaMock = vi.hoisted(() => ({
   todoTag: { deleteMany: vi.fn(), createMany: vi.fn() },
   tag: { findUnique: vi.fn(), create: vi.fn(), delete: vi.fn() },
   activity: { create: vi.fn() },
+  // Assignment writes also emit a targeted Notification (ticket 05) inside
+  // the same transaction — mocked so the domain write still succeeds here.
+  notification: { create: vi.fn() },
   $transaction: vi.fn(),
 }))
 const revalidateTagMock = vi.hoisted(() => vi.fn())

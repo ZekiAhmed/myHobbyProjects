@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { SignOutButton } from '@/components/SignOutButton'
+import { NotificationBell } from '@/components/NotificationBell'
 
 export function AppNav({ email }: { email: string }) {
   return (
@@ -18,6 +19,7 @@ export function AppNav({ email }: { email: string }) {
           >
             {email}
           </span>
+          <NotificationBell />
           <SignOutButton />
         </div>
       </div>
