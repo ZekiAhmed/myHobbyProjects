@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { PageShell } from '@/components/PageShell'
 import { SignOutButton } from '@/components/SignOutButton'
 import { ActiveSessions } from '@/components/settings/ActiveSessions'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface AccountSettingsClientProps {
@@ -49,6 +50,18 @@ export function AccountSettingsClient({ name, email }: AccountSettingsClientProp
             <div className="mt-4 border-t border-gray-200 pt-4">
               <SignOutButton />
             </div>
+          </section>
+
+          <section className="mt-4 bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+            <h3 className="text-xl font-semibold text-gray-900 mb-1">Your data</h3>
+            <p className="text-sm text-gray-500 mb-3">
+              Download a JSON copy of your personal data: profile, Active sessions, boards,
+              todos, comments, notifications, activity, and invitations. Password hashes,
+              session tokens, and invite tokens are never included.
+            </p>
+            <Button variant="outline" render={<a href="/api/me/export" />}>
+              Export my data
+            </Button>
           </section>
         </TabsContent>
 
