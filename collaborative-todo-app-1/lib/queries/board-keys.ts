@@ -13,7 +13,13 @@
  */
 
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
-import type { Board, BoardDetail, CommentFeedPage, TodoWithRelations } from '@/lib/types'
+import type {
+  ActivityFeedPage,
+  Board,
+  BoardDetail,
+  CommentFeedPage,
+  TodoWithRelations,
+} from '@/lib/types'
 
 /**
  * Fetch JSON and fail loudly on non-2xx responses.
@@ -53,6 +59,7 @@ async function fetchJson<T = unknown>(url: string): Promise<T> {
  * - boardKeys.detail(id)        → ['boards', boardId]                (single board details)
  * - boardKeys.todos(id)         → ['boards', boardId, 'todos']       (todos for a board)
  * - boardKeys.invitations(id)   → ['boards', boardId, 'invitations'] (pending invitations)
+ * - boardKeys.activity(id)      → ['boards', boardId, 'activity']     (Activity feed)
  * - boardKeys.comments(b, t)    → ['boards', b, 'todos', t, 'comments'] (Comment feed of one todo)
  *
  * The nested structure allows TanStack Query to invalidate related queries:
@@ -75,6 +82,8 @@ export const boardKeys = {
   todos:  (id: string) => ['boards', id, 'todos']  as const,
   /** Pending invitations for a board query key — used in the InviteForm */
   invitations: (id: string) => ['boards', id, 'invitations'] as const,
+  /** Activity feed for a board — used by the board Activity page */
+  activity: (id: string) => ['boards', id, 'activity'] as const,
   /** Comment feed for a single todo — used by the Todo side panel */
   comments: (boardId: string, todoId: string) =>
     ['boards', boardId, 'todos', todoId, 'comments'] as const,
@@ -237,6 +246,44 @@ export const commentFeedQueryOptions = (boardId: string, todoId: string) =>
       ),
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage: CommentFeedPage) => lastPage.nextCursor,
+    staleTime:        0,
+    gcTime:           300_000,
+    retry:            3,
+  })
+
+/**
+ * Infinite query options for a board's Activity feed (20 per page, newest → oldest)
+ *
+ * WHAT IT DOES:
+ * - First page: GET /api/boards/[id]/activity → the newest 20 entries,
+ *   returned newest → oldest (the feed's display order)
+ * - "Load older": GET /api/boards/[id]/activity?before=<nextCursor> → the
+ *   previous 20 entries (never a full-list fetch — spec "Pagination rule")
+ * - nextCursor === null means the start of the log is reached
+ *
+ * CONFIGURATION:
+ * - staleTime: 0 — every mount refetches the first page, so catching up after
+ *   other work never shows a stale log
+ * - No polling: unlike todos, the feed is mutation-driven
+ *
+ * USAGE:
+ * - Client: useInfiniteQuery(activityFeedQueryOptions(boardId))
+ *
+ * @example
+ * const { data, fetchNextPage, hasNextPage } =
+ *   useInfiniteQuery(activityFeedQueryOptions('board1'))
+ */
+export const activityFeedQueryOptions = (boardId: string) =>
+  infiniteQueryOptions({
+    queryKey:        boardKeys.activity(boardId),
+    queryFn:         ({ pageParam }) =>
+      fetchJson<ActivityFeedPage>(
+        `/api/boards/${boardId}/activity${
+          pageParam ? `?before=${encodeURIComponent(pageParam)}` : ''
+        }`
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage: ActivityFeedPage) => lastPage.nextCursor,
     staleTime:        0,
     gcTime:           300_000,
     retry:            3,

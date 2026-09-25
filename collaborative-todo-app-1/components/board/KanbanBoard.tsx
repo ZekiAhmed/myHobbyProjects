@@ -50,7 +50,7 @@ import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { ArrowLeft, Activity as ActivityIcon, Settings } from 'lucide-react'
 import { generateKeyBetween } from 'fractional-indexing'
 import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations, BoardDetail } from '@/lib/types'
@@ -382,6 +382,13 @@ export function KanbanBoard({ boardId, currentUserId }: { boardId: string; curre
       }
       actions={
         <div className="flex items-center gap-2">
+          <Link
+            href={`/boards/${boardId}/activity`}
+            className="inline-flex h-8 items-center justify-center rounded-[4px] border border-black bg-white px-4 text-sm font-medium tracking-[0.01em] text-black no-underline transition-[transform,background-color,color] duration-100 hover:bg-black hover:text-white active:translate-y-px"
+            aria-label="Activity feed"
+          >
+            {isMobile ? <ActivityIcon className="h-5 w-5" /> : 'Activity'}
+          </Link>
           {isOwner && (
             <Link
               href={`/boards/${boardId}/settings`}

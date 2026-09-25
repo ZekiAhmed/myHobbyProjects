@@ -24,6 +24,7 @@ import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { activityData, getBestEffortIp } from '@/lib/activity'
 
 /**
  * Removes a member from a board. Only the board owner can do this.
@@ -31,9 +32,13 @@ import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
  * WHAT HAPPENS:
  * 1. Authenticates the current user
  * 2. Verifies the user is the board owner
- * 3. Deletes the BoardMember record
+ * 3. Deletes the BoardMember record and writes a `member.removed` Activity
+ *    entry in the same transaction (ADR-0002 taxonomy)
  * 4. Todos assigned to the removed member become unassigned (SetNull)
  * 5. Invalidates the board-detail cache
+ *
+ * ACTIVITY RESOURCE: `USER` + the removed member's id — the BoardMember row is
+ * gone, but the member's own id keeps the entry attributable at read time.
  *
  * @param boardId - The board to remove the member from
  * @param userId - The ID of the member to remove
@@ -66,11 +71,27 @@ export async function removeMember(boardId: string, userId: string): Promise<Act
       return actionError('validation', 'User is not a member of this board')
     }
 
-    await prisma.boardMember.delete({
-      where: { id: member.id },
+    const ipAddress = await getBestEffortIp()
+
+    await prisma.$transaction(async (tx) => {
+      await tx.boardMember.delete({
+        where: { id: member.id },
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId,
+          actorId: session.user.id,
+          action: 'member.removed',
+          resourceType: 'USER',
+          resourceId: userId,
+          ipAddress,
+        }),
+      })
     })
 
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ success: true as const })
   } catch {
@@ -84,7 +105,8 @@ export async function removeMember(boardId: string, userId: string): Promise<Act
  * WHAT HAPPENS:
  * 1. Authenticates the current user
  * 2. Checks the user is not the board owner (owner cannot leave)
- * 3. Deletes the user's own BoardMember record
+ * 3. Deletes the user's own BoardMember record and writes a `member.left`
+ *    Activity entry in the same transaction (ADR-0002 taxonomy)
  * 4. Invalidates both 'boards' and 'board-detail' cache tags
  *
  * WHY CANNOT OWNER LEAVE?
@@ -119,12 +141,28 @@ export async function leaveBoard(boardId: string): Promise<ActionResult<{ succes
       return actionError('validation', 'You are not a member of this board')
     }
 
-    await prisma.boardMember.delete({
-      where: { id: member.id },
+    const ipAddress = await getBestEffortIp()
+
+    await prisma.$transaction(async (tx) => {
+      await tx.boardMember.delete({
+        where: { id: member.id },
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId,
+          actorId: session.user.id,
+          action: 'member.left',
+          resourceType: 'USER',
+          resourceId: session.user.id,
+          ipAddress,
+        }),
+      })
     })
 
     revalidateTag('boards', 'max')
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ success: true as const })
   } catch {

@@ -31,6 +31,7 @@ import { getRequiredSession } from '@/lib/session'
 import { generateInviteToken, getInvitationExpiry, isTokenExpired } from '@/lib/utils/invite-tokens'
 import { sendInvitationEmail } from '@/lib/email'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { activityData, getBestEffortIp } from '@/lib/activity'
 
 type InvitationData = {
   id: string
@@ -50,7 +51,8 @@ type InvitationData = {
  * 2. Verifies the user is the board owner
  * 3. Checks if the email is already a member or has a pending invite
  * 4. Generates a cryptographically secure token
- * 5. Creates an Invitation record with 48h expiry
+ * 5. Creates an Invitation record with 48h expiry, and a `member.invited`
+ *    Activity entry in the same transaction (ADR-0002 taxonomy)
  * 6. Sends an invitation email via Resend
  * 7. Invalidates the board-detail cache
  *
@@ -96,14 +98,30 @@ export async function createInvitation(boardId: string, email: string): Promise<
 
     const token = generateInviteToken()
     const expiresAt = getInvitationExpiry()
+    const ipAddress = await getBestEffortIp()
 
-    const invitation = await prisma.invitation.create({
-      data: {
-        boardId,
-        email,
-        token,
-        expiresAt,
-      },
+    const invitation = await prisma.$transaction(async (tx) => {
+      const created = await tx.invitation.create({
+        data: {
+          boardId,
+          email,
+          token,
+          expiresAt,
+        },
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId,
+          actorId: session.user.id,
+          action: 'member.invited',
+          resourceType: 'INVITATION',
+          resourceId: created.id,
+          ipAddress,
+        }),
+      })
+
+      return created
     })
 
     try {
@@ -113,6 +131,7 @@ export async function createInvitation(boardId: string, email: string): Promise<
     }
 
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess(invitation)
   } catch {
@@ -167,7 +186,8 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
  * 1. Authenticates the current user via session
  * 2. Validates the token exists and is not expired
  * 3. Checks the invitation status is PENDING
- * 4. Creates a BoardMember record linking the user to the board
+ * 4. Creates a BoardMember record linking the user to the board, and writes a
+ *    `member.joined` Activity entry in the same transaction
  * 5. Updates the invitation status to ACCEPTED
  * 6. Invalidates both 'boards' and 'board-detail' cache tags
  *
@@ -224,21 +244,36 @@ export async function acceptInvitation(token: string): Promise<ActionResult<{ bo
       return actionSuccess({ boardId: invitation.boardId })
     }
 
-    await prisma.$transaction([
-      prisma.boardMember.create({
+    const ipAddress = await getBestEffortIp()
+
+    await prisma.$transaction(async (tx) => {
+      await tx.boardMember.create({
         data: {
           boardId: invitation.boardId,
           userId,
         },
-      }),
-      prisma.invitation.update({
+      })
+      await tx.invitation.update({
         where: { id: invitation.id },
         data: { status: 'ACCEPTED' },
-      }),
-    ])
+      })
+
+      // The join is the domain change; the Activity entry lands with it.
+      await tx.activity.create({
+        data: activityData({
+          boardId: invitation.boardId,
+          actorId: userId,
+          action: 'member.joined',
+          resourceType: 'USER',
+          resourceId: userId,
+          ipAddress,
+        }),
+      })
+    })
 
     revalidateTag('boards', 'max')
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ boardId: invitation.boardId })
   } catch {

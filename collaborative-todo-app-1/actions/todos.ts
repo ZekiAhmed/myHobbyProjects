@@ -6,6 +6,7 @@ import { getRequiredSession } from '@/lib/session'
 import { generateKeyBetween } from 'fractional-indexing'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { activityData, getBestEffortIp } from '@/lib/activity'
 
 const CreateTodoSchema = z.object({
   boardId: z.string(),
@@ -116,25 +117,42 @@ export async function createTodo(input: {
 
     const status = parsed.data.status ?? 'TO_DO'
     const order = await getOrderForPosition(parsed.data.boardId, status)
+    const ipAddress = await getBestEffortIp()
 
-    const todo = await prisma.todo.create({
-      data: {
-        title: parsed.data.title,
-        description: parsed.data.description,
-        status,
-        priority: parsed.data.priority ?? 'MEDIUM',
-        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-        order,
-        boardId: parsed.data.boardId,
-        assigneeId: parsed.data.assigneeId,
-        tags: parsed.data.tagIds?.length
-          ? { create: parsed.data.tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
-      },
-      include: todoInclude,
+    const todo = await prisma.$transaction(async (tx) => {
+      const created = await tx.todo.create({
+        data: {
+          title: parsed.data.title,
+          description: parsed.data.description,
+          status,
+          priority: parsed.data.priority ?? 'MEDIUM',
+          dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+          order,
+          boardId: parsed.data.boardId,
+          assigneeId: parsed.data.assigneeId,
+          tags: parsed.data.tagIds?.length
+            ? { create: parsed.data.tagIds.map((tagId) => ({ tagId })) }
+            : undefined,
+        },
+        include: todoInclude,
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId: parsed.data.boardId,
+          actorId: session.user.id,
+          action: 'todo.created',
+          resourceType: 'TODO',
+          resourceId: created.id,
+          ipAddress,
+        }),
+      })
+
+      return created
     })
 
     revalidateTag('todos', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {
@@ -165,7 +183,7 @@ export async function updateTodo(
 
     const existingTodo = await prisma.todo.findUnique({
       where: { id: todoId },
-      select: { boardId: true },
+      select: { boardId: true, status: true, assigneeId: true },
     })
 
     if (!existingTodo) return actionError('server', 'Todo not found')
@@ -182,6 +200,17 @@ export async function updateTodo(
     if (parsed.data.dueDate !== undefined) updateData.dueDate = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null
     if (parsed.data.assigneeId !== undefined) updateData.assigneeId = parsed.data.assigneeId
 
+    // ADR-0002: only the two collaboration-relevant changes emit Activity.
+    // Title/description/priority/due-date edits and tag retags are field-level
+    // noise and must stay out of the feed.
+    const statusChanged =
+      parsed.data.status !== undefined && parsed.data.status !== existingTodo.status
+    const assigneeChanged =
+      parsed.data.assigneeId !== undefined &&
+      parsed.data.assigneeId !== existingTodo.assigneeId
+    const ipAddress =
+      statusChanged || assigneeChanged ? await getBestEffortIp() : null
+
     if (parsed.data.tagIds !== undefined) {
       await prisma.todoTag.deleteMany({ where: { todoId } })
       if (parsed.data.tagIds.length > 0) {
@@ -191,13 +220,46 @@ export async function updateTodo(
       }
     }
 
-    const todo = await prisma.todo.update({
-      where: { id: todoId },
-      data: updateData,
-      include: todoInclude,
+    const todo = await prisma.$transaction(async (tx) => {
+      const updated = await tx.todo.update({
+        where: { id: todoId },
+        data: updateData,
+        include: todoInclude,
+      })
+
+      if (statusChanged) {
+        await tx.activity.create({
+          data: activityData({
+            boardId: existingTodo.boardId,
+            actorId: session.user.id,
+            action: 'todo.status_changed',
+            resourceType: 'TODO',
+            resourceId: todoId,
+            ipAddress,
+          }),
+        })
+      }
+
+      if (assigneeChanged) {
+        await tx.activity.create({
+          data: activityData({
+            boardId: existingTodo.boardId,
+            actorId: session.user.id,
+            action: 'todo.assignee_changed',
+            resourceType: 'TODO',
+            resourceId: todoId,
+            ipAddress,
+          }),
+        })
+      }
+
+      return updated
     })
 
     revalidateTag('todos', 'max')
+    if (statusChanged || assigneeChanged) {
+      revalidateTag('activity', 'max')
+    }
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {
@@ -219,9 +281,27 @@ export async function deleteTodo(todoId: string): Promise<ActionResult<{ success
     const membershipResult = await verifyBoardMembership(existingTodo.boardId, session.user.id)
     if (membershipResult.error) return membershipResult
 
-    await prisma.todo.delete({ where: { id: todoId } })
+    const ipAddress = await getBestEffortIp()
+
+    await prisma.$transaction(async (tx) => {
+      await tx.todo.delete({ where: { id: todoId } })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId: existingTodo.boardId,
+          actorId: session.user.id,
+          action: 'todo.deleted',
+          // The Todo row is gone by design — its id IS the compliance record.
+          // BOARD/boardId would only repeat the entry's own boardId.
+          resourceType: 'TODO',
+          resourceId: todoId,
+          ipAddress,
+        }),
+      })
+    })
 
     revalidateTag('todos', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ success: true as const })
   } catch {
@@ -246,14 +326,31 @@ export async function quickCompleteTodo(todoId: string): Promise<ActionResult<To
     const newStatus = existingTodo.status === 'DONE' ? 'TO_DO' : 'DONE'
 
     const order = await getOrderForPosition(existingTodo.boardId, newStatus)
+    const ipAddress = await getBestEffortIp()
 
-    const todo = await prisma.todo.update({
-      where: { id: todoId },
-      data: { status: newStatus, order },
-      include: todoInclude,
+    const todo = await prisma.$transaction(async (tx) => {
+      const updated = await tx.todo.update({
+        where: { id: todoId },
+        data: { status: newStatus, order },
+        include: todoInclude,
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId: existingTodo.boardId,
+          actorId: session.user.id,
+          action: 'todo.status_changed',
+          resourceType: 'TODO',
+          resourceId: todoId,
+          ipAddress,
+        }),
+      })
+
+      return updated
     })
 
     revalidateTag('todos', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {
@@ -261,6 +358,12 @@ export async function quickCompleteTodo(todoId: string): Promise<ActionResult<To
   }
 }
 
+/**
+ * Drag reorder only — status untouched.
+ *
+ * Emits NO Activity row: reorders are field-level noise and never appear in
+ * the feed (ADR-0002).
+ */
 export async function updateTodoOrder(todoId: string, newOrder: string): Promise<ActionResult<TodoWithRelations>> {
   try {
     const session = await getRequiredSession()
@@ -299,7 +402,7 @@ export async function updateTodoStatusAndOrder(
 
     const existingTodo = await prisma.todo.findUnique({
       where: { id: todoId },
-      select: { boardId: true },
+      select: { boardId: true, status: true },
     })
 
     if (!existingTodo) return actionError('server', 'Todo not found')
@@ -307,15 +410,39 @@ export async function updateTodoStatusAndOrder(
     const membershipResult = await verifyBoardMembership(existingTodo.boardId, session.user.id)
     if (membershipResult.error) return membershipResult
 
+    // Dragging a todo inside its current column changes `order` only — that is
+    // a reorder, which never emits Activity (ADR-0002). A real column change
+    // does, atomically with the write.
+    const statusChanged = existingTodo.status !== newStatus
+    const ipAddress = statusChanged ? await getBestEffortIp() : null
+
     const todo = await prisma.$transaction(async (tx) => {
-      return tx.todo.update({
+      const updated = await tx.todo.update({
         where: { id: todoId },
         data: { status: newStatus, order: newOrder },
         include: todoInclude,
       })
+
+      if (statusChanged) {
+        await tx.activity.create({
+          data: activityData({
+            boardId: existingTodo.boardId,
+            actorId: session.user.id,
+            action: 'todo.status_changed',
+            resourceType: 'TODO',
+            resourceId: todoId,
+            ipAddress,
+          }),
+        })
+      }
+
+      return updated
     })
 
     revalidateTag('todos', 'max')
+    if (statusChanged) {
+      revalidateTag('activity', 'max')
+    }
 
     return actionSuccess(todo as TodoWithRelations)
   } catch {

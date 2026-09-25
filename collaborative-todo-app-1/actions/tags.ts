@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { activityData, getBestEffortIp } from '@/lib/activity'
 
 const CreateTagSchema = z.object({
   boardId: z.string(),
@@ -40,15 +41,33 @@ export async function createTag(input: {
     const ownershipError = await verifyBoardOwnership(parsed.data.boardId, session.user.id)
     if (ownershipError) return ownershipError
 
-    const tag = await prisma.tag.create({
-      data: {
-        name: parsed.data.name,
-        color: parsed.data.color,
-        boardId: parsed.data.boardId,
-      },
+    const ipAddress = await getBestEffortIp()
+
+    const tag = await prisma.$transaction(async (tx) => {
+      const created = await tx.tag.create({
+        data: {
+          name: parsed.data.name,
+          color: parsed.data.color,
+          boardId: parsed.data.boardId,
+        },
+      })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId: parsed.data.boardId,
+          actorId: session.user.id,
+          action: 'tag.created',
+          resourceType: 'TAG',
+          resourceId: created.id,
+          ipAddress,
+        }),
+      })
+
+      return created
     })
 
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess(tag)
   } catch (error) {
@@ -73,9 +92,26 @@ export async function deleteTag(tagId: string): Promise<ActionResult<{ success: 
     const ownershipError = await verifyBoardOwnership(existingTag.boardId, session.user.id)
     if (ownershipError) return ownershipError
 
-    await prisma.tag.delete({ where: { id: tagId } })
+    const ipAddress = await getBestEffortIp()
+
+    await prisma.$transaction(async (tx) => {
+      await tx.tag.delete({ where: { id: tagId } })
+
+      await tx.activity.create({
+        data: activityData({
+          boardId: existingTag.boardId,
+          actorId: session.user.id,
+          action: 'tag.deleted',
+          // The Tag row is gone — its id is the record of which tag went.
+          resourceType: 'TAG',
+          resourceId: tagId,
+          ipAddress,
+        }),
+      })
+    })
 
     revalidateTag('board-detail', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ success: true as const })
   } catch {

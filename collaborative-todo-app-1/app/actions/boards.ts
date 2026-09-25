@@ -31,6 +31,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getRequiredSession } from "@/lib/session";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors";
+import { activityData, getBestEffortIp } from "@/lib/activity";
 
 type BoardData = {
   id: string;
@@ -99,7 +100,8 @@ export async function createBoard(
  * 1. Authenticates the user
  * 2. Fetches the board from the database
  * 3. Checks if the current user is the owner (returns error if not)
- * 4. Updates the board name
+ * 4. Updates the board name and writes a `board.renamed` Activity entry in the
+ *    same transaction (ADR-0002 taxonomy)
  * 5. Invalidates both 'boards' and 'board-detail' cache tags
  * 6. Returns the updated board
  *
@@ -143,17 +145,37 @@ export async function renameBoard(
       );
     }
 
-    // Step 4: Update the board name in the database
-    const updatedBoard = await prisma.board.update({
-      where: { id: boardId },
-      data: { name: name.trim() },
+    // Step 4: Update the board name, and emit the board renamed Activity
+    // entry in the same transaction (ADR-0002 taxonomy — atomic with the
+    // domain change so the feed cannot drift from reality).
+    const ipAddress = await getBestEffortIp();
+    const updatedBoard = await prisma.$transaction(async (tx) => {
+      const updated = await tx.board.update({
+        where: { id: boardId },
+        data: { name: name.trim() },
+      });
+
+      await tx.activity.create({
+        data: activityData({
+          boardId,
+          actorId: session.user.id,
+          action: "board.renamed",
+          resourceType: "BOARD",
+          resourceId: boardId,
+          ipAddress,
+        }),
+      });
+
+      return updated;
     });
 
     // Step 5: Invalidate both cache tags
     // 'boards' — affects the dashboard list of boards
     // 'board-detail' — affects the individual board page (name displayed there)
+    // 'activity' — the board's Activity feed now holds the rename entry
     revalidateTag("boards", "max");
     revalidateTag("board-detail", "max");
+    revalidateTag("activity", "max");
 
     // Return the updated board for the client to use
     return actionSuccess(updatedBoard);
@@ -175,6 +197,7 @@ export async function renameBoard(
  *    - All tags in the board
  *    - All board memberships (BoardMember records)
  *    - All pending invitations
+ *    - All Activity entries (the Activity log dies with its board — no orphaned feed)
  * 5. Invalidates the 'boards' cache tag
  *
  * CASCADE DELETION:

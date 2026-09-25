@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidateTag } from 'next/cache'
-import { headers } from 'next/headers'
 import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { activityData, getBestEffortIp } from '@/lib/activity'
 import type { CommentWithAuthor } from '@/lib/types'
 
 /** Plain-text body rule shared by create and edit: non-blank, no length cap. */
@@ -40,19 +40,6 @@ async function verifyBoardMembership(boardId: string, userId: string) {
   }
 
   return { isOwner, error: null }
-}
-
-async function getBestEffortIp(): Promise<string | null> {
-  try {
-    const requestHeaders = await headers()
-    return (
-      requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      requestHeaders.get('x-real-ip') ||
-      null
-    )
-  } catch {
-    return null
-  }
 }
 
 export async function createComment(input: {
@@ -91,20 +78,21 @@ export async function createComment(input: {
       })
 
       await tx.activity.create({
-        data: {
+        data: activityData({
           boardId: existingTodo.boardId,
           actorId: session.user.id,
           action: 'comment.created',
           resourceType: 'COMMENT',
           resourceId: created.id,
           ipAddress,
-        },
+        }),
       })
 
       return created
     })
 
     revalidateTag('comments', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess(comment)
   } catch {
@@ -216,7 +204,7 @@ export async function deleteComment(commentId: string): Promise<ActionResult<{ s
       await tx.comment.delete({ where: { id: commentId } })
 
       await tx.activity.create({
-        data: {
+        data: activityData({
           boardId: comment.todo.boardId,
           actorId: session.user.id,
           action: 'comment.deleted',
@@ -226,11 +214,12 @@ export async function deleteComment(commentId: string): Promise<ActionResult<{ s
           resourceType: 'TODO',
           resourceId: comment.todo.id,
           ipAddress,
-        },
+        }),
       })
     })
 
     revalidateTag('comments', 'max')
+    revalidateTag('activity', 'max')
 
     return actionSuccess({ success: true as const })
   } catch {

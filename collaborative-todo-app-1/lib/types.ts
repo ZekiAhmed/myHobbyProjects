@@ -72,3 +72,34 @@ export type CommentFeedPage = {
   comments: CommentWithAuthor[]
   nextCursor: string | null
 }
+
+/**
+ * One Activity entry with its actor resolved — used by the board Activity feed.
+ *
+ * `actor` is null once the account that performed the entry is erased
+ * (`Activity.actorId` is `SetNull`); the feed renders that as "Former member".
+ * A member who was merely removed from the board keeps their name.
+ *
+ * `ipAddress` is a compliance column (ADR-0002) and is deliberately not
+ * returned to board members.
+ */
+export type ActivityWithActor = {
+  id: string
+  action: string
+  resourceType: string
+  resourceId: string
+  createdAt: Date | string
+  actor: { id: string; name: string; image: string | null } | null
+}
+
+/**
+ * One page of a board's Activity feed (GET /api/boards/[id]/activity).
+ *
+ * Entries inside a page are ordered newest → oldest (the feed's display
+ * order). `nextCursor` is the id of the oldest returned entry when older
+ * pages exist (drives the "Load older" control), otherwise null.
+ */
+export type ActivityFeedPage = {
+  activities: ActivityWithActor[]
+  nextCursor: string | null
+}
