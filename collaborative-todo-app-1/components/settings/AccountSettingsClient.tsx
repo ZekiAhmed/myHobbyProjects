@@ -59,7 +59,7 @@ export function AccountSettingsClient({ name, email }: AccountSettingsClientProp
               todos, comments, notifications, activity, and invitations. Password hashes,
               session tokens, and invite tokens are never included.
             </p>
-            <Button variant="outline" render={<a href="/api/me/export" />}>
+            <Button variant="outline" render={<a href="/api/me/export" />} nativeButton={false}>
               Export my data
             </Button>
           </section>
