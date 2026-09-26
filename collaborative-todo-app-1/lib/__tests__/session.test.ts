@@ -60,6 +60,19 @@ vi.mock('next/headers', () => ({
  */
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  forbidden: vi.fn(),
+}))
+
+/**
+ * Mock the database module.
+ *
+ * requireAdmin reads the platform role (subscription-billing issue 01) from
+ * the user row — mocked here so role outcomes are controlled per test.
+ */
+vi.mock('@/lib/db', () => ({
+  prisma: {
+    user: { findUnique: vi.fn() },
+  },
 }))
 
 /**
@@ -209,5 +222,105 @@ describe('session helpers', () => {
       // Verify redirect was called with correct URL
       expect(redirect).toHaveBeenCalledWith('/sign-in')
     })
+  })
+})
+
+/**
+ * Tests for requireAdmin() — the platform Administrator gate
+ * (subscription-billing issue 01).
+ *
+ * The helper sits alongside getRequiredSession and is the single deny point
+ * for the admin area: Administrators get their session back, signed-in
+ * regular users hit forbidden() (a 403), and signed-out visitors are sent
+ * to sign-in exactly like every other protected route.
+ */
+describe('requireAdmin', () => {
+  const ADMIN_ID = 'user_admin'
+  const REGULAR_ID = 'user_regular'
+
+  function signIn(userId: string) {
+    const mockSession = {
+      user: { id: userId, email: `${userId}@t.dev`, name: 'Test User' },
+      session: { id: 'session1', token: 'token1' },
+    }
+    return mockSession
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns the session when the signed-in user is an Administrator', async () => {
+    const mockSession = signIn(ADMIN_ID)
+    const { auth } = await import('@/lib/auth')
+    vi.mocked(auth.api.getSession).mockResolvedValue(
+      mockSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>
+    )
+    const { prisma } = await import('@/lib/db')
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'ADMINISTRATOR' } as never)
+
+    const { requireAdmin } = await import('@/lib/session')
+    const session = await requireAdmin()
+
+    expect(session).toEqual(mockSession)
+    // the role belongs to the signed-in user — nobody else's row is consulted
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: ADMIN_ID },
+      select: { role: true },
+    })
+  })
+
+  it('throws forbidden() when the signed-in user is a regular user', async () => {
+    const mockSession = signIn(REGULAR_ID)
+    const { auth } = await import('@/lib/auth')
+    vi.mocked(auth.api.getSession).mockResolvedValue(
+      mockSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>
+    )
+    const { prisma } = await import('@/lib/db')
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ role: 'REGULAR' } as never)
+    const { forbidden } = await import('next/navigation')
+    vi.mocked(forbidden).mockImplementation(() => {
+      throw new Error('Forbidden')
+    })
+
+    const { requireAdmin } = await import('@/lib/session')
+
+    await expect(requireAdmin()).rejects.toThrow('Forbidden')
+    expect(forbidden).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws forbidden() when the session has no matching user row', async () => {
+    const mockSession = signIn('user_deleted')
+    const { auth } = await import('@/lib/auth')
+    vi.mocked(auth.api.getSession).mockResolvedValue(
+      mockSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>
+    )
+    const { prisma } = await import('@/lib/db')
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+    const { forbidden } = await import('next/navigation')
+    vi.mocked(forbidden).mockImplementation(() => {
+      throw new Error('Forbidden')
+    })
+
+    const { requireAdmin } = await import('@/lib/session')
+
+    await expect(requireAdmin()).rejects.toThrow('Forbidden')
+    expect(forbidden).toHaveBeenCalledTimes(1)
+  })
+
+  it('redirects to sign-in when not authenticated, without consulting any role', async () => {
+    const { auth } = await import('@/lib/auth')
+    vi.mocked(auth.api.getSession).mockResolvedValue(null)
+    const { redirect } = await import('next/navigation')
+    vi.mocked(redirect).mockImplementation(() => {
+      throw new Error('Redirect')
+    })
+    const { prisma } = await import('@/lib/db')
+
+    const { requireAdmin } = await import('@/lib/session')
+
+    await expect(requireAdmin()).rejects.toThrow('Redirect')
+    expect(redirect).toHaveBeenCalledWith('/sign-in')
+    expect(prisma.user.findUnique).not.toHaveBeenCalled()
   })
 })

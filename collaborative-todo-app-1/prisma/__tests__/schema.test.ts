@@ -192,3 +192,26 @@ describe('post-mvp schema (TRD §12)', () => {
     })
   })
 })
+
+/**
+ * Platform Administrator role (subscription-billing issue 01).
+ *
+ * The platform role is deliberately distinct from the board Owner role —
+ * CONTEXT.md bans "admin" for board roles, so the enum vocabulary is
+ * "regular" vs "Administrator" and lives only on the user model.
+ */
+describe('platform Administrator role (subscription-billing 01)', () => {
+  describe('User model', () => {
+    const user = block('model', 'User')
+
+    it('carries a role field typed by the UserRole enum', () => {
+      expect(user).toContain('role UserRole @default(REGULAR)')
+    })
+  })
+
+  describe('UserRole enum', () => {
+    it('is exactly regular + administrator, defaulting conceptually to regular', () => {
+      expect(block('enum', 'UserRole')).toEqual(['REGULAR', 'ADMINISTRATOR'])
+    })
+  })
+})

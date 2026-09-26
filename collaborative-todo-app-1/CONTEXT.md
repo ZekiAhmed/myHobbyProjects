@@ -74,6 +74,12 @@ _Avoid_: alert, ping, inbox item
 The number of a user's Notifications with no `readAt` — surfaced as the global nav bell badge.
 _Avoid_: badge count (as a domain term)
 
+### Platform administration
+
+**Administrator**:
+A platform-wide role — independent of board membership — whose holder approves subscription payments and admits or releases other Administrators.
+_Avoid_: admin (as a role), superuser, root, platform admin
+
 ### Account & privacy
 
 **Active session**:

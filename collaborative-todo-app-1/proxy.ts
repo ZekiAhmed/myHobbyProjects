@@ -24,8 +24,10 @@ import { getSessionCookie } from 'better-auth/cookies'
 /**
  * Routes that require authentication.
  * Users without a session cookie will be redirected to /sign-in.
+ * /admin is the platform Administrator area — the cookie check is only the
+ * fast path; requireAdmin() enforces the role (403) server-side.
  */
-const protectedRoutes = ['/boards', '/settings']
+const protectedRoutes = ['/boards', '/settings', '/admin']
 
 /**
  * Main proxy function that runs for every matched request.

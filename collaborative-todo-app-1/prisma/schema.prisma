@@ -25,6 +25,11 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
+  // Platform role (subscription-billing): distinct from board ownership.
+  // REGULAR is the default for every new account; the first ADMINISTRATOR
+  // is promoted by the one-time scripts/promote-first-admin.mjs, and
+  // thereafter only by other Administrators (actions/admin.ts).
+  role          UserRole @default(REGULAR)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -40,6 +45,14 @@ model User {
   activities         Activity[]     @relation("ActivityActor")
   notifications      Notification[] @relation("NotificationRecipient")
   actedNotifications Notification[] @relation("NotificationActor")
+}
+
+// The platform Administrator role — never called "admin" for board roles
+// (CONTEXT.md bans "admin" as a synonym for Owner); this is the separate
+// platform-level role that approves payments and manages the admin area.
+enum UserRole {
+  REGULAR
+  ADMINISTRATOR
 }
 
 model Session {
