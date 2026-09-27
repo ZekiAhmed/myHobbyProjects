@@ -215,3 +215,86 @@ describe('platform Administrator role (subscription-billing 01)', () => {
     })
   })
 })
+
+/**
+ * Pricing & bank-details settings (subscription-billing issue 02).
+ *
+ * A single admin-editable record is the source of truth the upgrade
+ * screen reads (spec §Money: price, currency, account holder, account
+ * number, bank name, transfer instructions; seed = 100 ETB + placeholder
+ * bank fields). The 6–15 digit account-number rule is a form/action
+ * validation, not a column constraint — the column stays a plain string.
+ */
+describe('pricing & bank-details settings (subscription-billing 02)', () => {
+  describe('PricingSettings model', () => {
+    const settings = block('model', 'PricingSettings')
+
+    it('has exactly the designed fields — no extras', () => {
+      expect(fieldNames(settings)).toEqual([
+        'id',
+        'price',
+        'currency',
+        'accountHolder',
+        'accountNumber',
+        'bankName',
+        'transferInstructions',
+        'createdAt',
+        'updatedAt',
+      ])
+    })
+
+    it('is a singleton row keyed by a constant id', () => {
+      expect(lineStarting(settings, 'id')).toBe('id String @id @default("singleton")')
+    })
+
+    it('keeps price an integer amount and account number a plain string (digit validation is app-level)', () => {
+      expect(lineStarting(settings, 'price')).toMatch(/^price Int$/)
+      expect(lineStarting(settings, 'currency')).toMatch(/^currency String$/)
+      expect(lineStarting(settings, 'accountNumber')).toMatch(/^accountNumber String$/)
+      expect(lineStarting(settings, 'bankName')).toMatch(/^bankName String$/)
+    })
+
+    it('stores transfer instructions as long-form text with timestamps', () => {
+      expect(lineStarting(settings, 'transferInstructions')).toMatch(
+        /^transferInstructions String @db\.Text$/
+      )
+      expect(lineStarting(settings, 'createdAt')).toMatch(/^createdAt DateTime @default\(now\(\)\)$/)
+      expect(lineStarting(settings, 'updatedAt')).toMatch(/^updatedAt DateTime @updatedAt$/)
+    })
+  })
+
+  describe('migrations', () => {
+    const tableMigration = readFileSync(
+      path.join(__dirname, '..', 'migrations', '20260927220823_pricing_settings', 'migration.sql'),
+      'utf8'
+    )
+    const seedMigration = readFileSync(
+      path.join(
+        __dirname,
+        '..',
+        'migrations',
+        '20260928000000_seed_pricing_settings',
+        'migration.sql'
+      ),
+      'utf8'
+    )
+
+    it('creates the PricingSettings table', () => {
+      expect(tableMigration).toContain('CREATE TABLE "PricingSettings"')
+    })
+
+    it('seeds 100 ETB with placeholder bank fields owned by the migration (spec §Money)', () => {
+      const insert = seedMigration.match(/INSERT INTO "PricingSettings"[\s\S]*?;/)
+      expect(insert).not.toBeNull()
+      const values = insert![0]
+      // the singleton row with the spec's seed price and currency
+      expect(values).toMatch(/'singleton',\s*100,\s*'ETB'/)
+      // placeholders exist for every bank field, and the seeded account
+      // number obeys the 6–15 digit rule the save action enforces
+      expect(values).toMatch(/'Placeholder Account Holder'/)
+      expect(values).toMatch(/'\d{6,15}'/)
+      expect(values).toMatch(/'Placeholder Bank'/)
+      expect(values).toMatch(/'Transfer the exact amount/)
+    })
+  })
+})

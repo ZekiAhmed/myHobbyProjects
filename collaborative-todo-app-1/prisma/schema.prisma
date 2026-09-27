@@ -330,3 +330,31 @@ enum NotificationType {
   ASSIGNED
   COMMENTED
 }
+
+// ============================================
+// SUBSCRIPTION-BILLING MODELS (spec: manual
+// bank-transfer subscription with admin approval)
+// ============================================
+
+model PricingSettings {
+  // The single admin-editable pricing/bank-details record — one row,
+  // keyed by a constant id, seeded by its migration
+  // (20260928000000_seed_pricing_settings: 100 ETB + placeholder bank
+  // fields); reads never write, and a missing row falls back to the seed
+  // defaults in memory (lib/pricing-settings.ts). The upgrade screen
+  // reads it as the source of truth; submissions snapshot price+currency
+  // at creation time (spec §Money), so later edits never invalidate an
+  // in-flight payment.
+  //
+  // `accountNumber` is a plain string on purpose: the 6–15 digit rule is
+  // a form/action validation (issue 02), not a column constraint.
+  id                   String   @id @default("singleton")
+  price                Int // whole units of `currency` (100 = 100 ETB)
+  currency             String // ISO 4217 code, e.g. "ETB"
+  accountHolder        String
+  accountNumber        String // 6–15 digits, validated in the action
+  bankName             String
+  transferInstructions String   @db.Text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}

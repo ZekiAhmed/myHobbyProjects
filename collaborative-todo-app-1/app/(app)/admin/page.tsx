@@ -10,15 +10,17 @@
  * This is the platform role (payment approval), deliberately distinct
  * from the board Owner role.
  *
- * The area starts minimal: the user list with in-app promote/demote
- * controls (RoleManager). Later tickets hang the review queue and the
- * pricing/bank-details settings off this gate.
+ * The area grows with the tickets that hang off this gate: role
+ * management (01), pricing/bank-details settings (02), and later the
+ * payment review queue.
  */
 
 import { requireAdmin } from '@/lib/session'
 import { prisma } from '@/lib/db'
+import { getPricingSettings } from '@/lib/pricing-settings'
 import { PageShell } from '@/components/PageShell'
 import { RoleManager } from '@/components/admin/RoleManager'
+import { PricingSettingsForm } from '@/components/admin/PricingSettingsForm'
 
 export default async function AdminPage() {
   const session = await requireAdmin()
@@ -28,6 +30,12 @@ export default async function AdminPage() {
     orderBy: { createdAt: 'asc' },
   })
 
+  // Read only after requireAdmin passed: the settings record is
+  // Administrator-only. The read never writes — the migration seeds
+  // the record, and a missing row falls back to the seed defaults
+  // in memory (lib/pricing-settings.ts).
+  const settings = await getPricingSettings()
+
   return (
     <PageShell title="Administration">
       <div className="space-y-4">
@@ -36,6 +44,7 @@ export default async function AdminPage() {
           subscription payments and manage who holds the Administrator role.
         </p>
         <RoleManager users={users} currentUserId={session.user.id} />
+        <PricingSettingsForm settings={settings} />
         <section className="rounded-lg border p-4">
           <h2 className="font-semibold">Payment review queue</h2>
           <p className="text-sm text-muted-foreground">
