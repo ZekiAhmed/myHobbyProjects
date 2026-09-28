@@ -21,6 +21,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PaymentInstructionCard } from '@/components/subscription/PaymentInstructionCard'
 import type { PricingSettingsInput } from '@/lib/pricing-settings-schema'
 
@@ -84,7 +85,14 @@ describe('PaymentInstructionCard', () => {
   async function render() {
     await act(async () => {
       root = createRoot(container)
-      root.render(<PaymentInstructionCard submission={SUBMISSION} settings={SETTINGS} />)
+      // the hosted receipt upload form (issue 05) reads TanStack Query for
+      // its post-upload billing invalidation (issue 06), so it needs the
+      // same provider the app shell supplies
+      root.render(
+        <QueryClientProvider client={new QueryClient()}>
+          <PaymentInstructionCard submission={SUBMISSION} settings={SETTINGS} />
+        </QueryClientProvider>
+      )
     })
   }
 

@@ -9,13 +9,18 @@
  * signed-in user's one non-terminal attempt:
  * - live AWAITING_UPLOAD → the payment instruction card replaces the
  *   Subscribe CTA (reference, snapshotted amount, bank details)
- * - PENDING → an "under review" note, never a second attempt
+ * - PENDING → the waiting-experience status card instead of the pay CTA
+ *   (issue 06: canonical 24-hour promise copy, reference, amount — no
+ *   further action, everything else on the screen unchanged)
  * - nothing / stale (48h TTL passed) → the Subscribe CTA. A stale row
  *   is NOT rendered as live and NOT flipped here — rendering never
  *   writes; the EXPIRED flip happens inside the subscribe action's
  *   transaction (issue 04).
+ * A "View billing history" link is always present: the durable record of
+ * every attempt (spec story 14) is one click away from any state.
  */
 
+import Link from 'next/link'
 import { getRequiredSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { getPricingSettings } from '@/lib/pricing-settings'
@@ -23,6 +28,7 @@ import { NON_TERMINAL_PAYMENT_STATUSES } from '@/lib/subscription'
 import { PageShell } from '@/components/PageShell'
 import { SubscribeButton } from '@/components/subscription/SubscribeButton'
 import { PaymentInstructionCard } from '@/components/subscription/PaymentInstructionCard'
+import { PaymentStatusCard } from '@/components/subscription/PaymentStatusCard'
 
 export default async function UpgradePage() {
   const session = await getRequiredSession()
@@ -59,14 +65,7 @@ export default async function UpgradePage() {
         {awaitingReceipt ? (
           <PaymentInstructionCard submission={awaitingReceipt} settings={settings} />
         ) : underReview ? (
-          <section className="rounded-lg border p-4">
-            <h2 className="font-semibold">Payment under review</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your payment for reference {underReview.reference} was submitted and is reviewed
-              within 24 hours. You will be notified of the decision — no further action needed,
-              and nothing else on this screen changes.
-            </p>
-          </section>
+          <PaymentStatusCard submission={underReview} />
         ) : (
           <section className="rounded-lg border p-4">
             <h2 className="font-semibold">Start a payment attempt</h2>
@@ -79,6 +78,15 @@ export default async function UpgradePage() {
             </div>
           </section>
         )}
+
+        <p className="text-sm text-muted-foreground">
+          <Link
+            href="/billing"
+            className="underline underline-offset-4 transition-colors hover:text-foreground"
+          >
+            View billing history
+          </Link>
+        </p>
       </div>
     </PageShell>
   )

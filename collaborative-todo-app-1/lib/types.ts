@@ -5,7 +5,7 @@
  * Centralizing types prevents duplication and ensures consistency.
  */
 
-import type { Todo, BoardMember, Tag, Comment } from '@/lib/generated/prisma/browser'
+import type { Todo, BoardMember, Tag, Comment, PaymentStatus } from '@/lib/generated/prisma/browser'
 
 /**
  * Board type definition — matches the shape returned by Prisma
@@ -155,4 +155,27 @@ export type ActiveSession = {
   createdAt: Date | string
   expiresAt: Date | string
   isCurrent: boolean
+}
+
+/**
+ * One payment attempt as billing history renders it
+ * (GET /api/billing/submissions).
+ *
+ * Metadata only — receipt bytes are deliberately absent from the wire
+ * (they are read behind the admin gate, never on this path). Dates are
+ * `Date | string` because the route serialises them to ISO strings while
+ * server-side reads can still hand over `Date`s.
+ *
+ * `updatedAt` doubles as the "last activity" timestamp: the receipt
+ * upload (and every later status change) bumps it.
+ */
+export type BillingSubmission = {
+  id: string
+  reference: string
+  status: PaymentStatus
+  priceSnapshot: number
+  currencySnapshot: string
+  createdAt: Date | string
+  updatedAt: Date | string
+  expiresAt: Date | string
 }

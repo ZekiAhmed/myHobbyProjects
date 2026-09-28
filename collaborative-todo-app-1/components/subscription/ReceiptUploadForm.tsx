@@ -22,8 +22,10 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/lib/toast'
+import { billingKeys } from '@/lib/queries/board-keys'
 import {
   RECEIPT_MAX_BYTES,
   RECEIPT_MIME_TYPES,
@@ -42,6 +44,7 @@ type UploadState =
 
 export function ReceiptUploadForm({ reference }: ReceiptUploadFormProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
   const [memoConfirmed, setMemoConfirmed] = useState(false)
   const [state, setState] = useState<UploadState>({ phase: 'idle' })
@@ -81,6 +84,10 @@ export function ReceiptUploadForm({ reference }: ReceiptUploadFormProps) {
 
       setState({ phase: 'success' })
       toast.success('Receipt submitted for review')
+      // the attempt just flipped to PENDING: invalidate the billing reads
+      // so the pending-review banner appears now, not at the query's next
+      // focus/refetch trigger (subscription-billing issue 06)
+      queryClient.invalidateQueries({ queryKey: billingKeys.all() })
       // flip the screen to the server-rendered "payment under review"
       // section — the definitive state, not just this component's view
       router.refresh()

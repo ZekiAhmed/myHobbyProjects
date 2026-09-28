@@ -8,7 +8,9 @@
  * 2. Oversize files get a clear, immediate validation error without a
  *    network round-trip (story 9)
  * 3. A successful upload shows a definitive "submitted, under review"
- *    success state and refreshes the screen (story 11)
+ *    success state, refreshes the screen (story 11), and invalidates the
+ *    billing queries so the pending-review banner appears at once
+ *    (issue 06)
  * 4. A server rejection surfaces its message inline and keeps the form
  *
  * jsdom environment — prior art:
@@ -18,6 +20,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -42,11 +45,16 @@ const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promis
 
 let container: HTMLDivElement
 let root: Root | undefined
+let queryClient: QueryClient
 
 async function render() {
   root = createRoot(container)
   await act(async () => {
-    root!.render(<ReceiptUploadForm reference={REFERENCE} />)
+    root!.render(
+      <QueryClientProvider client={queryClient}>
+        <ReceiptUploadForm reference={REFERENCE} />
+      </QueryClientProvider>
+    )
   })
 }
 
@@ -79,6 +87,7 @@ beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
   container = document.createElement('div')
   document.body.appendChild(container)
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   vi.stubGlobal('fetch', fetchMock)
   fetchMock.mockResolvedValue(
     new Response(JSON.stringify({ ok: true, status: 'PENDING' }), {
@@ -139,6 +148,7 @@ describe('ReceiptUploadForm — client-side size validation (story 9)', () => {
 
 describe('ReceiptUploadForm — success screen (story 11)', () => {
   it('shows a definitive submitted / under-review state and refreshes the screen', async () => {
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
     await render()
     setInputFiles(new File([new Uint8Array([0xff, 0xd8, 0xff])], 'r.jpg', { type: 'image/jpeg' }))
     await act(async () => {
@@ -162,11 +172,15 @@ describe('ReceiptUploadForm — success screen (story 11)', () => {
     expect(container.textContent).toContain(REFERENCE)
     expect(refreshMock).toHaveBeenCalledTimes(1)
     expect(toastSuccessMock).toHaveBeenCalledTimes(1)
+    // the PENDING flip must reach the shell banner without waiting for the
+    // query's next focus/refetch trigger (subscription-billing issue 06)
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['billing'] })
   })
 })
 
 describe('ReceiptUploadForm — server rejection stays inline', () => {
   it('surfaces the server error and keeps the form usable', async () => {
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ error: 'Unsupported file type — upload a JPEG, PNG, WebP, or PDF receipt' }), {
         status: 415,
@@ -190,6 +204,7 @@ describe('ReceiptUploadForm — server rejection stays inline', () => {
     expect(container.textContent).toContain('Unsupported file type')
     expect(container.textContent).not.toContain('submitted')
     expect(refreshMock).not.toHaveBeenCalled()
+    expect(invalidate).not.toHaveBeenCalled()
     expect(submitButton().disabled).toBe(false)
     expect(toastErrorMock).toHaveBeenCalledTimes(1)
     expect(toastErrorMock.mock.calls[0][0]).toContain('Unsupported file type')

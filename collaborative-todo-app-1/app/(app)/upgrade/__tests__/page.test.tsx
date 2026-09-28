@@ -17,6 +17,10 @@
  * 6. A PENDING attempt shows a "under review" note with its reference,
  *    never a second Subscribe CTA
  * 7. Rendering reads only — no submission is created or updated here
+ * 8. (issue 06) A PENDING attempt renders the waiting-experience status
+ *    card: the canonical 24-hour promise copy, the reference, the
+ *    snapshotted amount, no pay CTA — and the rest of the screen keeps
+ *    working (non-blocking), with an entry point into billing history
  *
  * The real getRequiredSession gate runs in this test — only the session
  * source, the database, and the Next redirects are mocked at the module
@@ -26,6 +30,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { redirect } from 'next/navigation'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const sessionMock = vi.hoisted(() => ({ getSession: vi.fn() }))
 const refreshMock = vi.hoisted(() => vi.fn())
@@ -94,7 +99,12 @@ function signIn(userId = USER_ID) {
 /** Renders the upgrade screen to static HTML — what the user actually sees. */
 async function renderScreen(): Promise<string> {
   const el = await UpgradePage()
-  return renderToStaticMarkup(el)
+  // the receipt upload form (issue 05) reads TanStack Query for the
+  // post-upload billing invalidation (issue 06), so the static render
+  // needs the same provider the app shell supplies
+  return renderToStaticMarkup(
+    <QueryClientProvider client={new QueryClient()}>{el}</QueryClientProvider>
+  )
 }
 
 beforeEach(() => {
@@ -198,5 +208,54 @@ describe('upgrade screen content (payment instruction card)', () => {
     expect(html).toContain('PAY-REVW-0002')
     expect(html).toMatch(/under review/i)
     expect(html).not.toContain('Subscribe')
+  })
+})
+
+describe('upgrade screen waiting experience (issue 06)', () => {
+  it('swaps the pay CTA for the status card carrying the 24-hour promise, reference, and amount', async () => {
+    signIn()
+    prismaMock.paymentSubmission.findFirst.mockResolvedValue({
+      ...LIVE_ATTEMPT,
+      id: 'sub_pending',
+      reference: 'PAY-REVW-0002',
+      status: 'PENDING' as const,
+    })
+
+    const html = await renderScreen()
+
+    // the canonical waiting copy, verbatim (spec story 12 + ticket 06)
+    expect(html).toContain('Receipt submitted — awaiting review, within 24 hours.')
+    expect(html).toContain('PAY-REVW-0002')
+    // the snapshotted amount travels with the status, never the live price
+    expect(html).toContain('175 ETB')
+    // the pay CTA is gone while the submission is under review
+    expect(html).not.toContain('Subscribe')
+  })
+
+  it('keeps the screen non-blocking while pending: page content is unchanged and nothing is written', async () => {
+    signIn()
+    prismaMock.paymentSubmission.findFirst.mockResolvedValue({
+      ...LIVE_ATTEMPT,
+      id: 'sub_pending',
+      reference: 'PAY-REVW-0002',
+      status: 'PENDING' as const,
+    })
+
+    const html = await renderScreen()
+
+    // the pricing section still renders — waiting never costs access
+    expect(html).toContain('One subscription, your whole team')
+    expect(html).toContain('Invite Members to any Board you own')
+    // reads only: rendering never creates or flips a submission
+    expect(prismaMock.paymentSubmission.create).not.toHaveBeenCalled()
+    expect(prismaMock.paymentSubmission.update).not.toHaveBeenCalled()
+  })
+
+  it('offers a way into billing history from the screen', async () => {
+    signIn()
+
+    const html = await renderScreen()
+
+    expect(html).toContain('/billing')
   })
 })

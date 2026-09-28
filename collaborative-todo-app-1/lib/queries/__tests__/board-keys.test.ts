@@ -8,10 +8,18 @@
  *
  * CONTRACT UNDER TEST: queryFn must either resolve to an array of todos
  * or reject — never resolve a non-array object.
+ *
+ * Also covers the billing history entry added by subscription-billing
+ * issue 06: same key-factory contract, same non-2xx rejection rule.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { todosQueryOptions, boardDetailQueryOptions } from '@/lib/queries/board-keys'
+import {
+  billingKeys,
+  billingSubmissionsQueryOptions,
+  boardDetailQueryOptions,
+  todosQueryOptions,
+} from '@/lib/queries/board-keys'
 
 function mockFetchResponse(body: unknown, status: number) {
   return vi.fn().mockResolvedValue({
@@ -101,5 +109,33 @@ describe('boardDetailQueryOptions queryFn — same non-ok pattern', () => {
     vi.stubGlobal('fetch', mockFetchResponse(board, 200))
 
     await expect(callQueryFn(boardDetailQueryOptions('b1').queryFn)).resolves.toEqual(board)
+  })
+})
+
+describe('billingSubmissionsQueryOptions — central query-key factory entry (issue 06)', () => {
+  it('keys off the central billing factory so banner and history share one cache entry', () => {
+    expect(billingKeys.all()).toEqual(['billing'])
+    expect(billingKeys.submissions()).toEqual(['billing', 'submissions'])
+    expect(billingSubmissionsQueryOptions().queryKey).toEqual(billingKeys.submissions())
+  })
+
+  it('fetches GET /api/billing/submissions and resolves its submissions array', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ submissions: [{ id: 'sub_1' }] }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await callQueryFn(billingSubmissionsQueryOptions().queryFn)
+
+    expect(String(fetchMock.mock.calls[0][0])).toBe('/api/billing/submissions')
+    expect(result).toEqual({ submissions: [{ id: 'sub_1' }] })
+  })
+
+  it('rejects on a non-2xx body — an error never reads as an empty history', async () => {
+    vi.stubGlobal('fetch', mockFetchResponse({ error: 'Unauthorized' }, 401))
+
+    await expect(callQueryFn(billingSubmissionsQueryOptions().queryFn)).rejects.toThrow()
   })
 })

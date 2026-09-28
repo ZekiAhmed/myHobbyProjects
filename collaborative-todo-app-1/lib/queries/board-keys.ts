@@ -3,7 +3,8 @@
  *
  * This file contains:
  * 1. Query Key Factories — consistent cache keys for board data, the
- *    acting user's Notifications, and their Active sessions
+ *    acting user's Notifications, their Active sessions, and their
+ *    billing history
  * 2. TanStack Query Options — client-side fetch configuration
  *
  * IMPORTANT: This is a CLIENT-SAFE file.
@@ -16,6 +17,7 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
 import type {
   ActivityFeedPage,
+  BillingSubmission,
   Board,
   BoardDetail,
   CommentFeedPage,
@@ -115,6 +117,23 @@ export const notificationKeys = {
 export const sessionKeys = {
   /** The Security tab's single Active sessions query */
   all: () => ['sessions'] as const,
+}
+
+/**
+ * Query Key Factory for the acting user's billing history
+ * (subscription-billing issue 06).
+ *
+ * Self-scoped by design — GET /api/billing/submissions only ever
+ * returns the signed-in user's payment attempts, so there is no
+ * per-user argument. Two surfaces share this one entry: the
+ * dashboard's pending-review banner and the billing history page, so a
+ * single invalidation refreshes both.
+ */
+export const billingKeys = {
+  /** The whole billing surface — invalidate to refresh every billing read */
+  all:         () => ['billing']                as const,
+  /** The user's payment attempts, newest first (banner + history page) */
+  submissions: () => ['billing', 'submissions'] as const,
 }
 
 /**
@@ -353,4 +372,35 @@ export const notificationsQueryOptions = () =>
     gcTime:           300_000,
     refetchInterval:  8_000,
     retry:            3,
+  })
+
+/**
+ * Query Options for the acting user's billing history (issue 06)
+ *
+ * WHAT IT DOES:
+ * - Fetches GET /api/billing/submissions — every payment attempt with
+ *   status, timestamps, amount, and reference (spec user story 14),
+ *   newest first, metadata only (no receipt bytes)
+ * - One cache entry serves both consumers: the dashboard's
+ *   pending-review banner (does a PENDING attempt exist?) and the
+ *   billing history page's table
+ * - staleTime 30s: a review decision takes hours, so a 30-second freshness
+ *   window is plenty while still picking up an approval on revisit
+ *
+ * No polling: an admin decision arrives through notifications, and the
+ * waiting surfaces are deliberately calm (spec §Waiting for review).
+ *
+ * USAGE:
+ * - Client: useQuery(billingSubmissionsQueryOptions())
+ *
+ * @example
+ * const { data } = useQuery(billingSubmissionsQueryOptions())
+ * const pending = data?.submissions.find((s) => s.status === 'PENDING')
+ */
+export const billingSubmissionsQueryOptions = () =>
+  queryOptions({
+    queryKey:  billingKeys.submissions(),
+    queryFn:   () => fetchJson<{ submissions: BillingSubmission[] }>('/api/billing/submissions'),
+    staleTime: 30_000,
+    gcTime:    300_000,
   })
