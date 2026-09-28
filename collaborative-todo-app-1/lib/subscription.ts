@@ -23,9 +23,26 @@
  */
 
 import crypto from 'crypto'
+import type { PaymentStatus } from '@/lib/generated/prisma/browser'
 
 /** Days before expiry at which the T-7 warning banner appears. */
 export const EXPIRY_WARNING_DAYS = 7
+
+/**
+ * How long a payment attempt stays live before it expires (spec
+ * §Payment lifecycle): 48 hours without a receipt, carried in the
+ * submission's `expiresAt`. Expiry is lazy — the next subscribe attempt
+ * flips the stale row to EXPIRED inside its own transaction.
+ */
+export const PAYMENT_INSTRUCTION_TTL_MS = 48 * 60 * 60 * 1000
+
+/**
+ * The statuses that count as "a payment attempt in progress": at most
+ * ONE of these per user, ever (spec §Payment lifecycle). Shared by the
+ * subscribe action's guard and the upgrade screen's read so the two
+ * can never drift apart.
+ */
+export const NON_TERMINAL_PAYMENT_STATUSES: PaymentStatus[] = ['AWAITING_UPLOAD', 'PENDING']
 
 /**
  * Adds one calendar month to `date`, clamping the day of month to the

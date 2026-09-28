@@ -20,8 +20,9 @@
  * the save action's upsert.
  *
  * NOT a Server Action: exposing this read as a callable action would
- * hand the record to anyone with a session. The only caller today is
- * the admin page behind requireAdmin().
+ * hand the record to anyone with a session. Callers are authenticated
+ * screens only: the admin page behind requireAdmin() and the upgrade
+ * screen behind getRequiredSession() (issue 04).
  */
 
 import { prisma } from '@/lib/db'

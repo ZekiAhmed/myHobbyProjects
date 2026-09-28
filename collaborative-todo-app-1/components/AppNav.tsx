@@ -22,6 +22,12 @@ export function AppNav({ email }: { email: string }) {
           </span>
           <NotificationBell />
           <Link
+            href="/upgrade"
+            className="text-sm font-medium text-foreground transition-colors hover:text-muted-foreground"
+          >
+            Upgrade
+          </Link>
+          <Link
             href="/settings"
             aria-label="Account settings"
             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[4px] border border-transparent text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"

@@ -298,3 +298,97 @@ describe('pricing & bank-details settings (subscription-billing 02)', () => {
     })
   })
 })
+
+/**
+ * Payment submission lifecycle (subscription-billing issue 04).
+ *
+ * The record a Subscribe click creates: a unique payment reference for
+ * memo matching, a price/currency snapshot (spec §Money — a later price
+ * edit never invalidates an in-flight payment), and a 48-hour TTL
+ * carried in `expiresAt`. Receipt bytes and decision columns arrive with
+ * later tickets; the "at most one non-terminal submission per user" rule
+ * is enforced inside the subscribe transaction (spec §Payment
+ * lifecycle), not by a column.
+ */
+describe('payment submission (subscription-billing 04)', () => {
+  describe('PaymentSubmission model', () => {
+    const submission = block('model', 'PaymentSubmission')
+
+    it('has exactly the designed fields — no receipt or decision columns yet', () => {
+      expect(fieldNames(submission)).toEqual([
+        'id',
+        'userId',
+        'reference',
+        'status',
+        'priceSnapshot',
+        'currencySnapshot',
+        'expiresAt',
+        'createdAt',
+        'updatedAt',
+        'user',
+      ])
+    })
+
+    it('carries a unique payment reference so a transfer memo can be matched', () => {
+      expect(lineStarting(submission, 'reference')).toBe('reference String @unique')
+    })
+
+    it('starts life in AWAITING_UPLOAD — the state a Subscribe click creates', () => {
+      expect(lineStarting(submission, 'status')).toBe(
+        'status PaymentStatus @default(AWAITING_UPLOAD)'
+      )
+    })
+
+    it('snapshots price and currency at creation (spec §Money)', () => {
+      expect(lineStarting(submission, 'priceSnapshot')).toMatch(/^priceSnapshot Int$/)
+      expect(lineStarting(submission, 'currencySnapshot')).toMatch(/^currencySnapshot String$/)
+    })
+
+    it('carries the 48-hour TTL in expiresAt with no default — code sets it at creation', () => {
+      expect(lineStarting(submission, 'expiresAt')).toMatch(/^expiresAt DateTime$/)
+    })
+
+    it('belongs to the subscribing user and dies with the account', () => {
+      expectRelation(submission, 'user', { fields: 'userId', onDelete: 'Cascade' })
+    })
+
+    it('indexes the per-user status lookup the subscribe transaction runs', () => {
+      expect(squashed(submission)).toContain('@@index([userId,status])')
+    })
+  })
+
+  describe('PaymentStatus enum', () => {
+    it('is exactly the two-stage lifecycle from the spec (§Payment lifecycle)', () => {
+      expect(block('enum', 'PaymentStatus')).toEqual([
+        'AWAITING_UPLOAD',
+        'PENDING',
+        'APPROVED',
+        'REJECTED',
+        'EXPIRED',
+      ])
+    })
+  })
+
+  describe('User back-relation', () => {
+    it('User carries their payment submissions', () => {
+      expect(block('model', 'User')).toContain('submissions PaymentSubmission[]')
+    })
+  })
+
+  describe('migrations', () => {
+    const migration = readFileSync(
+      path.join(__dirname, '..', 'migrations', '20260928120000_payment_submission', 'migration.sql'),
+      'utf8'
+    )
+
+    it('creates the PaymentSubmission table', () => {
+      expect(migration).toContain('CREATE TABLE "PaymentSubmission"')
+    })
+
+    it('enforces reference uniqueness with a database index, not just app code', () => {
+      expect(migration).toMatch(
+        /CREATE UNIQUE INDEX "PaymentSubmission_reference_key" ON "PaymentSubmission"\("reference"\)/
+      )
+    })
+  })
+})

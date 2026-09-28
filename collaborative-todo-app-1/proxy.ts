@@ -27,7 +27,7 @@ import { getSessionCookie } from 'better-auth/cookies'
  * /admin is the platform Administrator area — the cookie check is only the
  * fast path; requireAdmin() enforces the role (403) server-side.
  */
-const protectedRoutes = ['/boards', '/settings', '/admin']
+const protectedRoutes = ['/boards', '/settings', '/admin', '/upgrade']
 
 /**
  * Main proxy function that runs for every matched request.

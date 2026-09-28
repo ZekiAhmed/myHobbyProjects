@@ -39,6 +39,22 @@ export function isActionError<T>(result: ActionResult<T>): result is ActionError
   return !result.success
 }
 
+/**
+ * Signals a domain guard refusal raised inside a Server Action's
+ * transaction, so the catch block can surface it verbatim (original
+ * ErrorType + message) instead of collapsing it into a generic server
+ * error. Thrown by the role-demotion guard (actions/admin.ts) and the
+ * one-attempt-at-a-time subscribe guard (actions/subscribe.ts).
+ */
+export class GuardError extends Error {
+  constructor(
+    public readonly kind: ErrorType,
+    message: string
+  ) {
+    super(message)
+  }
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   if (typeof error === 'string') return error

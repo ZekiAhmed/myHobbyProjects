@@ -17,17 +17,12 @@
 
 import { prisma } from '@/lib/db'
 import { getRequiredSession, getPlatformRole } from '@/lib/session'
-import { actionSuccess, actionError, type ActionResult, type ErrorType } from '@/lib/errors'
-
-/** Signals a domain guard refusal raised inside the demotion transaction. */
-class RoleGuardError extends Error {
-  constructor(
-    public readonly kind: ErrorType,
-    message: string
-  ) {
-    super(message)
-  }
-}
+import {
+  actionSuccess,
+  actionError,
+  GuardError,
+  type ActionResult,
+} from '@/lib/errors'
 
 const ADMIN_ROLE = 'ADMINISTRATOR'
 const REGULAR_ROLE = 'REGULAR'
@@ -109,7 +104,7 @@ export async function demoteAdministrator(
     await prisma.$transaction(
       async (tx) => {
         if (targetUserId === actorId) {
-          throw new RoleGuardError('authorization', 'You cannot demote yourself')
+          throw new GuardError('authorization', 'You cannot demote yourself')
         }
 
         const targetRole = await tx.user.findUnique({
@@ -117,17 +112,17 @@ export async function demoteAdministrator(
           select: { role: true },
         })
         if (!targetRole) {
-          throw new RoleGuardError('validation', 'User not found')
+          throw new GuardError('validation', 'User not found')
         }
         if (targetRole.role !== ADMIN_ROLE) {
-          throw new RoleGuardError('validation', 'User is not an Administrator')
+          throw new GuardError('validation', 'User is not an Administrator')
         }
 
         const administratorCount = await tx.user.count({
           where: { role: ADMIN_ROLE },
         })
         if (administratorCount <= 1) {
-          throw new RoleGuardError(
+          throw new GuardError(
             'validation',
             'At least one Administrator must remain'
           )
@@ -149,7 +144,7 @@ export async function demoteAdministrator(
 
     return actionSuccess({ userId: targetUserId })
   } catch (error) {
-    if (error instanceof RoleGuardError) {
+    if (error instanceof GuardError) {
       return actionError(error.kind, error.message)
     }
     return actionError('server', 'Failed to demote user')
