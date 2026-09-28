@@ -4,11 +4,11 @@
 
 **Blocked by:** 07 — Admin review queue & approve/reject.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Approval and rejection each create an in-app Notification (new types) for the subscriber
-- [ ] Approval and rejection each send a best-effort email using the existing email service
-- [ ] Rejection reason appears in billing history next to the submission
-- [ ] Rejected state offers "submit a new receipt" which initiates a fresh attempt
-- [ ] Notification types extend the existing enum; payment events never touch Board Activity logs
-- [ ] Tests cover notification creation, reason rendering, resubmit entry point, and email-failure-does-not-fail behavior
+- [x] Approval and rejection each create an in-app Notification (new types) for the subscriber
+- [x] Approval and rejection each send a best-effort email using the existing email service
+- [x] Rejection reason appears in billing history next to the submission
+- [x] Rejected state offers "submit a new receipt" which initiates a fresh attempt
+- [x] Notification types extend the existing enum; payment events never touch Board Activity logs
+- [x] Tests cover notification creation, reason rendering, resubmit entry point, and email-failure-does-not-fail behavior
