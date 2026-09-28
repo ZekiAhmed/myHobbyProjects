@@ -126,6 +126,35 @@ describe('GET /api/notifications — page order and boundary', () => {
     expect(payload.nextCursor).toBeNull()
   })
 
+  it('carries a payment decision row through with its null board and todo refs (issue 08)', async () => {
+    signIn(MEMBER_ID)
+    prismaMock.notification.findMany.mockResolvedValue([
+      {
+        id: 'n_payment',
+        userId: MEMBER_ID,
+        actorId: OWNER_ID,
+        type: 'PAYMENT_REJECTED',
+        // a decision belongs to no board and no todo (spec story 51)
+        boardId: null,
+        readAt: null,
+        createdAt: new Date(Date.UTC(2026, 0, 1, 0, 5)),
+        actor: { id: OWNER_ID, name: 'Owner', image: null },
+        todo: null,
+      },
+    ])
+    prismaMock.notification.count.mockResolvedValue(1)
+
+    const res = await getNotifications(makeRequest('http://localhost/api/notifications'))
+    const payload = await res.json()
+
+    expect(payload.notifications[0]).toMatchObject({
+      type: 'PAYMENT_REJECTED',
+      boardId: null,
+      todo: null,
+      actor: { id: OWNER_ID, name: 'Owner' },
+    })
+  })
+
   it('returns at most 20 with a nextCursor when older pages exist', async () => {
     signIn(MEMBER_ID)
     prismaMock.notification.findMany.mockResolvedValue(

@@ -156,6 +156,14 @@ describe('post-mvp schema (TRD §12)', () => {
       expect(lineStarting(notification, 'readAt')).toMatch(/^readAt\s+DateTime\?$/)
     })
 
+    it('leaves boardId and todoId nullable — a payment decision belongs to neither', () => {
+      expect(lineStarting(notification, 'boardId')).toBe('boardId String?')
+      expect(lineStarting(notification, 'todoId')).toBe('todoId String?')
+      // the relations follow their scalar fields into optionality
+      expect(lineStarting(notification, 'board')).toMatch(/^board Board\? @relation/)
+      expect(lineStarting(notification, 'todo')).toMatch(/^todo Todo\? @relation/)
+    })
+
     it('indexes unread lookups and recency per user, plus the todo', () => {
       expect(squashed(notification)).toContain('@@index([userId,readAt])')
       expect(squashed(notification)).toContain('@@index([userId,createdAt(sort:Desc)])')
@@ -164,9 +172,9 @@ describe('post-mvp schema (TRD §12)', () => {
   })
 
   describe('NotificationType enum', () => {
-    it('is limited to assignment and comment events', () => {
+    it('is collaboration events plus the two payment decisions (spec story 51)', () => {
       const values = block('enum', 'NotificationType')
-      expect(values).toEqual(['ASSIGNED', 'COMMENTED'])
+      expect(values).toEqual(['ASSIGNED', 'COMMENTED', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'])
     })
   })
 
@@ -489,6 +497,41 @@ describe('payment decisions & subscription period (subscription-billing 07)', ()
       expect(migration).not.toContain('DROP')
       expect(migration).not.toContain('DELETE FROM')
       expect(migration).not.toContain('ALTER TABLE "PaymentSubmission" ALTER COLUMN')
+    })
+  })
+})
+
+/**
+ * Payment decisions delivered as Notifications (subscription-billing 08,
+ * spec story 51 + ADR-0002).
+ *
+ * An approval or rejection is addressed to the subscriber alone — it has
+ * no board and no todo, so the two references become nullable (same
+ * convention as the other optional Notification columns). The type enum
+ * gains exactly the two decision values; payment events never become
+ * Activity rows, so the Board Activity taxonomy stays untouched.
+ */
+describe('payment decision notifications (subscription-billing 08)', () => {
+  describe('migration', () => {
+    const migration = readFileSync(
+      path.join(__dirname, '..', 'migrations', '20260929000000_payment_decision_notifications', 'migration.sql'),
+      'utf8'
+    )
+
+    it('relaxes the board and todo references so a decision can have neither', () => {
+      expect(migration).toMatch(/ALTER TABLE "Notification" ALTER COLUMN "boardId" DROP NOT NULL/)
+      expect(migration).toMatch(/ALTER TABLE "Notification" ALTER COLUMN "todoId" DROP NOT NULL/)
+    })
+
+    it('adds the two payment decision values to the NotificationType enum', () => {
+      expect(migration).toMatch(/ALTER TYPE "NotificationType" ADD VALUE 'PAYMENT_APPROVED'/)
+      expect(migration).toMatch(/ALTER TYPE "NotificationType" ADD VALUE 'PAYMENT_REJECTED'/)
+    })
+
+    it('is additive — columns are only relaxed, never dropped, and no row is deleted', () => {
+      expect(migration).not.toContain('DROP COLUMN')
+      expect(migration).not.toContain('DELETE FROM')
+      expect(migration).not.toContain('DROP TYPE')
     })
   })
 })

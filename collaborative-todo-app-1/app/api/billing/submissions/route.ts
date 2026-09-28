@@ -14,7 +14,9 @@
  *
  * METADATA ONLY: the select list deliberately omits `receiptBytes` —
  * receipt blobs are read only through the admin-gated file route (issue
- * 07), never on this path. Newest-first so the live attempt sits at the
+ * 07), never on this path. `rejectionReason` IS selected (issue 08,
+ * story 19): the stored reason is displayed back to its owner next to
+ * the attempt. Newest-first so the live attempt sits at the
  * top of the history page.
  */
 
@@ -37,6 +39,7 @@ export async function GET() {
       createdAt: true,
       updatedAt: true,
       expiresAt: true,
+      rejectionReason: true,
     },
   })
 

@@ -320,19 +320,24 @@ model Activity {
 
 model Notification {
   // A targeted in-app Notification for exactly one recipient. `readAt` null = unread.
+  //
+  // `boardId`/`todoId` are nullable (subscription-billing issue 08): a
+  // payment approval/rejection belongs to the subscriber alone — no
+  // board, no todo (spec story 51) — while ASSIGNED/COMMENTED rows
+  // always carry both.
   id        String           @id @default(cuid())
   userId    String
   actorId   String?
   type      NotificationType
-  boardId   String
-  todoId    String
+  boardId   String?
+  todoId    String?
   readAt    DateTime?
   createdAt DateTime         @default(now())
 
   user  User  @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
   actor User? @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
-  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  todo  Todo  @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  board Board? @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  todo  Todo?  @relation(fields: [todoId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
   @@index([userId, createdAt(sort: Desc)])
@@ -342,6 +347,10 @@ model Notification {
 enum NotificationType {
   ASSIGNED
   COMMENTED
+  // Payment decisions (subscription-billing issue 08) — delivered only as
+  // user Notifications, never as Board Activity entries (ADR-0002).
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
 }
 
 // ============================================

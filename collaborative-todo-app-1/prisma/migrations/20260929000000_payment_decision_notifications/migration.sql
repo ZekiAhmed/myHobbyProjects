@@ -1,0 +1,7 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'PAYMENT_APPROVED';
+ALTER TYPE "NotificationType" ADD VALUE 'PAYMENT_REJECTED';
+
+-- AlterTable
+ALTER TABLE "Notification" ALTER COLUMN "boardId" DROP NOT NULL;
+ALTER TABLE "Notification" ALTER COLUMN "todoId" DROP NOT NULL;

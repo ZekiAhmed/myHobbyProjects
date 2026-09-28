@@ -67,7 +67,7 @@ _Avoid_: timeline, stream
 ### Notifications
 
 **Notification**:
-A per-user record that a targeted event needs their attention (todo assigned to them, or a new comment on a todo they're assigned to or have commented on). Carries a `readAt` timestamp; null means unread.
+A per-user record that a targeted event needs their attention (todo assigned to them, a new comment on a todo they're assigned to or have commented on, or an Administrator's decision on their payment receipt). Board events link their Todo; a payment decision carries no board or todo — it opens at billing history instead. Carries a `readAt` timestamp; null means unread.
 _Avoid_: alert, ping, inbox item
 
 **Unread count**:

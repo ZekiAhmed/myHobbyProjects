@@ -163,6 +163,15 @@ export async function sendInvitationEmail(
 }
 
 /**
+ * One named email recipient — the address + display-name clump every
+ * payment email takes, spelled once instead of inline at each signature.
+ */
+export interface EmailRecipient {
+  email: string
+  name: string
+}
+
+/**
  * The payload of a "receipt pending review" email — one type shared by
  * the upload route (which assembles it) and the sender (which renders
  * it), so the two cannot drift apart.
@@ -194,7 +203,7 @@ export interface PaymentPendingEmailSubmission {
  * @throws Will throw an error if the email fails to send
  */
 export async function sendPaymentPendingEmail(
-  admin: { email: string; name: string },
+  admin: EmailRecipient,
   submission: PaymentPendingEmailSubmission
 ) {
   await resend.emails.send({
@@ -216,6 +225,132 @@ export async function sendPaymentPendingEmail(
         }</strong> (snapshotted at submission)</li>
       </ul>
       <p>Review it in the Administration area — the queue promises a decision within 24 hours.</p>
+    `,
+  })
+}
+
+/**
+ * The payload shared by the two payment decision emails — assembled by
+ * the decide actions (which read it off the submission), rendered here.
+ */
+export interface PaymentDecisionEmailSubmission {
+  reference: string
+  price: number
+  currency: string
+}
+
+/**
+ * Escapes a dynamic value before it is interpolated into email HTML.
+ *
+ * The rejection reason is free text an Administrator typed, so it must
+ * never become markup in the subscriber's inbox (links, images, styling).
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+/**
+ * Tells the subscriber their payment was approved and their team can now
+ * be invited (subscription-billing issue 08, spec story 18).
+ *
+ * WHEN IS THIS SENT?
+ * - Once, right after an Administrator approves a submission —
+ *   fire-and-forget from the approve action
+ *
+ * CALLER CONTRACT:
+ * The action treats every failure as log-and-continue: this function may
+ * throw, and a thrown email must never roll back the approval
+ * (spec story 22).
+ *
+ * @param subscriber - The approving decision's recipient (email + name)
+ * @param submission - The approved payment (reference, snapshotted
+ *   amount) plus the period end the approval bought
+ * @throws Will throw an error if the email fails to send
+ */
+export async function sendPaymentApprovedEmail(
+  subscriber: EmailRecipient,
+  submission: PaymentDecisionEmailSubmission & { periodEnd: Date }
+) {
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing`
+  const periodEnd = submission.periodEnd.toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  await resend.emails.send({
+    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    to: subscriber.email,
+    subject: `Payment approved — ${submission.reference}`,
+    html: `
+      <h1>Payment approved</h1>
+      <p>Hi ${escapeHtml(subscriber.name)},</p>
+      <p>
+        Your payment <strong>${submission.reference}</strong> (${
+          submission.price
+        } ${submission.currency}) was approved. Your Pro subscription is
+        running — you can now <strong>invite your team</strong>: Members
+        join your Boards for free.
+      </p>
+      <p>Your subscription runs until ${periodEnd}.</p>
+      <p><a href="${billingUrl}">View your billing history</a></p>
+    `,
+  })
+}
+
+/**
+ * Tells the subscriber their payment was rejected, with the exact reason
+ * (subscription-billing issue 08, spec stories 19 + 20 — the same reason
+ * billing history renders next to the attempt, plus the way back in).
+ *
+ * WHEN IS THIS SENT?
+ * - Once, right after an Administrator rejects a submission —
+ *   fire-and-forget from the reject action
+ *
+ * CALLER CONTRACT:
+ * The action treats every failure as log-and-continue: this function may
+ * throw, and a thrown email must never roll back the rejection
+ * (spec story 22).
+ *
+ * @param subscriber - The rejecting decision's recipient (email + name)
+ * @param submission - The rejected payment (reference, snapshotted
+ *   amount) plus the stored rejection reason
+ * @throws Will throw an error if the email fails to send
+ */
+export async function sendPaymentRejectedEmail(
+  subscriber: EmailRecipient,
+  submission: PaymentDecisionEmailSubmission & { reason: string }
+) {
+  const upgradeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/upgrade`
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing`
+
+  await resend.emails.send({
+    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    to: subscriber.email,
+    subject: `Payment rejected — ${submission.reference}`,
+    html: `
+      <h1>Payment rejected</h1>
+      <p>Hi ${escapeHtml(subscriber.name)},</p>
+      <p>
+        Your payment <strong>${submission.reference}</strong> (${
+          submission.price
+        } ${submission.currency}) was rejected. The reason given by the
+        Administrator:
+      </p>
+      <blockquote><p>${escapeHtml(submission.reason)}</p></blockquote>
+      <p>
+        One rejected attempt does not dead-end your subscription — submit a
+        new receipt to start a fresh attempt.
+      </p>
+      <p>
+        <a href="${upgradeUrl}">Submit a new receipt</a><br />
+        <a href="${billingUrl}">View your billing history</a>
+      </p>
     `,
   })
 }

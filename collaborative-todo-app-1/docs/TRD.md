@@ -974,15 +974,15 @@ model Notification {
   userId    String           // recipient
   actorId   String?          // who caused it (assignment self → null/omitted)
   type      NotificationType
-  boardId   String
-  todoId    String
+  boardId   String?          // null for account-level events (payment decisions)
+  todoId    String?          // ditto
   readAt    DateTime?        // null = unread → unread count
   createdAt DateTime         @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   actor  User?  @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
-  board  Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  todo   Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  board  Board? @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  todo   Todo?  @relation(fields: [todoId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
   @@index([userId, createdAt(sort: Desc)])
@@ -992,6 +992,8 @@ model Notification {
 enum NotificationType {
   ASSIGNED
   COMMENTED
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
 }
 ```
 
@@ -1019,7 +1021,8 @@ enum NotificationType {
 |----------|-------------------|-----|
 | Comments hard-deleted | No `deletedAt`; plain `onDelete: Cascade` | ADR-0001 |
 | Activity taxonomy widens without migration | `action` / `resourceType` are `String`, not enums | ADR-0002 |
+| Account-level events carry no board/todo | `boardId`/`todoId` nullable (`Cascade` when set) | subscription-billing story 51 |
 | Actor erased with account, entry persists | `actorId String?` + `onDelete: SetNull` | PRD §4.2 |
 | Unread = null `readAt` | Partial-query friendly `@@index([userId, readAt])` | PRD §4.5 |
 | Notifications die with board/todo/recipient | `Cascade` on all three FKs | PRD §4.5 |
-| No email channel / no due-date type | `NotificationType` enum has exactly `ASSIGNED`, `COMMENTED` | PRD §4.5 |
+| Closed notification taxonomy | `NotificationType` enum: `ASSIGNED`, `COMMENTED`, `PAYMENT_APPROVED`, `PAYMENT_REJECTED` | subscription-billing spec + PRD §4.5 |

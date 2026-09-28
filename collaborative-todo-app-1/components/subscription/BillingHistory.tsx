@@ -14,6 +14,11 @@
  * carries the 24-hour review promise verbatim (checklist), and the page
  * repeats the promise once as a footer note.
  *
+ * Rejection delivery (issue 08): a REJECTED row additionally shows the
+ * exact stored reason (story 19) and the "submit a new receipt" entry
+ * point (story 20) that starts a fresh attempt — the outcome the
+ * subscriber was notified about, readable right where the attempt lives.
+ *
  * Timestamps: the `datetime` attribute is the machine-readable contract;
  * the visible text uses the reader's local timezone, like every other
  * timestamp in the app.
@@ -27,6 +32,7 @@ import {
   paymentStatusDetail,
   paymentStatusLabel,
 } from '@/lib/payment-status'
+import { ResubmitReceiptButton } from '@/components/subscription/ResubmitReceiptButton'
 import type { BillingSubmission } from '@/lib/types'
 
 function formatTimestamp(value: Date | string): string {
@@ -57,6 +63,19 @@ function BillingRow({ submission }: { submission: BillingSubmission }) {
           <p className="mt-0.5 text-xs text-muted-foreground">
             Expires {formatTimestamp(submission.expiresAt)}
           </p>
+        )}
+        {submission.status === 'REJECTED' && submission.rejectionReason && (
+          <p
+            className="mt-1.5 rounded bg-muted px-2 py-1 text-xs"
+            data-testid="billing-rejection-reason"
+          >
+            <span className="font-medium">Reason:</span> {submission.rejectionReason}
+          </p>
+        )}
+        {submission.status === 'REJECTED' && (
+          <div className="mt-2">
+            <ResubmitReceiptButton />
+          </div>
         )}
       </td>
       <td className="px-4 py-3 align-top">

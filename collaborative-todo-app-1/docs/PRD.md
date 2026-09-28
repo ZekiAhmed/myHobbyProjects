@@ -110,9 +110,10 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
   |-------|-----------|
   | Todo assigned to you | Assignee |
   | New comment on a todo | Assignee + prior commenters on that todo (minus actor) |
+  | Payment receipt approved/rejected (subscription-billing) | The submitting subscriber |
 - **Not notifiable:** comment edits · status changes · membership/tag/rename events (Activity log's job) · board invites (invite email already transactional) · due-date reminders (no scheduling infra) · board-wide broadcasts
-- **No email channel** — Resend stays transactional (verify, reset, invite); in-app only
-- Global nav **bell + dropdown** (latest 20) with **unread count** (`readAt IS NULL`); click → open that todo's side panel + mark read; **mark-all-read** server action
+- **Email only for payment decisions** — Resend stays transactional (verify, reset, invite, payment approval/rejection); every other Notification is in-app only
+- Global nav **bell + dropdown** (latest 20) with **unread count** (`readAt IS NULL`); click → open that todo's side panel + mark read (payment decisions open billing history instead); **mark-all-read** server action
 - Polls on the same **8s cadence** as todos while authenticated
 
 ### 💡 Could Have (Future)

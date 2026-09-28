@@ -34,6 +34,21 @@
  * 15. An unknown submission is refused with validation
  * 16. The rejection runs in one transaction
  *
+ * Decision delivery (subscription-billing issue 08):
+ * 17. Approval creates exactly one in-app PAYMENT_APPROVED Notification
+ *     for the subscriber, written inside the decision transaction, with
+ *     the deciding Administrator as actor and no board / no todo
+ * 18. Approval sends a best-effort email to the subscriber carrying the
+ *     reference, the snapshotted amount, and the new period end
+ * 19. An approval email failure never fails the approval — the action
+ *     still returns success and the failure is logged (spec story 22)
+ * 20. Rejection creates exactly one PAYMENT_REJECTED Notification under
+ *     the same rules
+ * 21. Rejection emails the subscriber the exact stored reason
+ * 22. A rejection email failure never fails the rejection
+ * 23. Neither decision ever writes a Board Activity entry — payment
+ *     events are user Notifications only (ADR-0002, spec story 51)
+ *
  * External behavior only — session and db mocked at the module boundary
  * (prior art: actions/__tests__/admin.test.ts). The fake rows below
  * behave as the database state the guards read and write, so the tests
@@ -47,14 +62,23 @@ const sessionMock = vi.hoisted(() => ({ getSession: vi.fn(), getPlatformRole: vi
 const prismaMock = vi.hoisted(() => ({
   paymentSubmission: { findUnique: vi.fn(), updateMany: vi.fn() },
   user: { findUnique: vi.fn(), update: vi.fn() },
+  notification: { create: vi.fn() },
+  activity: { create: vi.fn() },
   $transaction: vi.fn(),
 }))
+const emailMock = vi.hoisted(() => ({
+  sendPaymentApprovedEmail: vi.fn(),
+  sendPaymentRejectedEmail: vi.fn(),
+}))
+const revalidateTagMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/session', () => ({
   getRequiredSession: async () => sessionMock.getSession(),
   getPlatformRole: (userId: string) => sessionMock.getPlatformRole(userId),
 }))
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/email', () => emailMock)
+vi.mock('next/cache', () => ({ revalidateTag: revalidateTagMock }))
 
 import { approveSubmission, rejectSubmission } from '@/actions/payment-review'
 
@@ -71,13 +95,21 @@ type SubmissionStatus = 'AWAITING_UPLOAD' | 'PENDING' | 'APPROVED' | 'REJECTED' 
 type SubmissionRow = {
   id: string
   userId: string
+  reference: string
+  priceSnapshot: number
+  currencySnapshot: string
   status: SubmissionStatus
   rejectionReason: string | null
   decidedAt: Date | null
   decidedById: string | null
 }
 
-type UserRow = { id: string; subscriptionPeriodEnd: Date | null }
+type UserRow = {
+  id: string
+  email: string
+  name: string
+  subscriptionPeriodEnd: Date | null
+}
 
 /** Fake database: the rows the guards read and the writes mutate. */
 let submissions: Record<string, SubmissionRow>
@@ -87,6 +119,9 @@ function seedSubmission(overrides: Partial<SubmissionRow> = {}): SubmissionRow {
   const row: SubmissionRow = {
     id: SUBMISSION_ID,
     userId: SUBSCRIBER_ID,
+    reference: 'PAY-TEST-0001',
+    priceSnapshot: 250,
+    currencySnapshot: 'ETB',
     status: 'PENDING',
     rejectionReason: null,
     decidedAt: null,
@@ -98,7 +133,12 @@ function seedSubmission(overrides: Partial<SubmissionRow> = {}): SubmissionRow {
 }
 
 function seedSubscriber(subscriptionPeriodEnd: Date | null): UserRow {
-  const row: UserRow = { id: SUBSCRIBER_ID, subscriptionPeriodEnd }
+  const row: UserRow = {
+    id: SUBSCRIBER_ID,
+    email: 'subscriber@t.dev',
+    name: 'Test Subscriber',
+    subscriptionPeriodEnd,
+  }
   users[row.id] = row
   return row
 }
@@ -140,10 +180,18 @@ function signIn(userId: string, role: 'REGULAR' | 'ADMINISTRATOR' = 'ADMINISTRAT
   sessionMock.getPlatformRole.mockResolvedValue(role)
 }
 
+/** True only while a `prisma.$transaction` callback is on the stack. */
+let inTransaction = false
+
+/** Counters the delivery tests assert — never set directly by a test. */
+let notificationsWritten: unknown[] = []
+
 beforeEach(() => {
   vi.clearAllMocks()
   submissions = {}
   users = {}
+  inTransaction = false
+  notificationsWritten = []
 
   vi.useFakeTimers()
   vi.setSystemTime(NOW)
@@ -153,9 +201,25 @@ beforeEach(() => {
   prismaMock.paymentSubmission.updateMany.mockImplementation(decideSubmission)
   prismaMock.user.findUnique.mockImplementation(findUser)
   prismaMock.user.update.mockImplementation(updateUser)
-  prismaMock.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
-    fn(prismaMock)
-  )
+  prismaMock.notification.create.mockImplementation(async (args: { data: unknown }) => {
+    // the house rule: a decision's Notification is written inside the
+    // SAME transaction as the decision itself, or not at all
+    if (!inTransaction) {
+      throw new Error('notification must be written inside the decision transaction')
+    }
+    notificationsWritten.push(args.data)
+    return { id: `notif_${notificationsWritten.length}` }
+  })
+  emailMock.sendPaymentApprovedEmail.mockResolvedValue(undefined)
+  emailMock.sendPaymentRejectedEmail.mockResolvedValue(undefined)
+  prismaMock.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+    inTransaction = true
+    try {
+      return await fn(prismaMock)
+    } finally {
+      inTransaction = false
+    }
+  })
 })
 
 afterEach(() => {
@@ -298,6 +362,7 @@ describe('approveSubmission — authorization & guards', () => {
 describe('rejectSubmission — mandatory reason', () => {
   it('rejects a pending submission and stores the reason with the decision metadata', async () => {
     seedSubmission()
+    seedSubscriber(null)
 
     const result = await rejectSubmission({
       submissionId: SUBMISSION_ID,
@@ -312,12 +377,13 @@ describe('rejectSubmission — mandatory reason', () => {
       decidedById: ACTOR_ADMIN_ID,
     })
     // a rejection never touches the subscriber's clock
-    expect(users).toEqual({})
+    expect(users[SUBSCRIBER_ID].subscriptionPeriodEnd).toBeNull()
     expect(prismaMock.user.update).not.toHaveBeenCalled()
   })
 
   it('stores the trimmed reason, not the padding it arrived with', async () => {
     seedSubmission()
+    seedSubscriber(null)
 
     await rejectSubmission({ submissionId: SUBMISSION_ID, reason: '  wrong account  ' })
 
@@ -396,11 +462,171 @@ describe('rejectSubmission — mandatory reason', () => {
 
   it('runs the rejection in exactly one transaction', async () => {
     seedSubmission()
+    seedSubscriber(null)
 
     await rejectSubmission({ submissionId: SUBMISSION_ID, reason: 'amount mismatch' })
 
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function))
     expect(prismaMock.paymentSubmission.updateMany).toHaveBeenCalledTimes(1)
+  })
+})
+
+/** Let queued microtask callbacks — a fire-and-forget `.catch` — run. */
+async function flushMicrotasks() {
+  await Promise.resolve()
+  await Promise.resolve()
+}
+
+describe('approveSubmission — decision delivery (issue 08)', () => {
+  it('creates exactly one PAYMENT_APPROVED Notification for the subscriber, inside the decision transaction', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    const result = await approveSubmission({ submissionId: SUBMISSION_ID })
+
+    expect(result.success).toBe(true)
+    expect(prismaMock.notification.create).toHaveBeenCalledTimes(1)
+    expect(prismaMock.notification.create).toHaveBeenCalledWith({
+      data: {
+        userId: SUBSCRIBER_ID,
+        actorId: ACTOR_ADMIN_ID,
+        type: 'PAYMENT_APPROVED',
+        // a payment decision belongs to no board and no todo (story 51)
+        boardId: null,
+        todoId: null,
+      },
+    })
+    // written through the transaction client, or the mock refuses it
+    expect(notificationsWritten).toHaveLength(1)
+  })
+
+  it('emails the subscriber the approval with reference, snapshotted amount, and the new period end', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    await approveSubmission({ submissionId: SUBMISSION_ID })
+
+    expect(emailMock.sendPaymentApprovedEmail).toHaveBeenCalledTimes(1)
+    expect(emailMock.sendPaymentApprovedEmail).toHaveBeenCalledWith(
+      { email: 'subscriber@t.dev', name: 'Test Subscriber' },
+      {
+        reference: 'PAY-TEST-0001',
+        price: 250,
+        currency: 'ETB',
+        periodEnd: new Date('2026-11-28T10:00:00.000Z'),
+      }
+    )
+  })
+
+  it('never fails the approval when the email blows up — the decision stands and the failure is logged', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    seedSubmission()
+    seedSubscriber(null)
+    emailMock.sendPaymentApprovedEmail.mockRejectedValue(new Error('resend down'))
+
+    const result = await approveSubmission({ submissionId: SUBMISSION_ID })
+
+    expect(result.success).toBe(true)
+    expect(submissions[SUBMISSION_ID].status).toBe('APPROVED')
+    await flushMicrotasks()
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    expect(String(errorSpy.mock.calls[0][0])).toContain('payment-approved email failed')
+    errorSpy.mockRestore()
+  })
+
+  it('a refused second decision delivers nothing — the bell never promises an outcome that did not commit', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    await approveSubmission({ submissionId: SUBMISSION_ID })
+    const second = await approveSubmission({ submissionId: SUBMISSION_ID })
+
+    expect(second.success).toBe(false)
+    expect(prismaMock.notification.create).toHaveBeenCalledTimes(1)
+    expect(emailMock.sendPaymentApprovedEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it('revalidates the notifications cache so the subscriber’s bell picks the row up', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    await approveSubmission({ submissionId: SUBMISSION_ID })
+
+    expect(revalidateTagMock).toHaveBeenCalledWith('notifications', 'max')
+  })
+})
+
+describe('rejectSubmission — decision delivery (issue 08)', () => {
+  it('creates exactly one PAYMENT_REJECTED Notification for the subscriber, inside the decision transaction', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    const result = await rejectSubmission({ submissionId: SUBMISSION_ID, reason: 'amount mismatch' })
+
+    expect(result.success).toBe(true)
+    expect(prismaMock.notification.create).toHaveBeenCalledTimes(1)
+    expect(prismaMock.notification.create).toHaveBeenCalledWith({
+      data: {
+        userId: SUBSCRIBER_ID,
+        actorId: ACTOR_ADMIN_ID,
+        type: 'PAYMENT_REJECTED',
+        boardId: null,
+        todoId: null,
+      },
+    })
+    expect(notificationsWritten).toHaveLength(1)
+  })
+
+  it('emails the subscriber the exact stored reason with the reference and amount', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    await rejectSubmission({ submissionId: SUBMISSION_ID, reason: '  wrong account  ' })
+
+    expect(emailMock.sendPaymentRejectedEmail).toHaveBeenCalledTimes(1)
+    expect(emailMock.sendPaymentRejectedEmail).toHaveBeenCalledWith(
+      { email: 'subscriber@t.dev', name: 'Test Subscriber' },
+      {
+        reference: 'PAY-TEST-0001',
+        price: 250,
+        currency: 'ETB',
+        // the same trimmed reason billing history will render (story 19)
+        reason: 'wrong account',
+      }
+    )
+  })
+
+  it('never fails the rejection when the email blows up — the decision stands and the failure is logged', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    seedSubmission()
+    seedSubscriber(null)
+    emailMock.sendPaymentRejectedEmail.mockRejectedValue(new Error('resend down'))
+
+    const result = await rejectSubmission({ submissionId: SUBMISSION_ID, reason: 'amount mismatch' })
+
+    expect(result.success).toBe(true)
+    expect(submissions[SUBMISSION_ID]).toMatchObject({
+      status: 'REJECTED',
+      rejectionReason: 'amount mismatch',
+    })
+    await flushMicrotasks()
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    expect(String(errorSpy.mock.calls[0][0])).toContain('payment-rejected email failed')
+    errorSpy.mockRestore()
+  })
+})
+
+describe('decision delivery — the ADR-0002 boundary', () => {
+  it('never writes a Board Activity entry for either decision — payment events are Notifications only', async () => {
+    seedSubmission()
+    seedSubscriber(null)
+
+    await approveSubmission({ submissionId: SUBMISSION_ID })
+    seedSubmission({ id: 'sub_2', status: 'PENDING' })
+    await rejectSubmission({ submissionId: 'sub_2', reason: 'amount mismatch' })
+
+    expect(prismaMock.activity.create).not.toHaveBeenCalled()
+    expect(prismaMock.notification.create).toHaveBeenCalledTimes(2)
   })
 })

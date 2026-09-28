@@ -5,7 +5,7 @@
  * Centralizing types prevents duplication and ensures consistency.
  */
 
-import type { Todo, BoardMember, Tag, Comment, PaymentStatus } from '@/lib/generated/prisma/browser'
+import type { Todo, BoardMember, Tag, Comment, PaymentStatus, NotificationType } from '@/lib/generated/prisma/browser'
 
 /**
  * Board type definition — matches the shape returned by Prisma
@@ -111,15 +111,19 @@ export type ActivityFeedPage = {
  * `actor` is null once the account that caused it is erased (`Notification.
  * actorId` is `SetNull`). Only the addressed user ever reads their rows:
  * the bell is self-scoped, with no board-level view.
+ *
+ * `boardId`/`todo` are null for a payment decision
+ * (subscription-billing issue 08): it belongs to the subscriber alone and
+ * opens at billing history instead of a board deep link.
  */
 export type NotificationWithRefs = {
   id: string
-  type: 'ASSIGNED' | 'COMMENTED'
+  type: NotificationType
   readAt: Date | string | null
   createdAt: Date | string
-  boardId: string
+  boardId: string | null
   actor: { id: string; name: string; image: string | null } | null
-  todo: { id: string; title: string }
+  todo: { id: string; title: string } | null
 }
 
 /**
@@ -168,6 +172,10 @@ export type ActiveSession = {
  *
  * `updatedAt` doubles as the "last activity" timestamp: the receipt
  * upload (and every later status change) bumps it.
+ *
+ * `rejectionReason` is the stored reason a REJECTED row carries — null
+ * on every other status — shown back to its owner next to the attempt
+ * (subscription-billing issue 08, spec story 19).
  */
 export type BillingSubmission = {
   id: string
@@ -178,6 +186,7 @@ export type BillingSubmission = {
   createdAt: Date | string
   updatedAt: Date | string
   expiresAt: Date | string
+  rejectionReason: string | null
 }
 
 /**

@@ -12,6 +12,9 @@
  *    empty history
  * 5. The read goes through the central query options
  *    (GET /api/billing/submissions)
+ * 6. A rejected attempt shows the exact stored reason next to it, plus
+ *    the "submit a new receipt" entry point that starts a fresh attempt
+ *    (issue 08, spec stories 19 + 20) — and no other row offers it
  *
  * jsdom environment — prior art:
  * components/subscription/__tests__/PendingReviewBanner.test.tsx
@@ -27,6 +30,18 @@ declare global {
 }
 
 const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>()
+const requestMock = vi.hoisted(() => vi.fn())
+const pushMock = vi.hoisted(() => vi.fn())
+const toastSuccessMock = vi.hoisted(() => vi.fn())
+const toastErrorMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@/actions/subscribe', () => ({ requestPaymentInstructions: requestMock }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: pushMock, refresh: vi.fn() }),
+}))
+vi.mock('sonner', () => ({
+  toast: { success: toastSuccessMock, error: toastErrorMock },
+}))
 
 import { BillingHistory } from '@/components/subscription/BillingHistory'
 
@@ -50,6 +65,18 @@ const EXPIRED_ROW = {
   createdAt: '2026-09-20T08:00:00.000Z',
   updatedAt: '2026-09-22T08:00:00.000Z',
   expiresAt: '2026-09-22T08:00:00.000Z',
+}
+
+const REJECTED_ROW = {
+  id: 'sub_rejected',
+  reference: 'PAY-RJCT-0003',
+  status: 'REJECTED',
+  priceSnapshot: 250,
+  currencySnapshot: 'ETB',
+  rejectionReason: 'Amount mismatch — received 90 ETB, expected 250 ETB',
+  createdAt: '2026-09-28T09:00:00.000Z',
+  updatedAt: '2026-09-29T09:00:00.000Z',
+  expiresAt: '2026-09-30T09:00:00.000Z',
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -174,5 +201,80 @@ describe('BillingHistory — empty and error states', () => {
     await render()
 
     expect(container.textContent).toMatch(/loading/i)
+  })
+})
+
+describe('BillingHistory — rejection delivery (issue 08)', () => {
+  async function flush() {
+    for (let i = 0; i < 10; i++) {
+      await act(async () => {
+        await Promise.resolve()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+    }
+  }
+
+  function resubmitButton(): HTMLButtonElement | undefined {
+    return [...container.querySelectorAll('button')].find((button) =>
+      /submit a new receipt/i.test(button.textContent ?? '')
+    )
+  }
+
+  it('shows the exact rejection reason next to the attempt (story 19)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ submissions: [REJECTED_ROW] }))
+
+    await renderAndWait()
+
+    const reason = container.querySelector('[data-testid="billing-rejection-reason"]')
+    expect(reason).not.toBeNull()
+    expect(reason!.textContent).toContain('Amount mismatch — received 90 ETB, expected 250 ETB')
+    // the reason belongs to the rejected row, not to the table at large
+    expect(reason!.closest('[data-testid="billing-row"]')).not.toBeNull()
+  })
+
+  it('offers "submit a new receipt" on the rejected row and starts a fresh attempt (story 20)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ submissions: [REJECTED_ROW] }))
+    requestMock.mockResolvedValue({ success: true, data: { id: 'sub_new' } })
+
+    await renderAndWait()
+    const button = resubmitButton()
+    expect(button).toBeDefined()
+
+    await act(async () => {
+      button!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    await flush()
+
+    expect(requestMock).toHaveBeenCalledTimes(1)
+    expect(pushMock).toHaveBeenCalledWith('/upgrade')
+    expect(toastSuccessMock).toHaveBeenCalledWith('Payment instructions ready')
+  })
+
+  it('keeps the subscriber on the page when a fresh attempt is refused, with the reason toasted', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ submissions: [REJECTED_ROW] }))
+    requestMock.mockResolvedValue({
+      success: false,
+      error: { type: 'validation', message: 'reference PAY-LIVE-0001 is already under review' },
+    })
+
+    await renderAndWait()
+    await act(async () => {
+      resubmitButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    await flush()
+
+    expect(toastErrorMock).toHaveBeenCalledTimes(1)
+    expect(toastErrorMock.mock.calls[0][0]).toContain('PAY-LIVE-0001')
+    expect(pushMock).not.toHaveBeenCalled()
+  })
+
+  it('offers no resubmit entry point on rows that are not rejected', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ submissions: [PENDING_ROW, EXPIRED_ROW] })
+    )
+
+    await renderAndWait()
+
+    expect(container.querySelector('[data-testid="submit-new-receipt"]')).toBeNull()
   })
 })

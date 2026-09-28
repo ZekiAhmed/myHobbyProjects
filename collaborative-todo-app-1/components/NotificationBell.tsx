@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell } from 'lucide-react'
-import { notificationKeys, notificationsQueryOptions } from '@/lib/queries/board-keys'
+import { billingKeys, notificationKeys, notificationsQueryOptions } from '@/lib/queries/board-keys'
 import { emitFocusTodo } from '@/lib/focus-todo'
 import { markAllNotificationsRead, markNotificationRead } from '@/actions/notifications'
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
@@ -25,21 +25,48 @@ function formatNotificationTime(createdAt: Date | string): string {
 /**
  * One-line summary of why the Notification exists.
  *
- * Only `ASSIGNED` rows exist until ticket 06 (comment notifications) lands,
- * but the copy already handles the rest of the designed matrix so the bell
- * needs no rewrite when `COMMENTED` rows appear.
+ * `ASSIGNED`/`COMMENTED` rows always carry their Todo (they are written
+ * with it), while the payment decision rows from subscription-billing
+ * issue 08 carry neither board nor todo — their copy names the outcome
+ * instead of a piece of work.
  */
-function notificationSummary(notification: NotificationWithRefs): string {
+export function notificationSummary(notification: NotificationWithRefs): string {
   const actor = notification.actor?.name ?? 'Someone'
   switch (notification.type) {
     case 'ASSIGNED':
-      return `${actor} assigned you to “${notification.todo.title}”`
+      return `${actor} assigned you to “${notification.todo?.title ?? 'a Todo'}”`
     case 'COMMENTED':
-      return `${actor} commented on “${notification.todo.title}”`
+      return `${actor} commented on “${notification.todo?.title ?? 'a Todo'}”`
+    case 'PAYMENT_APPROVED':
+      return `${actor} approved your payment — you can now invite your team`
+    case 'PAYMENT_REJECTED':
+      return `${actor} rejected your payment — the reason is in your billing history`
     default:
       // Unknown/newer type than this client knows — generic copy rather
       // than a summary that claims an event that may not have happened.
-      return `${actor} updated “${notification.todo.title}”`
+      return notification.todo
+        ? `${actor} updated “${notification.todo.title}”`
+        : `${actor} sent you a notification`
+  }
+}
+
+/**
+ * Where clicking a Notification lands.
+ *
+ * Board notifications deep-link into the Todo's side panel (req 38); a
+ * payment decision has no board to open — its outcome, its reason, and
+ * the fresh-attempt entry point all live on the billing history page
+ * (subscription-billing issues 08 + 06).
+ */
+export function notificationHref(notification: NotificationWithRefs): string {
+  switch (notification.type) {
+    case 'PAYMENT_APPROVED':
+    case 'PAYMENT_REJECTED':
+      return '/billing'
+    default:
+      return notification.boardId && notification.todo
+        ? `/boards/${notification.boardId}?todo=${encodeURIComponent(notification.todo.id)}`
+        : '/'
   }
 }
 
@@ -107,10 +134,19 @@ export function NotificationBell() {
     // landing on the Todo. A failure keeps the row unread and toasts.
     markOneMutation.mutate(notification.id)
     setOpen(false)
-    router.push(`/boards/${notification.boardId}?todo=${encodeURIComponent(notification.todo.id)}`)
-    // A repeat click is an identical URL (a Next.js no-op) — hand the id to
-    // the mounted board directly so its side panel refocuses anyway.
-    emitFocusTodo(notification.todo.id)
+    if (notification.type === 'PAYMENT_APPROVED' || notification.type === 'PAYMENT_REJECTED') {
+      // The subscriber may have loaded billing history before the decision
+      // landed (staleTime 30s) — refresh it so the row they are about to
+      // open carries the fresh reason and the resubmit entry point
+      // (spec story 19).
+      queryClient.invalidateQueries({ queryKey: billingKeys.all() })
+    }
+    router.push(notificationHref(notification))
+    if (notification.boardId && notification.todo) {
+      // A repeat click is an identical URL (a Next.js no-op) — hand the id
+      // to the mounted board directly so its side panel refocuses anyway.
+      emitFocusTodo(notification.todo.id)
+    }
   }
 
   return (

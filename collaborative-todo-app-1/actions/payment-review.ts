@@ -1,6 +1,6 @@
 /**
  * @fileoverview Payment review Server Actions — approve / reject
- * (subscription-billing issue 07)
+ * (subscription-billing issues 07 + 08)
  *
  * The two decisions an Administrator makes from the review queue. Both
  * follow the same shape (spec stories 41 + 42):
@@ -12,9 +12,10 @@
  * 2. VALIDATION — a rejection reason is mandatory (trimmed, capped) and
  *    every input is parsed with zod, the house convention.
  * 3. ONE ATOMIC TRANSACTION — the status transition, the decision
- *    metadata, and (on approval) the subscriber's new period end land
- *    together or not at all (spec story 52: partial failures must never
- *    leave a subscription half-applied).
+ *    metadata, the subscriber's in-app Notification, and (on approval)
+ *    the subscriber's new period end land together or not at all (spec
+ *    story 52: partial failures must never leave a subscription
+ *    half-applied).
  * 4. TERMINAL-STATE GUARD — the write carries `status: PENDING` in its
  *    WHERE, so a double-click, a stale tab, or a second Administrator
  *    loses the race cleanly with a validation error instead of
@@ -27,13 +28,22 @@
  * paying subscriber never falls into a locked gap (spec §Money).
  *
  * REJECT stores the reason on the submission itself: it is the permanent
- * audit trail's part of the outcome, and issue 08 shows it back next to
- * the attempt in billing history.
+ * audit trail's part of the outcome, and billing history shows it back
+ * next to the attempt (spec story 19).
+ *
+ * DECISION DELIVERY (issue 08): each decision writes exactly one in-app
+ * Notification for the subscriber INSIDE the transaction above — a
+ * payment event is a user Notification, never a Board Activity entry
+ * (ADR-0002, spec story 51) — then fires the outcome email best-effort:
+ * the email is sent only after the transaction commits, is never
+ * awaited, and any failure is logged rather than surfaced (spec story
+ * 22: email delivery must never roll back a decision).
  */
 
 'use server'
 
 import { z } from 'zod/v4'
+import { revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { refuseUnlessAdministrator } from '@/lib/admin-guard'
@@ -44,6 +54,8 @@ import {
   type ActionResult,
 } from '@/lib/errors'
 import { computePeriodEnd } from '@/lib/subscription'
+import { paymentDecisionNotificationData } from '@/lib/notifications'
+import { sendPaymentApprovedEmail, sendPaymentRejectedEmail } from '@/lib/email'
 
 const ApproveSchema = z.object({
   submissionId: z.string().min(1, 'A payment submission is required'),
@@ -95,11 +107,17 @@ export async function approveSubmission(input: {
     const submissionId = parsed.data.submissionId
     const now = new Date()
 
-    const periodEnd = await prisma.$transaction(
+    const delivery = await prisma.$transaction(
       async (tx) => {
         const submission = await tx.paymentSubmission.findUnique({
           where: { id: submissionId },
-          select: { id: true, userId: true },
+          select: {
+            id: true,
+            userId: true,
+            reference: true,
+            priceSnapshot: true,
+            currencySnapshot: true,
+          },
         })
         if (!submission) {
           throw new GuardError('validation', 'Payment submission not found')
@@ -119,7 +137,7 @@ export async function approveSubmission(input: {
 
         const subscriber = await tx.user.findUnique({
           where: { id: submission.userId },
-          select: { subscriptionPeriodEnd: true },
+          select: { email: true, name: true, subscriptionPeriodEnd: true },
         })
         if (!subscriber) {
           // unreachable in practice — a subscriber's submissions are
@@ -134,7 +152,27 @@ export async function approveSubmission(input: {
           data: { subscriptionPeriodEnd: nextPeriodEnd },
         })
 
-        return nextPeriodEnd
+        // Issue 08: the in-app Notification lands with the decision
+        // itself, in this same transaction — the bell can never promise
+        // an approval that did not commit (and a payment decision is a
+        // user Notification, never a Board Activity entry — ADR-0002).
+        await tx.notification.create({
+          data: paymentDecisionNotificationData({
+            subscriberId: submission.userId,
+            actorId: session.user.id,
+            decision: 'APPROVED',
+          }),
+        })
+
+        return {
+          periodEnd: nextPeriodEnd,
+          subscriber: { email: subscriber.email, name: subscriber.name },
+          submission: {
+            reference: submission.reference,
+            price: submission.priceSnapshot,
+            currency: submission.currencySnapshot,
+          },
+        }
       },
       // Serializable: approval is the one read-modify-write in billing
       // (read the current period end, write the stacked one). At READ
@@ -145,7 +183,19 @@ export async function approveSubmission(input: {
       { isolationLevel: 'Serializable' }
     )
 
-    return actionSuccess({ submissionId, periodEnd })
+    revalidateTag('notifications', 'max')
+
+    // Best-effort, fire-and-forget (spec story 22): intentionally NOT
+    // awaited — the decision above is already committed, and any failure
+    // below is logged, never surfaced as a failed approval.
+    void sendPaymentApprovedEmail(delivery.subscriber, {
+      ...delivery.submission,
+      periodEnd: delivery.periodEnd,
+    }).catch((error) => {
+      console.error('[payment-review] payment-approved email failed', error)
+    })
+
+    return actionSuccess({ submissionId, periodEnd: delivery.periodEnd })
   } catch (error) {
     if (error instanceof GuardError) {
       return actionError(error.kind, error.message)
@@ -184,10 +234,16 @@ export async function rejectSubmission(input: {
     const { submissionId, reason } = parsed.data
     const now = new Date()
 
-    await prisma.$transaction(async (tx) => {
+    const delivery = await prisma.$transaction(async (tx) => {
       const submission = await tx.paymentSubmission.findUnique({
         where: { id: submissionId },
-        select: { id: true },
+        select: {
+          id: true,
+          userId: true,
+          reference: true,
+          priceSnapshot: true,
+          currencySnapshot: true,
+        },
       })
       if (!submission) {
         throw new GuardError('validation', 'Payment submission not found')
@@ -209,6 +265,49 @@ export async function rejectSubmission(input: {
       if (decided.count === 0) {
         throw new GuardError('validation', 'This payment has already been decided')
       }
+
+      const subscriber = await tx.user.findUnique({
+        where: { id: submission.userId },
+        select: { email: true, name: true },
+      })
+      if (!subscriber) {
+        // unreachable in practice (cascade) — but the Notification's
+        // recipient foreign key needs the row either way, so a half-gone
+        // pair rolls the rejection back rather than deciding for nobody
+        throw new GuardError('server', 'Subscriber not found')
+      }
+
+      // Issue 08: the in-app Notification (and its stored reason, which
+      // billing history reads back) lands with the decision itself —
+      // same transaction, never an Activity entry (ADR-0002).
+      await tx.notification.create({
+        data: paymentDecisionNotificationData({
+          subscriberId: submission.userId,
+          actorId: session.user.id,
+          decision: 'REJECTED',
+        }),
+      })
+
+      return {
+        subscriber: { email: subscriber.email, name: subscriber.name },
+        submission: {
+          reference: submission.reference,
+          price: submission.priceSnapshot,
+          currency: submission.currencySnapshot,
+        },
+      }
+    })
+
+    revalidateTag('notifications', 'max')
+
+    // Best-effort, fire-and-forget (spec story 22): intentionally NOT
+    // awaited — the rejection above is already committed, and any
+    // failure below is logged, never surfaced as a failed rejection.
+    void sendPaymentRejectedEmail(delivery.subscriber, {
+      ...delivery.submission,
+      reason,
+    }).catch((error) => {
+      console.error('[payment-review] payment-rejected email failed', error)
     })
 
     return actionSuccess({ submissionId })

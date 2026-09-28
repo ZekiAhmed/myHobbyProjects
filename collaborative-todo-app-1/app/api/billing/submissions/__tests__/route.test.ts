@@ -106,7 +106,8 @@ describe('GET /api/billing/submissions — metadata only, never receipt bytes', 
     const { select } = prismaMock.paymentSubmission.findMany.mock.calls[0][0]
     expect(select).not.toHaveProperty('receiptBytes')
     expect(select).not.toHaveProperty('userId')
-    // the fields the history page renders (story 14)
+    // the fields the history page renders (story 14), plus the rejection
+    // reason it shows next to a rejected attempt (issue 08, story 19)
     expect(select).toMatchObject({
       id: true,
       reference: true,
@@ -116,6 +117,7 @@ describe('GET /api/billing/submissions — metadata only, never receipt bytes', 
       createdAt: true,
       updatedAt: true,
       expiresAt: true,
+      rejectionReason: true,
     })
   })
 
@@ -141,6 +143,29 @@ describe('GET /api/billing/submissions — metadata only, never receipt bytes', 
       expiresAt: '2026-09-30T12:00:00.000Z',
     })
     expect(JSON.stringify(body)).not.toContain('receiptBytes')
+  })
+
+  it('carries the stored rejection reason back to the subscriber (story 19)', async () => {
+    prismaMock.paymentSubmission.findMany.mockImplementation(
+      async (args: { select?: Record<string, boolean> } | undefined) =>
+        findManyHonoringSelect(
+          [
+            submissionRow({
+              status: 'REJECTED',
+              rejectionReason: 'Amount mismatch — received 90 ETB, expected 250 ETB',
+            }),
+          ],
+          args?.select
+        )
+    )
+
+    const res = await getBillingSubmissions()
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.submissions[0].rejectionReason).toBe(
+      'Amount mismatch — received 90 ETB, expected 250 ETB'
+    )
   })
 })
 
