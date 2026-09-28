@@ -300,21 +300,22 @@ describe('pricing & bank-details settings (subscription-billing 02)', () => {
 })
 
 /**
- * Payment submission lifecycle (subscription-billing issue 04).
+ * Payment submission lifecycle (subscription-billing issues 04 + 05).
  *
  * The record a Subscribe click creates: a unique payment reference for
  * memo matching, a price/currency snapshot (spec §Money — a later price
  * edit never invalidates an in-flight payment), and a 48-hour TTL
- * carried in `expiresAt`. Receipt bytes and decision columns arrive with
- * later tickets; the "at most one non-terminal submission per user" rule
- * is enforced inside the subscribe transaction (spec §Payment
- * lifecycle), not by a column.
+ * carried in `expiresAt`. Issue 05 adds the receipt columns the upload
+ * route writes (bytes in PostgreSQL, spec §Receipt storage). Decision
+ * columns arrive with later tickets; the "at most one non-terminal
+ * submission per user" rule is enforced inside the subscribe
+ * transaction (spec §Payment lifecycle), not by a column.
  */
-describe('payment submission (subscription-billing 04)', () => {
+describe('payment submission (subscription-billing 04 + 05)', () => {
   describe('PaymentSubmission model', () => {
     const submission = block('model', 'PaymentSubmission')
 
-    it('has exactly the designed fields — no receipt or decision columns yet', () => {
+    it('has exactly the designed fields — no decision columns yet', () => {
       expect(fieldNames(submission)).toEqual([
         'id',
         'userId',
@@ -323,6 +324,8 @@ describe('payment submission (subscription-billing 04)', () => {
         'priceSnapshot',
         'currencySnapshot',
         'expiresAt',
+        'receiptBytes',
+        'receiptMimeType',
         'createdAt',
         'updatedAt',
         'user',
@@ -346,6 +349,14 @@ describe('payment submission (subscription-billing 04)', () => {
 
     it('carries the 48-hour TTL in expiresAt with no default — code sets it at creation', () => {
       expect(lineStarting(submission, 'expiresAt')).toMatch(/^expiresAt DateTime$/)
+    })
+
+    it('stores receipt bytes as an optional binary column (spec §Receipt storage — bytes in PostgreSQL)', () => {
+      expect(lineStarting(submission, 'receiptBytes')).toBe('receiptBytes Bytes?')
+    })
+
+    it('remembers how the receipt sniffed so the admin viewer can render it', () => {
+      expect(lineStarting(submission, 'receiptMimeType')).toBe('receiptMimeType String?')
     })
 
     it('belongs to the subscribing user and dies with the account', () => {
@@ -389,6 +400,23 @@ describe('payment submission (subscription-billing 04)', () => {
       expect(migration).toMatch(
         /CREATE UNIQUE INDEX "PaymentSubmission_reference_key" ON "PaymentSubmission"\("reference"\)/
       )
+    })
+  })
+
+  describe('receipt columns migration (issue 05)', () => {
+    const migration = readFileSync(
+      path.join(__dirname, '..', 'migrations', '20260928130000_receipt_bytes', 'migration.sql'),
+      'utf8'
+    )
+
+    it('adds the receipt byte and mime-type columns to the existing table', () => {
+      expect(migration).toMatch(/ADD COLUMN\s+"receiptBytes" BYTEA/)
+      expect(migration).toMatch(/ADD COLUMN\s+"receiptMimeType" TEXT/)
+    })
+
+    it('is additive — the existing table and data are untouched', () => {
+      expect(migration).not.toContain('DROP')
+      expect(migration).not.toContain('ALTER TABLE "PaymentSubmission" ALTER COLUMN')
     })
   })
 })

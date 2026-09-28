@@ -385,6 +385,16 @@ model PaymentSubmission {
   priceSnapshot    Int // price in force when this attempt was created
   currencySnapshot String // ISO 4217 code snapshotted with the price
   expiresAt        DateTime // createdAt + 48h (AWAITING_UPLOAD TTL)
+
+  // Receipt bytes live in PostgreSQL (spec §Receipt storage — no storage
+  // service). Written ONCE by the upload route together with the
+  // AWAITING_UPLOAD -> PENDING flip; null until a receipt arrives.
+  // `receiptMimeType` is the signature-sniffed type (never the client's
+  // claim), so the admin viewer can render the bytes correctly.
+  // Issue 12 nulls `receiptBytes` 30 days after the decision; the row
+  // itself (and this mime type) are the permanent audit trail.
+  receiptBytes     Bytes?
+  receiptMimeType String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 

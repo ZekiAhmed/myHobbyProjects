@@ -161,3 +161,61 @@ export async function sendInvitationEmail(
     `,
   })
 }
+
+/**
+ * The payload of a "receipt pending review" email — one type shared by
+ * the upload route (which assembles it) and the sender (which renders
+ * it), so the two cannot drift apart.
+ */
+export interface PaymentPendingEmailSubmission {
+  reference: string
+  price: number
+  currency: string
+  submitterName: string
+  submitterEmail: string
+}
+
+/**
+ * Notifies one Administrator that a new payment receipt is awaiting
+ * review (subscription-billing issue 05, spec §Administrator
+ * notification).
+ *
+ * WHEN IS THIS SENT?
+ * - Once per Administrator, per submission that flips AWAITING_UPLOAD →
+ *   PENDING (the receipt upload route fires it best-effort)
+ *
+ * CALLER CONTRACT:
+ * The route treats every failure as log-and-continue: this function may
+ * throw, and a thrown email must never fail the user's upload.
+ *
+ * @param admin - The Administrator recipient (email + display name)
+ * @param submission - The newly pending payment (reference, snapshotted
+ *   amount, and the submitting user) for the email body
+ * @throws Will throw an error if the email fails to send
+ */
+export async function sendPaymentPendingEmail(
+  admin: { email: string; name: string },
+  submission: PaymentPendingEmailSubmission
+) {
+  await resend.emails.send({
+    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    to: admin.email,
+    subject: `Receipt pending review — ${submission.reference}`,
+    html: `
+      <h1>A receipt is waiting for review</h1>
+      <p>Hi ${admin.name},</p>
+      <p>
+        <strong>${submission.submitterName}</strong> (${
+          submission.submitterEmail
+        }) uploaded a payment receipt and is waiting on a decision.
+      </p>
+      <ul>
+        <li>Payment reference: <strong>${submission.reference}</strong></li>
+        <li>Expected amount: <strong>${submission.price} ${
+          submission.currency
+        }</strong> (snapshotted at submission)</li>
+      </ul>
+      <p>Review it in the Administration area — the queue promises a decision within 24 hours.</p>
+    `,
+  })
+}

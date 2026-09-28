@@ -12,9 +12,10 @@
  * 3. A clipboard failure (insecure context, denied permission) surfaces
  *    an error toast instead of failing silently
  *
- * Module-boundary mocks: sonner (prior art:
- * components/admin/__tests__/PricingSettingsForm.test.tsx — jsdom
- * pragma, react-dom/client + act).
+ * Module-boundary mocks: sonner, and next/navigation (the card hosts
+ * the receipt upload form, issue 05, whose router is out of scope here)
+ * (prior art: components/admin/__tests__/PricingSettingsForm.test.tsx —
+ * jsdom pragma, react-dom/client + act).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -32,6 +33,9 @@ const toastErrorMock = vi.hoisted(() => vi.fn())
 
 vi.mock('sonner', () => ({
   toast: { success: toastSuccessMock, error: toastErrorMock },
+}))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
 }))
 
 const SUBMISSION = {

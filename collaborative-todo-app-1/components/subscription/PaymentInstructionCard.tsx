@@ -2,13 +2,14 @@
 
 /**
  * @fileoverview Payment instruction card shown after Subscribe
- * (subscription-billing issue 04)
+ * (subscription-billing issues 04 + 05)
  *
  * Everything a manual bank transfer needs without leaving the app
  * (spec user stories 2–6): the exact amount (snapshotted at creation),
  * the bank details, a unique payment reference with a
- * copy-to-clipboard chip, the memo nudge that makes review fast, and
- * when the attempt expires.
+ * copy-to-clipboard chip, the memo nudge that makes review fast, when
+ * the attempt expires — and (issue 05) the receipt upload form that
+ * flips the attempt to PENDING.
  *
  * The amount comes from the attempt's snapshot, never the live price —
  * the admin can edit pricing mid-flight without moving the goalposts
@@ -20,6 +21,7 @@ import { Copy, Check } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/lib/toast'
+import { ReceiptUploadForm } from '@/components/subscription/ReceiptUploadForm'
 import type { PricingSettingsInput } from '@/lib/pricing-settings-schema'
 import type { PaymentSubmission } from '@/lib/generated/prisma/browser'
 
@@ -105,6 +107,8 @@ export function PaymentInstructionCard({ submission, settings }: PaymentInstruct
         This attempt expires on {format(submission.expiresAt, 'd MMM yyyy, HH:mm')} if no
         receipt is uploaded — after that you can start again at any time.
       </p>
+
+      <ReceiptUploadForm reference={submission.reference} />
     </section>
   )
 }
