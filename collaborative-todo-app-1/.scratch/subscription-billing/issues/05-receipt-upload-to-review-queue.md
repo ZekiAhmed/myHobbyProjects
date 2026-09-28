@@ -4,10 +4,10 @@
 
 **Blocked by:** 04 — Subscribe: payment instruction card.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Upload route handler accepts the four MIME types via signature check, rejects over-5 MB and spoofed files before any database write
-- [ ] Successful upload stores bytes and transitions to PENDING atomically; wrong-state or unknown-reference attempts are rejected
-- [ ] Memo checkbox + success screen give the user a definitive "submitted, under review" state
-- [ ] Best-effort notification email fires to Administrators on each new PENDING; failures are logged, not surfaced as upload errors
-- [ ] Tests cover accepted/rejected file types, size limit, transition guards, and the fire-and-forget email behavior
+- [x] Upload route handler accepts the four MIME types via signature check, rejects over-5 MB and spoofed files before any database write
+- [x] Successful upload stores bytes and transitions to PENDING atomically; wrong-state or unknown-reference attempts are rejected
+- [x] Memo checkbox + success screen give the user a definitive "submitted, under review" state
+- [x] Best-effort notification email fires to Administrators on each new PENDING; failures are logged, not surfaced as upload errors
+- [x] Tests cover accepted/rejected file types, size limit, transition guards, and the fire-and-forget email behavior
