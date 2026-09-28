@@ -4,11 +4,11 @@
 
 **Blocked by:** 05 — Receipt upload → review queue.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Upgrade screen renders the status card instead of the pay CTA while a PENDING submission exists
-- [ ] Dashboard banner shows the pending review (subscriber only, never Members)
-- [ ] Billing history page lists all submissions with status, timestamps, amount, and reference
-- [ ] All statuses shown include the 24-hour review promise copy
-- [ ] Reads go through GET route handlers + React Query with the central query-key factory
-- [ ] No navigation or free-feature behavior changes while pending
+- [x] Upgrade screen renders the status card instead of the pay CTA while a PENDING submission exists
+- [x] Dashboard banner shows the pending review (subscriber only, never Members)
+- [x] Billing history page lists all submissions with status, timestamps, amount, and reference
+- [x] All statuses shown include the 24-hour review promise copy
+- [x] Reads go through GET route handlers + React Query with the central query-key factory
+- [x] No navigation or free-feature behavior changes while pending
