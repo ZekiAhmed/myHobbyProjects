@@ -46,6 +46,29 @@ function startsWithAscii(bytes: Uint8Array, prefix: string): boolean {
   return true
 }
 
+/** Extension per accepted type — always derived from the sniffed type. */
+const RECEIPT_EXTENSIONS: Record<ReceiptMimeType, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+}
+
+/**
+ * The file extension for a stored receipt type — used for the
+ * Content-Disposition filename on the admin viewer route
+ * (subscription-billing issue 07), so a downloaded receipt keeps a name
+ * the operating system recognises instead of the URL's last segment.
+ *
+ * Takes the raw column value (a plain `string` on the row, not the
+ * union): a type outside the accepted four would otherwise crash the
+ * viewer, and an unknown type deserves a neutral extension rather than
+ * a 500 while an Administrator is mid-review.
+ */
+export function receiptFileExtension(mimeType: string): string {
+  return RECEIPT_EXTENSIONS[mimeType as ReceiptMimeType] ?? 'bin'
+}
+
 /**
  * Sniffs the receipt's MIME type from its leading bytes.
  *

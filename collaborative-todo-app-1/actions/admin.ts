@@ -17,6 +17,7 @@
 
 import { prisma } from '@/lib/db'
 import { getRequiredSession, getPlatformRole } from '@/lib/session'
+import { refuseUnlessAdministrator } from '@/lib/admin-guard'
 import {
   actionSuccess,
   actionError,
@@ -26,22 +27,6 @@ import {
 
 const ADMIN_ROLE = 'ADMINISTRATOR'
 const REGULAR_ROLE = 'REGULAR'
-
-/**
- * Shared authorization gate for both role mutations: only an
- * Administrator may manage roles.
- *
- * @returns An authorization ActionResult when the actor is not an
- *   Administrator, null when the actor is allowed to proceed
- */
-async function refuseUnlessAdministrator(
-  actorId: string
-): Promise<ActionResult<never> | null> {
-  if ((await getPlatformRole(actorId)) !== ADMIN_ROLE) {
-    return actionError('authorization', 'Only Administrators can manage roles')
-  }
-  return null
-}
 
 /**
  * Promotes a user to platform Administrator (Administrators only).
@@ -57,7 +42,7 @@ export async function promoteAdministrator(
   try {
     const session = await getRequiredSession()
 
-    const denied = await refuseUnlessAdministrator(session.user.id)
+    const denied = await refuseUnlessAdministrator(session.user.id, 'manage roles')
     if (denied) return denied
 
     const targetRole = await getPlatformRole(targetUserId)
@@ -98,7 +83,7 @@ export async function demoteAdministrator(
     const session = await getRequiredSession()
     const actorId = session.user.id
 
-    const denied = await refuseUnlessAdministrator(actorId)
+    const denied = await refuseUnlessAdministrator(actorId, 'manage roles')
     if (denied) return denied
 
     await prisma.$transaction(

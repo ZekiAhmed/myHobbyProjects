@@ -17,7 +17,8 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { getRequiredSession, getPlatformRole } from '@/lib/session'
+import { getRequiredSession } from '@/lib/session'
+import { refuseUnlessAdministrator } from '@/lib/admin-guard'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import {
   PRICING_SETTINGS_ID,
@@ -40,9 +41,11 @@ export async function savePricingSettings(
   try {
     const session = await getRequiredSession()
 
-    if ((await getPlatformRole(session.user.id)) !== 'ADMINISTRATOR') {
-      return actionError('authorization', 'Only Administrators can manage pricing settings')
-    }
+    const denied = await refuseUnlessAdministrator(
+      session.user.id,
+      'manage pricing settings'
+    )
+    if (denied) return denied
 
     const parsed = PricingSettingsSchema.safeParse(input)
     if (!parsed.success) {

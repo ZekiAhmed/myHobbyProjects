@@ -1,6 +1,6 @@
 /**
- * @fileoverview Server-entrypoint tests for the receipt upload route
- * (subscription-billing issue 05)
+ * @fileoverview Server-entrypoint tests for the receipt route
+ * (subscription-billing issues 05 + 07)
  *
  * CONTRACT UNDER TEST (POST /api/receipts):
  * 1. Accepts only the four spec MIME types — determined by real file
@@ -12,6 +12,12 @@
  * 5. Each new PENDING fires a best-effort email per Administrator;
  *    email failure is logged and never fails the upload
  *
+ * CONTRACT UNDER TEST (GET /api/receipts):
+ * 6. An Administrator gets the stored bytes with their sniffed content
+ *    type, a download-friendly filename, and no-store caching (story 38)
+ * 7. A signed-in non-Administrator gets 403 before the row is read
+ * 8. Missing reference → 400; unknown reference / no bytes → 404
+ *
  * External behavior only — session, db, and email mocked at the module
  * boundary per spec §Testing Decisions (prior art:
  * app/api/notifications/__tests__/route.test.ts).
@@ -20,7 +26,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const sessionMock = vi.hoisted(() => ({ getSession: vi.fn() }))
+const sessionMock = vi.hoisted(() => ({ getSession: vi.fn(), getPlatformRole: vi.fn() }))
 const prismaMock = vi.hoisted(() => ({
   paymentSubmission: { findUnique: vi.fn(), updateMany: vi.fn() },
   user: { findMany: vi.fn() },
@@ -29,11 +35,12 @@ const emailMock = vi.hoisted(() => ({ sendPaymentPendingEmail: vi.fn() }))
 
 vi.mock('@/lib/session', () => ({
   getRequiredSession: async () => sessionMock.getSession(),
+  getPlatformRole: (userId: string) => sessionMock.getPlatformRole(userId),
 }))
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
 vi.mock('@/lib/email', () => emailMock)
 
-import { POST as uploadReceipt } from '@/app/api/receipts/route'
+import { POST as uploadReceipt, GET as getReceipt } from '@/app/api/receipts/route'
 import { RECEIPT_MAX_BYTES } from '@/lib/receipt'
 
 const USER_ID = 'user_subscriber'
@@ -47,6 +54,15 @@ function signIn(userId = USER_ID) {
     user: { id: userId, email: `${userId}@t.dev`, name: 'Sub User' },
     session: { id: 's1' },
   })
+}
+
+/** The viewer's own session: signed in as someone holding the platform role. */
+function signInAsAdmin() {
+  sessionMock.getSession.mockResolvedValue({
+    user: { id: 'user_admin', email: 'admin@t.dev', name: 'Admin User' },
+    session: { id: 's1' },
+  })
+  sessionMock.getPlatformRole.mockResolvedValue('ADMINISTRATOR')
 }
 
 function awaitingSubmission(overrides: Record<string, unknown> = {}) {
@@ -86,6 +102,9 @@ let errorSpy: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
   vi.clearAllMocks()
   signIn()
+  // the viewer's role check defaults to Administrator; individual tests
+  // that exercise the gate override it
+  sessionMock.getPlatformRole.mockResolvedValue('ADMINISTRATOR')
   prismaMock.paymentSubmission.findUnique.mockResolvedValue(awaitingSubmission())
   prismaMock.paymentSubmission.updateMany.mockResolvedValue({ count: 1 })
   prismaMock.user.findMany.mockResolvedValue([
@@ -256,5 +275,88 @@ describe('POST /api/receipts — best-effort Administrator email', () => {
     await new Promise((r) => setTimeout(r, 0))
     expect(emailMock.sendPaymentPendingEmail).not.toHaveBeenCalled()
     expect(prismaMock.user.findMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/receipts — Administrator receipt viewer (issue 07)', () => {
+  const RECEIPT_BYTES = new TextEncoder().encode('%PDF-1.7 receipt evidence')
+
+  function viewerRequest(reference: string | null = REFERENCE) {
+    const url =
+      reference === null
+        ? 'http://localhost/api/receipts'
+        : `http://localhost/api/receipts?reference=${encodeURIComponent(reference)}`
+    return new NextRequest(url)
+  }
+
+  function storedReceipt(overrides: Record<string, unknown> = {}) {
+    return {
+      reference: REFERENCE,
+      receiptBytes: RECEIPT_BYTES,
+      receiptMimeType: 'application/pdf',
+      ...overrides,
+    }
+  }
+
+  beforeEach(() => {
+    signInAsAdmin()
+  })
+
+  it('streams the stored bytes with their sniffed content type, uncached', async () => {
+    prismaMock.paymentSubmission.findUnique.mockResolvedValue(storedReceipt())
+
+    const res = await getReceipt(viewerRequest())
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('application/pdf')
+    expect(res.headers.get('cache-control')).toContain('no-store')
+    expect(Array.from(new Uint8Array(await res.arrayBuffer()))).toEqual(
+      Array.from(RECEIPT_BYTES)
+    )
+  })
+
+  it('names the download after the payment reference, with the type’s own extension', async () => {
+    prismaMock.paymentSubmission.findUnique.mockResolvedValue(storedReceipt())
+
+    const res = await getReceipt(viewerRequest())
+
+    expect(res.headers.get('content-disposition')).toBe(
+      `inline; filename="receipt-${REFERENCE}.pdf"`
+    )
+  })
+
+  it('returns 403 to a signed-in non-Administrator without reading the row', async () => {
+    sessionMock.getPlatformRole.mockResolvedValue('REGULAR')
+    prismaMock.paymentSubmission.findUnique.mockResolvedValue(storedReceipt())
+
+    const res = await getReceipt(viewerRequest())
+
+    expect(res.status).toBe(403)
+    expect(prismaMock.paymentSubmission.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('requires a payment reference with 400', async () => {
+    const res = await getReceipt(viewerRequest(null))
+
+    expect(res.status).toBe(400)
+    expect(prismaMock.paymentSubmission.findUnique).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 for an unknown reference', async () => {
+    prismaMock.paymentSubmission.findUnique.mockResolvedValue(null)
+
+    const res = await getReceipt(viewerRequest('PAY-ZZZZ-9999'))
+
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 404 when no bytes are stored — awaiting upload, or pruned by retention', async () => {
+    prismaMock.paymentSubmission.findUnique.mockResolvedValue(
+      storedReceipt({ receiptBytes: null })
+    )
+
+    const res = await getReceipt(viewerRequest())
+
+    expect(res.status).toBe(404)
   })
 })

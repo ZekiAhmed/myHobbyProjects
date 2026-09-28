@@ -11,10 +11,17 @@
  *
  * Also covers the billing history entry added by subscription-billing
  * issue 06: same key-factory contract, same non-2xx rejection rule.
+ *
+ * And the Administrator's review queue read (issue 07): keys must stay
+ * in the admin namespace — a regular user's client must never hold an
+ * admin payload under the subscriber billing key — and its 403 refusal
+ * must reject, not read as an empty queue to act on.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
+  adminKeys,
+  adminReviewQueueQueryOptions,
   billingKeys,
   billingSubmissionsQueryOptions,
   boardDetailQueryOptions,
@@ -137,5 +144,47 @@ describe('billingSubmissionsQueryOptions — central query-key factory entry (is
     vi.stubGlobal('fetch', mockFetchResponse({ error: 'Unauthorized' }, 401))
 
     await expect(callQueryFn(billingSubmissionsQueryOptions().queryFn)).rejects.toThrow()
+  })
+})
+
+describe('adminReviewQueueQueryOptions — operator queue read (issue 07)', () => {
+  it('keys off the admin factory, in its own namespace away from the subscriber billing entry', () => {
+    expect(adminKeys.all()).toEqual(['admin'])
+    expect(adminKeys.reviewQueue()).toEqual(['admin', 'review-queue'])
+    expect(adminReviewQueueQueryOptions().queryKey).toEqual(adminKeys.reviewQueue())
+    // a regular user's client must never land an admin payload in the
+    // cache entry its own billing banner reads from
+    expect(adminReviewQueueQueryOptions().queryKey).not.toEqual(billingKeys.submissions())
+  })
+
+  it('fetches GET /api/admin/review-queue and resolves its submissions', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () =>
+        Promise.resolve({ submissions: [{ id: 'sub_1', status: 'PENDING' }] }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await callQueryFn(adminReviewQueueQueryOptions().queryFn)
+
+    expect(String(fetchMock.mock.calls[0][0])).toBe('/api/admin/review-queue')
+    expect(result).toEqual({ submissions: [{ id: 'sub_1', status: 'PENDING' }] })
+  })
+
+  it('rejects the 403 a regular user receives — never resolves it as an empty queue', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetchResponse({ error: 'Forbidden: Administrators only' }, 403)
+    )
+
+    await expect(callQueryFn(adminReviewQueueQueryOptions().queryFn)).rejects.toThrow()
+  })
+
+  it('polls every 60s with no stale window, so a left-open tab keeps the aging badges honest', () => {
+    const options = adminReviewQueueQueryOptions()
+
+    expect(options.refetchInterval).toBe(60_000)
+    expect(options.staleTime).toBe(0)
   })
 })

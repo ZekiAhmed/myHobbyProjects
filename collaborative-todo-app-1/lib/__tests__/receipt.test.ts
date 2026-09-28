@@ -13,6 +13,7 @@ import {
   RECEIPT_MAX_BYTES,
   RECEIPT_MIME_TYPES,
   detectReceiptMimeType,
+  receiptFileExtension,
 } from '@/lib/receipt'
 
 /** Byte prefix helper: ASCII prefix padded with arbitrary trailing bytes. */
@@ -68,5 +69,25 @@ describe('detectReceiptMimeType — rejections', () => {
 describe('RECEIPT_MAX_BYTES', () => {
   it('is 5 MB exactly as the spec caps it', () => {
     expect(RECEIPT_MAX_BYTES).toBe(5 * 1024 * 1024)
+  })
+})
+
+/**
+ * Download naming for the admin receipt viewer (subscription-billing
+ * issue 07): the extension is derived from the SNIFFED type stored at
+ * upload time — never from the original filename, which was never
+ * trusted in the first place.
+ */
+describe('receiptFileExtension', () => {
+  it('maps each accepted type to its operating-system extension', () => {
+    expect(receiptFileExtension('image/jpeg')).toBe('jpg')
+    expect(receiptFileExtension('image/png')).toBe('png')
+    expect(receiptFileExtension('image/webp')).toBe('webp')
+    expect(receiptFileExtension('application/pdf')).toBe('pdf')
+  })
+
+  it('falls back to a neutral extension for a type outside the accepted four', () => {
+    expect(receiptFileExtension('application/octet-stream')).toBe('bin')
+    expect(receiptFileExtension('')).toBe('bin')
   })
 })

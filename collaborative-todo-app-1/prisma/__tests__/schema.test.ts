@@ -306,16 +306,16 @@ describe('pricing & bank-details settings (subscription-billing 02)', () => {
  * memo matching, a price/currency snapshot (spec §Money — a later price
  * edit never invalidates an in-flight payment), and a 48-hour TTL
  * carried in `expiresAt`. Issue 05 adds the receipt columns the upload
- * route writes (bytes in PostgreSQL, spec §Receipt storage). Decision
- * columns arrive with later tickets; the "at most one non-terminal
- * submission per user" rule is enforced inside the subscribe
- * transaction (spec §Payment lifecycle), not by a column.
+ * route writes (bytes in PostgreSQL, spec §Receipt storage); issue 07
+ * adds the decision columns the approve/reject actions write. The "at
+ * most one non-terminal submission per user" rule is enforced inside
+ * the subscribe transaction (spec §Payment lifecycle), not by a column.
  */
 describe('payment submission (subscription-billing 04 + 05)', () => {
   describe('PaymentSubmission model', () => {
     const submission = block('model', 'PaymentSubmission')
 
-    it('has exactly the designed fields — no decision columns yet', () => {
+    it('has exactly the designed fields', () => {
       expect(fieldNames(submission)).toEqual([
         'id',
         'userId',
@@ -326,9 +326,13 @@ describe('payment submission (subscription-billing 04 + 05)', () => {
         'expiresAt',
         'receiptBytes',
         'receiptMimeType',
+        'decidedAt',
+        'decidedById',
+        'rejectionReason',
         'createdAt',
         'updatedAt',
         'user',
+        'decidedBy',
       ])
     })
 
@@ -416,6 +420,74 @@ describe('payment submission (subscription-billing 04 + 05)', () => {
 
     it('is additive — the existing table and data are untouched', () => {
       expect(migration).not.toContain('DROP')
+      expect(migration).not.toContain('ALTER TABLE "PaymentSubmission" ALTER COLUMN')
+    })
+  })
+})
+
+/**
+ * Payment decisions & the subscription clock (subscription-billing 07).
+ *
+ * Approve writes the subscriber's period end (spec §Money & subscription
+ * period — max(now, current end) + 1 calendar month, stacked); reject
+ * stores the mandatory reason (spec §Payment lifecycle, story 41). Both
+ * decisions record when and who, because the retention rule keeps this
+ * metadata forever (story 50) while only the receipt bytes are pruned
+ * (issue 12). Every column is nullable: an undecided row carries none
+ * of them, and EXPIRED rows never will.
+ */
+describe('payment decisions & subscription period (subscription-billing 07)', () => {
+  describe('PaymentSubmission decision columns', () => {
+    const submission = block('model', 'PaymentSubmission')
+
+    it('leaves every decision column nullable — an undecided row writes none of them', () => {
+      expect(lineStarting(submission, 'decidedAt')).toBe('decidedAt DateTime?')
+      expect(lineStarting(submission, 'decidedById')).toBe('decidedById String?')
+      expect(lineStarting(submission, 'rejectionReason')).toBe('rejectionReason String?')
+    })
+
+    it('keeps the reviewer as a SetNull relation so the audit row outlives the account', () => {
+      expectRelation(submission, 'decidedBy', { fields: 'decidedById', onDelete: 'SetNull' })
+    })
+  })
+
+  describe('User period end', () => {
+    const user = block('model', 'User')
+
+    it('carries a nullable period end — null means no approval has ever happened', () => {
+      expect(lineStarting(user, 'subscriptionPeriodEnd')).toBe('subscriptionPeriodEnd DateTime?')
+    })
+
+    it('relates to the submissions it made and the submissions it decided', () => {
+      expect(user).toContain('submissions PaymentSubmission[]')
+      expect(user).toContain(
+        'decidedSubmissions PaymentSubmission[] @relation("PaymentDecisionActor")'
+      )
+    })
+  })
+
+  describe('migration', () => {
+    const migration = readFileSync(
+      path.join(__dirname, '..', 'migrations', '20260928140000_payment_decision', 'migration.sql'),
+      'utf8'
+    )
+
+    it('adds the three decision columns to the existing submissions table', () => {
+      expect(migration).toMatch(/ADD COLUMN\s+"decidedAt" TIMESTAMP\(3\)/)
+      expect(migration).toMatch(/ADD COLUMN\s+"decidedById" TEXT/)
+      expect(migration).toMatch(/ADD COLUMN\s+"rejectionReason" TEXT/)
+    })
+
+    it('adds the subscriber period end and a SetNull reviewer foreign key', () => {
+      expect(migration).toMatch(/ALTER TABLE "User" ADD COLUMN\s+"subscriptionPeriodEnd" TIMESTAMP\(3\)/)
+      expect(migration).toMatch(
+        /ADD CONSTRAINT "PaymentSubmission_decidedById_fkey"[\s\S]*?ON DELETE SET NULL/
+      )
+    })
+
+    it('is additive — no column is dropped or retyped, no row is deleted', () => {
+      expect(migration).not.toContain('DROP')
+      expect(migration).not.toContain('DELETE FROM')
       expect(migration).not.toContain('ALTER TABLE "PaymentSubmission" ALTER COLUMN')
     })
   })

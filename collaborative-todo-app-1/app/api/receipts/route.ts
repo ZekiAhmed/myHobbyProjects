@@ -1,7 +1,8 @@
 /**
- * @fileoverview POST /api/receipts — upload a transfer receipt
- * (subscription-billing issue 05)
+ * @fileoverview /api/receipts — the transfer receipt's two doors
+ * (subscription-billing issues 05 + 07)
  *
+ * POST /api/receipts — upload a transfer receipt.
  * Why an API route handler and not a server action (spec §Receipt
  * storage): the framework's server-action body-size limits are below
  * the spec's 5 MB receipt cap; a route handler reads the raw multipart
@@ -22,14 +23,23 @@
  * Administrator email is best-effort (spec §Administrator
  * notification): one fire-and-forget email per Administrator, logged on
  * failure — an email outage must never fail the user's upload.
+ *
+ * GET /api/receipts?reference=… — the Administrator's receipt viewer
+ * (spec story 38). Same bytes, opposite direction: an authenticated,
+ * Administrator-only route that streams the stored file back with its
+ * sniffed content type so the review card can show the proof. A
+ * non-Administrator is refused with 403 before the row is read —
+ * receipt bytes are financial evidence, never part of a regular user's
+ * session (the billing history route deliberately omits them).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getRequiredSession } from '@/lib/session'
+import { getRequiredSession, getPlatformRole } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { sendPaymentPendingEmail, type PaymentPendingEmailSubmission } from '@/lib/email'
 import {
   detectReceiptMimeType,
+  receiptFileExtension,
   RECEIPT_MAX_BYTES,
   RECEIPT_TOO_LARGE_ERROR,
   RECEIPT_UNSUPPORTED_TYPE_ERROR,
@@ -114,6 +124,60 @@ export async function POST(request: NextRequest) {
   })
 
   return NextResponse.json({ ok: true, status: 'PENDING' })
+}
+
+/**
+ * GET /api/receipts?reference=… — stream one stored receipt back to an
+ * Administrator (subscription-billing issue 07).
+ *
+ * AUTHORIZATION: the platform role is re-checked here, not inherited
+ * from the page gate — a receipt is reachable from the review card by
+ * URL, so this route is its own boundary. 403 comes before the row is
+ * read, so a non-Administrator learns nothing, not even whether the
+ * reference exists (the POST path answers unknown references with 404
+ * to their owner; this path must not leak that to anyone else).
+ *
+ * The sniffed `receiptMimeType` written at upload time is what the
+ * response carries — the stored bytes were validated by signature, so
+ * rendering them under that type is safe. `private, no-store` keeps the
+ * evidence out of every shared cache.
+ */
+export async function GET(request: NextRequest) {
+  const session = await getRequiredSession()
+
+  if ((await getPlatformRole(session.user.id)) !== 'ADMINISTRATOR') {
+    return NextResponse.json(
+      { error: 'Only Administrators can view receipts' },
+      { status: 403 }
+    )
+  }
+
+  const reference = request.nextUrl.searchParams.get('reference')
+  if (!reference) {
+    return NextResponse.json({ error: 'A payment reference is required' }, { status: 400 })
+  }
+
+  const submission = await prisma.paymentSubmission.findUnique({
+    where: { reference },
+    select: { reference: true, receiptBytes: true, receiptMimeType: true },
+  })
+
+  if (!submission || !submission.receiptBytes || !submission.receiptMimeType) {
+    // no receipt yet (still AWAITING_UPLOAD) or bytes already pruned by
+    // the 30-day retention rule (issue 12) — either way there is nothing
+    // to view, and the queue only offers the link when a type exists
+    return NextResponse.json({ error: 'Receipt not found' }, { status: 404 })
+  }
+
+  return new NextResponse(submission.receiptBytes, {
+    headers: {
+      'Content-Type': submission.receiptMimeType,
+      'Content-Disposition': `inline; filename="receipt-${submission.reference}.${receiptFileExtension(
+        submission.receiptMimeType
+      )}"`,
+      'Cache-Control': 'private, no-store',
+    },
+  })
 }
 
 /**

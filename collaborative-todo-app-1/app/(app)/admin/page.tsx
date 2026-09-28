@@ -11,8 +11,8 @@
  * from the board Owner role.
  *
  * The area grows with the tickets that hang off this gate: role
- * management (01), pricing/bank-details settings (02), and later the
- * payment review queue.
+ * management (01), pricing/bank-details settings (02), and the payment
+ * review queue (07).
  */
 
 import { requireAdmin } from '@/lib/session'
@@ -21,6 +21,7 @@ import { getPricingSettings } from '@/lib/pricing-settings'
 import { PageShell } from '@/components/PageShell'
 import { RoleManager } from '@/components/admin/RoleManager'
 import { PricingSettingsForm } from '@/components/admin/PricingSettingsForm'
+import { ReviewQueue } from '@/components/admin/ReviewQueue'
 
 export default async function AdminPage() {
   const session = await requireAdmin()
@@ -45,11 +46,19 @@ export default async function AdminPage() {
         </p>
         <RoleManager users={users} currentUserId={session.user.id} />
         <PricingSettingsForm settings={settings} />
+        {/* Client component: the queue reads through React Query and
+            decides through server actions (subscription-billing 07).
+            The whole page sits behind requireAdmin, and the route plus
+            both actions re-check the role anyway. */}
         <section className="rounded-lg border p-4">
           <h2 className="font-semibold">Payment review queue</h2>
           <p className="text-sm text-muted-foreground">
-            Pending payment submissions will appear here.
+            Pending payments, oldest first. Approve starts or extends the
+            subscriber&apos;s paid period; rejection needs a reason.
           </p>
+          <div className="mt-3">
+            <ReviewQueue />
+          </div>
         </section>
       </div>
     </PageShell>

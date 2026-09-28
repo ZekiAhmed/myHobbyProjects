@@ -179,3 +179,35 @@ export type BillingSubmission = {
   updatedAt: Date | string
   expiresAt: Date | string
 }
+
+/**
+ * One pending payment as the Administrator's review queue renders it
+ * (GET /api/admin/review-queue).
+ *
+ * Metadata only — the receipt blob is read through the admin-gated
+ * viewer route (`/api/receipts?reference=…`), never on this wire;
+ * `receiptMimeType` non-null is the queue card's signal that a viewer
+ * link is worth offering. `status` is not carried: the route already
+ * pins every row to PENDING.
+ *
+ * TWO CLOCKS, both `Date | string` (ISO on the wire, `Date` when a
+ * server read hands them over):
+ * - `createdAt` — payment instructions created, i.e. when the transfer
+ *   was initiated. The bank-statement fallback hint matches on this
+ *   date (lib/review-aging consumers show it alongside amount + sender)
+ * - `updatedAt` — when the receipt landed and the row entered the
+ *   review queue. The aging badge counts down from here
+ *   (lib/review-aging.ts): the 24-hour promise starts when there is
+ *   something to review, not when the instructions were requested. It
+ *   doubles as the card's "Submitted" time
+ */
+export type ReviewQueueSubmission = {
+  id: string
+  reference: string
+  priceSnapshot: number
+  currencySnapshot: string
+  receiptMimeType: string | null
+  createdAt: Date | string
+  updatedAt: Date | string
+  user: { id: string; name: string; email: string }
+}

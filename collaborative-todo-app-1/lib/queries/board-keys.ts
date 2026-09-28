@@ -3,8 +3,8 @@
  *
  * This file contains:
  * 1. Query Key Factories — consistent cache keys for board data, the
- *    acting user's Notifications, their Active sessions, and their
- *    billing history
+ *    acting user's Notifications, their Active sessions, their billing
+ *    history, and the Administrator's review queue
  * 2. TanStack Query Options — client-side fetch configuration
  *
  * IMPORTANT: This is a CLIENT-SAFE file.
@@ -22,6 +22,7 @@ import type {
   BoardDetail,
   CommentFeedPage,
   NotificationFeedPage,
+  ReviewQueueSubmission,
   TodoWithRelations,
 } from '@/lib/types'
 
@@ -403,4 +404,53 @@ export const billingSubmissionsQueryOptions = () =>
     queryFn:   () => fetchJson<{ submissions: BillingSubmission[] }>('/api/billing/submissions'),
     staleTime: 30_000,
     gcTime:    300_000,
+  })
+
+/**
+ * Query Key Factory for the Administrator area
+ * (subscription-billing issue 07).
+ *
+ * Scoped to the queue rather than any user: GET /api/admin/review-queue
+ * answers only for a signed-in Administrator, and every decision
+ * invalidates this one entry — the card disappears, the counts update.
+ * A separate namespace from `billingKeys` on purpose: that one is the
+ * subscriber's own history, this one is the operator's worklist, and
+ * the two must never share a cache entry (a regular user's client has
+ * no business holding an admin payload).
+ */
+export const adminKeys = {
+  /** The whole Administrator surface — invalidate to refresh every admin read */
+  all:         ()              => ['admin']               as const,
+  /** Pending payments, oldest first (the review queue) */
+  reviewQueue: ()              => ['admin', 'review-queue'] as const,
+}
+
+/**
+ * Query Options for the review queue (issue 07).
+ *
+ * WHAT IT DOES:
+ * - Fetches GET /api/admin/review-queue — pending submissions oldest
+ *   first with their snapshot, submitter identity, and timestamps
+ * - staleTime 0 + a 60-second refetch: this is the one surface in the
+ *   app that polls, deliberately. A new PENDING must show up without a
+ *   manual refresh, and the aging badge ("18h left" → "OVERDUE") is
+ *   recomputed from `createdAt` on every refetch, so a tab left open
+ *   overnight still tells the truth (spec story 36). The subscriber's
+ *   waiting surfaces stay calm and never poll (issue 06).
+ *
+ * USAGE:
+ * - Client: useQuery(adminReviewQueueQueryOptions()) in ReviewQueue
+ *
+ * @example
+ * const { data } = useQuery(adminReviewQueueQueryOptions())
+ * const pending = data?.submissions ?? []
+ */
+export const adminReviewQueueQueryOptions = () =>
+  queryOptions({
+    queryKey:        adminKeys.reviewQueue(),
+    queryFn:         () =>
+      fetchJson<{ submissions: ReviewQueueSubmission[] }>('/api/admin/review-queue'),
+    staleTime:       0,
+    gcTime:          300_000,
+    refetchInterval: 60_000,
   })

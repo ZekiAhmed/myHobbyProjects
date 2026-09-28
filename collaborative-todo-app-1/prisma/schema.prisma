@@ -33,6 +33,15 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // The subscriber's period end (subscription-billing issue 07): null
+  // until the first approval, then written by the approve action as
+  // max(now, current period end) + 1 calendar month (spec §Money &
+  // subscription period — early renewal stacks, so a paying subscriber
+  // never falls into a locked gap). Pro state is DERIVED from this
+  // timestamp at read time (spec §Domain & entitlement) — no cron, no
+  // stored status, no grace period.
+  subscriptionPeriodEnd DateTime?
+
   // Relations back into our domain models
   sessions      Session[]
   accounts      Account[]
@@ -47,7 +56,8 @@ model User {
   actedNotifications Notification[] @relation("NotificationActor")
 
   // Subscription-billing (spec: manual bank-transfer subscription)
-  submissions PaymentSubmission[]
+  submissions        PaymentSubmission[]
+  decidedSubmissions PaymentSubmission[] @relation("PaymentDecisionActor")
 }
 
 // The platform Administrator role — never called "admin" for board roles
@@ -393,12 +403,26 @@ model PaymentSubmission {
   // claim), so the admin viewer can render the bytes correctly.
   // Issue 12 nulls `receiptBytes` 30 days after the decision; the row
   // itself (and this mime type) are the permanent audit trail.
-  receiptBytes     Bytes?
+  receiptBytes    Bytes?
   receiptMimeType String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Decision columns (subscription-billing issue 07): when the
+  // Administrator decided, who decided it, and — for a REJECTED row —
+  // the mandatory reason the subscriber self-corrects from (spec
+  // §Payment lifecycle, story 41). Together with the snapshot fields
+  // these make up the permanent audit trail the retention rule keeps
+  // forever (story 50): only receiptBytes are ever pruned (issue 12).
+  // decidedById is SetNull so the submission survives its reviewer's
+  // account being erased — same convention as Activity.actorId.
+  decidedAt       DateTime?
+  decidedById     String?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy User? @relation("PaymentDecisionActor", fields: [decidedById], references: [id], onDelete: SetNull)
 
   // Covers the subscribe transaction's lookup: this user's rows by state.
   @@index([userId, status])
