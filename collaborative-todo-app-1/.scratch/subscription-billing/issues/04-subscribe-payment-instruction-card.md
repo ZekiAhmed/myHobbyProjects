@@ -4,11 +4,11 @@
 
 **Blocked by:** 02 — Pricing & bank-details settings, 03 — Subscription date & entitlement math.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Upgrade screen shows live price/currency, bank details, and transfer instructions from settings
-- [ ] Subscribe action creates AWAITING_UPLOAD with reference, price snapshot, and 48h TTL in a transaction
-- [ ] Single non-terminal submission per user is enforced; the error surfaced is actionable
-- [ ] Copy-to-clipboard reference chip with the memo nudge copy
-- [ ] Stale AWAITING_UPLOAD records become EXPIRED (lazy), after which a new attempt succeeds
-- [ ] Tests cover initiation, duplicate blocking, snapshotting, and TTL expiry
+- [x] Upgrade screen shows live price/currency, bank details, and transfer instructions from settings
+- [x] Subscribe action creates AWAITING_UPLOAD with reference, price snapshot, and 48h TTL in a transaction
+- [x] Single non-terminal submission per user is enforced; the error surfaced is actionable
+- [x] Copy-to-clipboard reference chip with the memo nudge copy
+- [x] Stale AWAITING_UPLOAD records become EXPIRED (lazy), after which a new attempt succeeds
+- [x] Tests cover initiation, duplicate blocking, snapshotting, and TTL expiry
