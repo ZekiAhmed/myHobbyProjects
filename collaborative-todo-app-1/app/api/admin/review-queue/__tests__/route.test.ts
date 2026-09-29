@@ -1,6 +1,6 @@
 /**
  * @fileoverview Server-entrypoint tests for the admin review queue
- * (subscription-billing issue 07)
+ * (subscription-billing issues 07 + 12)
  *
  * CONTRACT UNDER TEST (GET /api/admin/review-queue):
  * 1. An Administrator gets the queue: PENDING rows only, longest
@@ -16,9 +16,14 @@
  * 5. A signed-out caller is stopped by the session gate — no role
  *    lookup, no queue read
  * 6. An empty queue is a 200 with an empty list, not an error
+ * 7. An authorized read doubles as the retention trigger (issue 12):
+ *    it runs the receipt-byte sweep (query contract covered in
+ *    lib/__tests__/receipt-retention.test.ts), an unauthorized caller
+ *    triggers nothing, and a sweep failure never fails the queue read
  *
- * External behavior only — session and db mocked at the module boundary
- * (prior art: app/api/billing/submissions/__tests__/route.test.ts).
+ * External behavior only — session, db, and the retention helper
+ * mocked at the module boundary (prior art:
+ * app/api/billing/submissions/__tests__/route.test.ts).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -27,6 +32,7 @@ const sessionMock = vi.hoisted(() => ({ getSession: vi.fn(), getPlatformRole: vi
 const prismaMock = vi.hoisted(() => ({
   paymentSubmission: { findMany: vi.fn() },
 }))
+const retentionMock = vi.hoisted(() => ({ pruneExpiredReceipts: vi.fn() }))
 
 vi.mock('@/lib/session', () => ({
   // mirrors the real helper: no session means the sign-in redirect is
@@ -39,6 +45,7 @@ vi.mock('@/lib/session', () => ({
   getPlatformRole: (userId: string) => sessionMock.getPlatformRole(userId),
 }))
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/receipt-retention', () => retentionMock)
 
 import { GET as getReviewQueue } from '@/app/api/admin/review-queue/route'
 
@@ -72,6 +79,8 @@ beforeEach(() => {
   signIn(ADMIN_ID)
   sessionMock.getPlatformRole.mockResolvedValue('ADMINISTRATOR')
   prismaMock.paymentSubmission.findMany.mockResolvedValue([])
+  // the sweep finds nothing due by default
+  retentionMock.pruneExpiredReceipts.mockResolvedValue(0)
 })
 
 describe('GET /api/admin/review-queue — authorization', () => {
@@ -178,5 +187,43 @@ describe('GET /api/admin/review-queue — queue contents', () => {
 
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ submissions: [] })
+  })
+})
+
+describe('GET /api/admin/review-queue — lazy receipt pruning (issue 12)', () => {
+  it('uses an authorized queue read to trigger the receipt-byte retention sweep', async () => {
+    const res = await getReviewQueue()
+
+    expect(res.status).toBe(200)
+    expect(retentionMock.pruneExpiredReceipts).toHaveBeenCalledTimes(1)
+  })
+
+  it('runs no maintenance for an unauthorized caller — a 403 prunes nothing', async () => {
+    signIn(REGULAR_ID)
+    sessionMock.getPlatformRole.mockResolvedValue('REGULAR')
+
+    const res = await getReviewQueue()
+
+    expect(res.status).toBe(403)
+    expect(prismaMock.paymentSubmission.findMany).not.toHaveBeenCalled()
+    expect(retentionMock.pruneExpiredReceipts).not.toHaveBeenCalled()
+  })
+
+  it('never lets a sweep failure break the queue read it piggybacks on', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    prismaMock.paymentSubmission.findMany.mockResolvedValue([
+      pendingRow('sub_1', '2026-09-27T09:30:00.000Z'),
+    ])
+    retentionMock.pruneExpiredReceipts.mockRejectedValue(new Error('connection reset'))
+
+    const res = await getReviewQueue()
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.submissions).toHaveLength(1)
+    expect(body.submissions[0].reference).toBe('PAY-SUB_1')
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    expect(String(errorSpy.mock.calls[0][0])).toMatch(/prune/i)
+    errorSpy.mockRestore()
   })
 })

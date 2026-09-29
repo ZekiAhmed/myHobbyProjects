@@ -33,11 +33,20 @@
  * (GET /api/receipts), never shipped with the queue payload. `status`
  * is absent too: the WHERE already pins every row to PENDING, so
  * echoing it would be a constant on the wire.
+ *
+ * LAZY RETENTION (issue 12): an authorized queue read doubles as an
+ * opportunistic prune trigger for receipt bytes whose decision is 30+
+ * days old — no cron in this project, so whoever reads next does the
+ * sweep. The WHERE pins the sweep to APPROVED/REJECTED rows, which are
+ * never in this queue, so maintenance can never disturb live review
+ * work; it nulls `receiptBytes` alone and is isolated in try/catch so
+ * a prune failure still leaves the Administrator their queue.
  */
 
 import { NextResponse } from 'next/server'
 import { getRequiredSession, getPlatformRole } from '@/lib/session'
 import { prisma } from '@/lib/db'
+import { pruneExpiredReceipts } from '@/lib/receipt-retention'
 
 export async function GET() {
   const session = await getRequiredSession()
@@ -74,6 +83,16 @@ export async function GET() {
       user: { select: { id: true, name: true, email: true } },
     },
   })
+
+  // Opportunistic retention, after the queue read and only once the
+  // role check has passed — an unauthorized caller triggers no
+  // maintenance, and a failing sweep never costs the Administrator the
+  // queue they came for (issue 12).
+  try {
+    await pruneExpiredReceipts()
+  } catch (error) {
+    console.error('[admin/review-queue] receipt retention prune failed', error)
+  }
 
   return NextResponse.json({ submissions })
 }

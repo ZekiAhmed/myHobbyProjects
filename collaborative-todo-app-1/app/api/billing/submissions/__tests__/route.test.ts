@@ -1,6 +1,6 @@
 /**
  * @fileoverview Server-entrypoint tests for the billing history read
- * (subscription-billing issue 06)
+ * (subscription-billing issues 06 + 12)
  *
  * CONTRACT UNDER TEST (GET /api/billing/submissions):
  * 1. Scoped to the acting user only — a submission is private financial
@@ -10,9 +10,13 @@
  * 3. Receipt BYTES are never selected: the read is metadata-only, so a
  *    multi-megabyte receipt can never travel to the client
  * 4. An empty history is a valid 200 with an empty list
+ * 5. The read is also the retention trigger (issue 12): every
+ *    successful read runs the receipt-byte sweep (its query contract
+ *    lives in lib/__tests__/receipt-retention.test.ts), a signed-out
+ *    caller triggers nothing, and a sweep failure never fails the read
  *
- * External behavior only — db and session mocked at the module boundary
- * per spec §Testing Decisions (prior art:
+ * External behavior only — session, db, and the retention helper
+ * mocked at the module boundary per spec §Testing Decisions (prior art:
  * app/api/notifications/__tests__/route.test.ts).
  */
 
@@ -22,11 +26,19 @@ const sessionMock = vi.hoisted(() => ({ getSession: vi.fn() }))
 const prismaMock = vi.hoisted(() => ({
   paymentSubmission: { findMany: vi.fn() },
 }))
+const retentionMock = vi.hoisted(() => ({ pruneExpiredReceipts: vi.fn() }))
 
 vi.mock('@/lib/session', () => ({
-  getRequiredSession: async () => sessionMock.getSession(),
+  // mirrors the real helper: no session means the sign-in redirect is
+  // thrown before the handler can read (or prune) anything
+  getRequiredSession: async () => {
+    const session = await sessionMock.getSession()
+    if (!session) throw new Error('NEXT_REDIRECT:/sign-in')
+    return session
+  },
 }))
 vi.mock('@/lib/db', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/receipt-retention', () => retentionMock)
 
 import { GET as getBillingSubmissions } from '@/app/api/billing/submissions/route'
 
@@ -77,6 +89,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   signIn(USER_ID)
   prismaMock.paymentSubmission.findMany.mockResolvedValue([])
+  // the sweep finds nothing due by default
+  retentionMock.pruneExpiredReceipts.mockResolvedValue(0)
 })
 
 describe('GET /api/billing/submissions — scoping', () => {
@@ -176,5 +190,77 @@ describe('GET /api/billing/submissions — empty history', () => {
 
     expect(res.status).toBe(200)
     expect(body).toEqual({ submissions: [] })
+  })
+})
+
+describe('GET /api/billing/submissions — lazy receipt pruning (issue 12)', () => {
+  it('uses this read to trigger the receipt-byte retention sweep — no scheduler', async () => {
+    const res = await getBillingSubmissions()
+
+    expect(res.status).toBe(200)
+    expect(retentionMock.pruneExpiredReceipts).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps billing history fully readable after a prune — the audit metadata survives', async () => {
+    // a decided row whose bytes the sweep already cleared
+    prismaMock.paymentSubmission.findMany.mockImplementation(
+      async (args: { select?: Record<string, boolean> } | undefined) =>
+        findManyHonoringSelect(
+          [
+            submissionRow({
+              status: 'APPROVED',
+              receiptBytes: null,
+              decidedAt: new Date('2026-06-01T10:00:00.000Z'),
+              priceSnapshot: 250,
+            }),
+            submissionRow({
+              id: 'sub_2',
+              status: 'REJECTED',
+              receiptBytes: null,
+              rejectionReason: 'Amount mismatch',
+            }),
+          ],
+          args?.select
+        )
+    )
+
+    const res = await getBillingSubmissions()
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.submissions).toHaveLength(2)
+    expect(body.submissions[0]).toMatchObject({
+      status: 'APPROVED',
+      reference: 'PAY-ABCD-1234',
+      priceSnapshot: 250,
+      currencySnapshot: 'ETB',
+    })
+    expect(body.submissions[1]).toMatchObject({
+      status: 'REJECTED',
+      rejectionReason: 'Amount mismatch',
+    })
+  })
+
+  it('never lets a sweep failure break the read it piggybacks on', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    prismaMock.paymentSubmission.findMany.mockResolvedValue([submissionRow()])
+    retentionMock.pruneExpiredReceipts.mockRejectedValue(new Error('connection reset'))
+
+    const res = await getBillingSubmissions()
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.submissions).toHaveLength(1)
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    expect(String(errorSpy.mock.calls[0][0])).toMatch(/prune/i)
+    errorSpy.mockRestore()
+  })
+
+  it('runs no sweep for a signed-out caller — the session gate stops first', async () => {
+    sessionMock.getSession.mockResolvedValue(null)
+
+    await expect(getBillingSubmissions()).rejects.toThrow('NEXT_REDIRECT:/sign-in')
+    expect(prismaMock.paymentSubmission.findMany).not.toHaveBeenCalled()
+    expect(retentionMock.pruneExpiredReceipts).not.toHaveBeenCalled()
   })
 })
