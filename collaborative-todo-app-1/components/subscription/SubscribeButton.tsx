@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Subscribe button — starts a payment attempt
- * (subscription-billing issue 04)
+ * (subscription-billing issues 04 + 11)
  *
  * Calls the subscribe action, then refreshes the server-rendered
  * upgrade screen so the payment instruction card replaces this button.
@@ -11,6 +11,13 @@
  * helper stays silent on validation errors (it assumes inline form
  * feedback), and this button has no inline surface, so the message is
  * toasted here instead of being swallowed.
+ *
+ * The LABEL is the caller's call (issue 11): a subscriber whose period
+ * is still running is offered "Extend by 1 month" instead of a plain
+ * Subscribe — the click starts the same payment attempt, because an
+ * approved renewal stacks onto the current period end anyway (issue
+ * 07). Only the words differ; the action, the flow and the refusal
+ * messages are shared.
  */
 
 import { useTransition } from 'react'
@@ -19,7 +26,7 @@ import { Button } from '@/components/ui/button'
 import { requestPaymentInstructions } from '@/actions/subscribe'
 import { handleActionResult, handleMutationError, toast } from '@/lib/toast'
 
-export function SubscribeButton() {
+export function SubscribeButton({ label = 'Subscribe' }: { label?: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -48,7 +55,7 @@ export function SubscribeButton() {
 
   return (
     <Button onClick={handleSubscribe} disabled={isPending}>
-      {isPending ? 'Starting…' : 'Subscribe'}
+      {isPending ? 'Starting…' : label}
     </Button>
   )
 }

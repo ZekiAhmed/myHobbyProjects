@@ -2,20 +2,23 @@
  * @fileoverview Upgrade screen (Server Component)
  *
  * Route: /upgrade — where a free user starts a manual bank-transfer
- * payment attempt (subscription-billing issue 04).
+ * payment attempt (subscription-billing issue 04), and where an active
+ * subscriber renews early (issue 11).
  *
  * The screen reads the settings record as the single source of truth
  * for the live price/currency and bank details (spec §Money), plus the
- * signed-in user's one non-terminal attempt:
+ * signed-in user's one non-terminal attempt and their period end:
  * - live AWAITING_UPLOAD → the payment instruction card replaces the
  *   Subscribe CTA (reference, snapshotted amount, bank details)
  * - PENDING → the waiting-experience status card instead of the pay CTA
  *   (issue 06: canonical 24-hour promise copy, reference, amount — no
  *   further action, everything else on the screen unchanged)
- * - nothing / stale (48h TTL passed) → the Subscribe CTA. A stale row
- *   is NOT rendered as live and NOT flipped here — rendering never
- *   writes; the EXPIRED flip happens inside the subscribe action's
- *   transaction (issue 04).
+ * - nothing / stale (48h TTL passed) → the pay CTA, whose LABEL follows
+ *   entitlement (issue 11): "Extend by 1 month" while Pro is active
+ *   (with the clamped CALENDAR renewal date — spec story 33), the plain
+ *   Subscribe once the period has lapsed or never started. Same action
+ *   behind both: an approved renewal stacks onto the current period end
+ *   (issue 07), so extending is a Subscribe that stacks.
  * A "View billing history" link is always present: the durable record of
  * every attempt (spec story 14) is one click away from any state.
  */
@@ -24,7 +27,11 @@ import Link from 'next/link'
 import { getRequiredSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { getPricingSettings } from '@/lib/pricing-settings'
-import { NON_TERMINAL_PAYMENT_STATUSES } from '@/lib/subscription'
+import {
+  formatRenewalDate,
+  isProSubscriber,
+  NON_TERMINAL_PAYMENT_STATUSES,
+} from '@/lib/subscription'
 import { PageShell } from '@/components/PageShell'
 import { SubscribeButton } from '@/components/subscription/SubscribeButton'
 import { PaymentInstructionCard } from '@/components/subscription/PaymentInstructionCard'
@@ -38,6 +45,10 @@ export default async function UpgradePage() {
     where: { userId: session.user.id, status: { in: NON_TERMINAL_PAYMENT_STATUSES } },
     orderBy: { createdAt: 'desc' },
   })
+  const subscriber = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { subscriptionPeriodEnd: true },
+  })
 
   const now = new Date()
   const awaitingReceipt =
@@ -46,6 +57,17 @@ export default async function UpgradePage() {
       : null
   const underReview =
     openAttempt && openAttempt.status === 'PENDING' ? openAttempt : null
+
+  // entitlement drives the CTA: while Pro is running the screen offers
+  // an extension against its own calendar renewal date; otherwise the
+  // plain Subscribe. `renewal` is non-null exactly when the period is
+  // active (isProSubscriber answers the boolean, formatRenewalDate the
+  // date, so label and date can never disagree).
+  // The attempt cards above still win while one is live (one attempt at
+  // a time).
+  const periodEnd = subscriber?.subscriptionPeriodEnd ?? null
+  const renewal =
+    periodEnd !== null && isProSubscriber(periodEnd, now) ? formatRenewalDate(periodEnd) : null
 
   return (
     <PageShell title="Upgrade to Pro" narrow>
@@ -66,6 +88,17 @@ export default async function UpgradePage() {
           <PaymentInstructionCard submission={awaitingReceipt} settings={settings} />
         ) : underReview ? (
           <PaymentStatusCard submission={underReview} />
+        ) : renewal ? (
+          <section className="rounded-lg border p-4">
+            <h2 className="font-semibold">Extend your subscription</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your subscription renews {renewal}. Extending stacks another month onto your
+              current period — no gap in service. Receipts are reviewed within 24 hours.
+            </p>
+            <div className="mt-3">
+              <SubscribeButton label="Extend by 1 month" />
+            </div>
+          </section>
         ) : (
           <section className="rounded-lg border p-4">
             <h2 className="font-semibold">Start a payment attempt</h2>

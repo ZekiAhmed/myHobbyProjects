@@ -13,76 +13,129 @@ import {
   addCalendarMonth,
   computePeriodEnd,
   deriveSubscription,
+  formatRenewalDate,
   generatePaymentReference,
   isProSubscriber,
   deriveBoardWriteLock,
 } from '../subscription'
 
 describe('subscription date & entitlement math', () => {
+  // FIXTURES ARE CONSTRUCTED IN UTC: the arithmetic runs on the UTC
+  // calendar (addCalendarMonth/formatRenewalDate), so examples built
+  // with local `new Date(y, m, d)` would describe a different day on a
+  // server whose zone differs from UTC — the worked examples below must
+  // hold in ANY time zone the suite is run in.
   describe('addCalendarMonth', () => {
     it('clamps Jan 31 to Feb 28 in a non-leap year, keeping the time of day', () => {
-      expect(addCalendarMonth(new Date(2026, 0, 31, 14, 30))).toEqual(
-        new Date(2026, 1, 28, 14, 30)
+      expect(addCalendarMonth(new Date(Date.UTC(2026, 0, 31, 14, 30)))).toEqual(
+        new Date(Date.UTC(2026, 1, 28, 14, 30))
       )
     })
 
     it('clamps Jan 31 to Feb 29 in a leap year', () => {
-      expect(addCalendarMonth(new Date(2028, 0, 31))).toEqual(new Date(2028, 1, 29))
+      expect(addCalendarMonth(new Date(Date.UTC(2028, 0, 31)))).toEqual(
+        new Date(Date.UTC(2028, 1, 29))
+      )
     })
 
     it('clamps Mar 31 to Apr 30 (30-day month)', () => {
-      expect(addCalendarMonth(new Date(2026, 2, 31))).toEqual(new Date(2026, 3, 30))
+      expect(addCalendarMonth(new Date(Date.UTC(2026, 2, 31)))).toEqual(
+        new Date(Date.UTC(2026, 3, 30))
+      )
     })
 
     it('rolls Dec 31 into Jan 31 of the next year', () => {
-      expect(addCalendarMonth(new Date(2026, 11, 31))).toEqual(new Date(2027, 0, 31))
+      expect(addCalendarMonth(new Date(Date.UTC(2026, 11, 31)))).toEqual(
+        new Date(Date.UTC(2027, 0, 31))
+      )
     })
 
     it('advances Feb 28 to Mar 28 in a non-leap year (no rollover to Mar 1)', () => {
-      expect(addCalendarMonth(new Date(2026, 1, 28))).toEqual(new Date(2026, 2, 28))
+      expect(addCalendarMonth(new Date(Date.UTC(2026, 1, 28)))).toEqual(
+        new Date(Date.UTC(2026, 2, 28))
+      )
     })
 
     it('advances Feb 29 to Mar 29 in a leap year (no rollover to Mar 1)', () => {
-      expect(addCalendarMonth(new Date(2028, 1, 29))).toEqual(new Date(2028, 2, 29))
+      expect(addCalendarMonth(new Date(Date.UTC(2028, 1, 29)))).toEqual(
+        new Date(Date.UTC(2028, 2, 29))
+      )
     })
 
     it('keeps a mid-month day and never mutates the input', () => {
-      const input = new Date(2026, 3, 15, 9, 15)
+      const input = new Date(Date.UTC(2026, 3, 15, 9, 15))
       const result = addCalendarMonth(input)
-      expect(result).toEqual(new Date(2026, 4, 15, 9, 15))
-      expect(input).toEqual(new Date(2026, 3, 15, 9, 15))
+      expect(result).toEqual(new Date(Date.UTC(2026, 4, 15, 9, 15)))
+      expect(input).toEqual(new Date(Date.UTC(2026, 3, 15, 9, 15)))
       expect(result).not.toBe(input)
     })
   })
 
   describe('computePeriodEnd', () => {
     it('stacks one month onto the current end while the period is active', () => {
-      const now = new Date(2026, 4, 10, 12)
-      const currentEnd = new Date(2026, 4, 25, 8)
-      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(2026, 5, 25, 8))
+      const now = new Date(Date.UTC(2026, 4, 10, 12))
+      const currentEnd = new Date(Date.UTC(2026, 4, 25, 8))
+      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(Date.UTC(2026, 5, 25, 8)))
     })
 
     it('starts a fresh month at approval when the previous period lapsed', () => {
-      const now = new Date(2026, 4, 10, 12)
-      const lapsedEnd = new Date(2026, 3, 25, 8)
-      expect(computePeriodEnd(now, lapsedEnd)).toEqual(new Date(2026, 5, 10, 12))
+      const now = new Date(Date.UTC(2026, 4, 10, 12))
+      const lapsedEnd = new Date(Date.UTC(2026, 3, 25, 8))
+      expect(computePeriodEnd(now, lapsedEnd)).toEqual(new Date(Date.UTC(2026, 5, 10, 12)))
     })
 
     it('starts a fresh month at approval when there is no previous period', () => {
-      const now = new Date(2026, 4, 10, 12)
-      expect(computePeriodEnd(now, null)).toEqual(new Date(2026, 5, 10, 12))
+      const now = new Date(Date.UTC(2026, 4, 10, 12))
+      expect(computePeriodEnd(now, null)).toEqual(new Date(Date.UTC(2026, 5, 10, 12)))
     })
 
     it('stacks from approval when renewal lands exactly on the current end', () => {
-      const now = new Date(2026, 4, 25, 8)
-      const currentEnd = new Date(2026, 4, 25, 8)
-      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(2026, 5, 25, 8))
+      const now = new Date(Date.UTC(2026, 4, 25, 8))
+      const currentEnd = new Date(Date.UTC(2026, 4, 25, 8))
+      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(Date.UTC(2026, 5, 25, 8)))
     })
 
     it('clamps the stacked end when the current end falls on Jan 31', () => {
-      const now = new Date(2027, 0, 20)
-      const currentEnd = new Date(2027, 0, 31)
-      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(2027, 1, 28))
+      const now = new Date(Date.UTC(2027, 0, 20))
+      const currentEnd = new Date(Date.UTC(2027, 0, 31))
+      expect(computePeriodEnd(now, currentEnd)).toEqual(new Date(Date.UTC(2027, 1, 28)))
+    })
+
+    it('clamps from an end stored at UTC midnight — the case a local-calendar run got wrong', () => {
+      // 31 Jan 00:00 UTC read on a west-of-UTC server is still 31 Jan in
+      // the only zone billing uses; the clamp must land on 28 Feb 00:00
+      // UTC, so formatRenewalDate then says "28 February" everywhere.
+      const periodEnd = computePeriodEnd(
+        new Date(Date.UTC(2027, 0, 20)),
+        new Date(Date.UTC(2027, 0, 31))
+      )
+      expect(periodEnd).toEqual(new Date(Date.UTC(2027, 1, 28)))
+      expect(formatRenewalDate(periodEnd)).toBe('28 February')
+    })
+  })
+
+  describe('formatRenewalDate — the calendar date every surface renders', () => {
+    it('renders a period end as a clamped calendar date, never a day counter', () => {
+      expect(formatRenewalDate(new Date(Date.UTC(2026, 2, 25, 8, 30)))).toBe('25 March')
+    })
+
+    it('renders the clamped stacked end exactly as it was stored (Jan 31 → 28 February)', () => {
+      const periodEnd = computePeriodEnd(new Date(Date.UTC(2027, 0, 20)), new Date(Date.UTC(2027, 0, 31)))
+      expect(formatRenewalDate(periodEnd)).toBe('28 February')
+    })
+
+    it('renders a single-digit day without padding (1 March)', () => {
+      expect(formatRenewalDate(new Date(Date.UTC(2026, 2, 1)))).toBe('1 March')
+    })
+
+    it('ignores time of day and reads the date in UTC, so server and client never disagree', () => {
+      // 23:30 UTC on 30 June — local-time rendering east of UTC would
+      // already say 1 July, moving the renewal date by a whole day
+      expect(formatRenewalDate(new Date(Date.UTC(2026, 5, 30, 23, 30)))).toBe('30 June')
+    })
+
+    it('renders December of the previous year boundary without rolling', () => {
+      expect(formatRenewalDate(new Date(Date.UTC(2026, 11, 31, 23, 59)))).toBe('31 December')
     })
   })
 

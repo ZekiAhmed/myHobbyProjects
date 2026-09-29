@@ -21,6 +21,11 @@
  *    card: the canonical 24-hour promise copy, the reference, the
  *    snapshotted amount, no pay CTA — and the rest of the screen keeps
  *    working (non-blocking), with an entry point into billing history
+ * 9. (issue 11) The pay CTA depends on entitlement: a subscriber whose
+ *    period is running sees "Extend by 1 month" plus the clamped
+ *    CALENDAR renewal date, while a lapsed or never-subscribed user
+ *    sees the plain Subscribe CTA — the arithmetic of an approved
+ *    renewal (computePeriodEnd) is what the screen then renders
  *
  * The real getRequiredSession gate runs in this test — only the session
  * source, the database, and the Next redirects are mocked at the module
@@ -37,6 +42,7 @@ const refreshMock = vi.hoisted(() => vi.fn())
 const prismaMock = vi.hoisted(() => ({
   pricingSettings: { findUnique: vi.fn() },
   paymentSubmission: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+  user: { findUnique: vi.fn() },
 }))
 
 vi.mock('@/lib/auth', () => ({
@@ -59,6 +65,7 @@ vi.mock('next/navigation', async () => {
 
 import UpgradePage from '@/app/(app)/upgrade/page'
 import { PRICING_SETTINGS_ID } from '@/lib/pricing-settings-schema'
+import { computePeriodEnd, formatRenewalDate } from '@/lib/subscription'
 
 const USER_ID = 'user_free'
 const NOW = new Date('2026-09-28T12:00:00.000Z')
@@ -96,6 +103,12 @@ function signIn(userId = USER_ID) {
   })
 }
 
+/** Signs the default user in with a given subscription period end. */
+function signInWithPeriodEnd(periodEnd: Date | null) {
+  signIn()
+  prismaMock.user.findUnique.mockResolvedValue({ subscriptionPeriodEnd: periodEnd })
+}
+
 /** Renders the upgrade screen to static HTML — what the user actually sees. */
 async function renderScreen(): Promise<string> {
   const el = await UpgradePage()
@@ -113,6 +126,7 @@ beforeEach(() => {
   vi.setSystemTime(NOW)
   prismaMock.pricingSettings.findUnique.mockResolvedValue(SETTINGS_ROW)
   prismaMock.paymentSubmission.findFirst.mockResolvedValue(null)
+  prismaMock.user.findUnique.mockResolvedValue({ subscriptionPeriodEnd: null })
 })
 
 afterEach(() => {
@@ -127,6 +141,7 @@ describe('upgrade screen gate (signed-in users only)', () => {
     expect(redirect).toHaveBeenCalledWith('/sign-in')
     expect(prismaMock.pricingSettings.findUnique).not.toHaveBeenCalled()
     expect(prismaMock.paymentSubmission.findFirst).not.toHaveBeenCalled()
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
   })
 })
 
@@ -257,5 +272,85 @@ describe('upgrade screen waiting experience (issue 06)', () => {
     const html = await renderScreen()
 
     expect(html).toContain('/billing')
+  })
+})
+
+describe('upgrade screen renewal CTA (issue 11)', () => {
+  it('offers "Extend by 1 month" to a subscriber whose period is running, with the calendar renewal date', async () => {
+    signInWithPeriodEnd(new Date('2026-10-15T00:00:00.000Z'))
+
+    const html = await renderScreen()
+
+    expect(html).toContain('Extend by 1 month')
+    expect(html).toContain('renews 15 October')
+    // the plain Subscribe CTA is gone while Pro is active — extending
+    // is the only paid moment on this screen
+    expect(html).not.toContain('Subscribe')
+    // the renewal path starts a receipt too, so it carries the same
+    // review promise (spec §Money: the upgrade UI promises review
+    // within 24 hours) — extending must not read as a faster lane
+    expect(html).toContain('within 24 hours')
+    // a calendar date, never a drifting counter (spec story 33)
+    expect(html).not.toMatch(/\b\d+\s+days?\b/i)
+  })
+
+  it('keeps the plain Subscribe CTA for a lapsed subscriber — renewal is offered, not assumed', async () => {
+    signInWithPeriodEnd(new Date('2026-09-01T00:00:00.000Z'))
+
+    const html = await renderScreen()
+
+    expect(html).toContain('Subscribe')
+    expect(html).not.toContain('Extend by 1 month')
+  })
+
+  it('keeps the plain Subscribe CTA for a user who never subscribed', async () => {
+    signInWithPeriodEnd(null)
+
+    const html = await renderScreen()
+
+    expect(html).toContain('Subscribe')
+    expect(html).not.toContain('Extend by 1 month')
+  })
+
+  it('renders the stacked period an approved early renewal produced — approval arithmetic reaches the screen', async () => {
+    // an active period ending 15 October, approved NOW (issue 07):
+    // the new month stacks onto the current end → 15 November, and the
+    // screen shows that date with the extend CTA
+    const currentEnd = new Date('2026-10-15T00:00:00.000Z')
+    const stackedEnd = computePeriodEnd(NOW, currentEnd)
+    expect(stackedEnd).toEqual(new Date('2026-11-15T00:00:00.000Z'))
+
+    signInWithPeriodEnd(stackedEnd)
+
+    const html = await renderScreen()
+
+    expect(html).toContain('Extend by 1 month')
+    expect(html).toContain(`renews ${formatRenewalDate(stackedEnd)}`)
+    expect(html).toContain('renews 15 November')
+  })
+
+  it('does not offer an extension while an attempt is under review — one attempt at a time still holds', async () => {
+    signInWithPeriodEnd(new Date('2026-10-15T00:00:00.000Z'))
+    prismaMock.paymentSubmission.findFirst.mockResolvedValue({
+      ...LIVE_ATTEMPT,
+      id: 'sub_pending',
+      reference: 'PAY-REVW-0002',
+      status: 'PENDING' as const,
+    })
+
+    const html = await renderScreen()
+
+    expect(html).toContain('PAY-REVW-0002')
+    expect(html).not.toContain('Extend by 1 month')
+    expect(html).not.toContain('Subscribe')
+  })
+
+  it('reads only — rendering the CTA never writes a submission', async () => {
+    signInWithPeriodEnd(new Date('2026-10-15T00:00:00.000Z'))
+
+    await renderScreen()
+
+    expect(prismaMock.paymentSubmission.create).not.toHaveBeenCalled()
+    expect(prismaMock.paymentSubmission.update).not.toHaveBeenCalled()
   })
 })

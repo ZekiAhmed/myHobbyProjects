@@ -49,14 +49,21 @@ export const NON_TERMINAL_PAYMENT_STATUSES: PaymentStatus[] = ['AWAITING_UPLOAD'
  * last day of the target month (Jan 31 → Feb 28 in a non-leap year,
  * Jan 31 2028 → Feb 29 2028). Time of day is preserved; the input is
  * never mutated.
+ *
+ * The calendar is UTC on purpose (same zone formatRenewalDate renders
+ * in, and the zone the approval email already formats in): billing math
+ * that ran on the server's local calendar would land on a different
+ * instant depending on where the server sits, and the date the
+ * subscriber is then shown could disagree with the date the month was
+ * computed from — one zone from arithmetic to rendering.
  */
 export function addCalendarMonth(date: Date): Date {
   const result = new Date(date)
-  const nextMonth = result.getMonth() + 1
-  const year = result.getFullYear() + Math.floor(nextMonth / 12)
+  const nextMonth = result.getUTCMonth() + 1
+  const year = result.getUTCFullYear() + Math.floor(nextMonth / 12)
   const month = nextMonth % 12
-  const daysInTargetMonth = new Date(year, month + 1, 0).getDate()
-  result.setFullYear(year, month, Math.min(result.getDate(), daysInTargetMonth))
+  const daysInTargetMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
+  result.setUTCFullYear(year, month, Math.min(result.getUTCDate(), daysInTargetMonth))
   return result
 }
 
@@ -105,6 +112,28 @@ export function deriveSubscription(periodEnd: Date | null, now: Date): Subscript
   }
 
   return { state: 'expired', expiringSoon: false }
+}
+
+/**
+ * Renders a subscription date the way every surface must show it: a
+ * clamped CALENDAR date ("25 March"), never a drifting day counter
+ * (spec story 33). The clamp happened when the period end was computed
+ * (addCalendarMonth) — this only renders what is stored, so 31 Jan →
+ * 28 Feb shows as "28 February", not "in 28 days" and not 3 March.
+ *
+ * UTC on purpose: `periodEnd` is a stored instant, and formatting it in
+ * the server's local zone would move the visible date by a day either
+ * side of midnight (23:30 UTC = next day in UTC+3). One zone, one date,
+ * the same in an email, a banner, and a toast — and the same zone
+ * addCalendarMonth computes in, so the date rendered is the date the
+ * arithmetic clamped.
+ */
+export function formatRenewalDate(date: Date): string {
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  })
 }
 
 /**

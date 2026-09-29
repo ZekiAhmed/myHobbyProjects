@@ -292,7 +292,11 @@ describe('ReviewQueue — approve', () => {
 
     expect(approveMock).toHaveBeenCalledWith({ submissionId: 'sub_older' })
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['admin', 'review-queue'] })
-    expect(toastSuccessMock).toHaveBeenCalledWith(expect.stringContaining('paid through'))
+    // the period the payment bought, as a clamped CALENDAR date — never
+    // a timestamp with a clock reading (issue 11, spec story 33)
+    expect(toastSuccessMock).toHaveBeenCalledWith(
+      expect.stringContaining('paid through 28 November')
+    )
     expect(toastErrorMock).not.toHaveBeenCalled()
   })
 

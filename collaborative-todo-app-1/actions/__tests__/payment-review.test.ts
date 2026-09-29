@@ -81,6 +81,7 @@ vi.mock('@/lib/email', () => emailMock)
 vi.mock('next/cache', () => ({ revalidateTag: revalidateTagMock }))
 
 import { approveSubmission, rejectSubmission } from '@/actions/payment-review'
+import { formatRenewalDate } from '@/lib/subscription'
 
 const ACTOR_ADMIN_ID = 'user_admin'
 const SUBSCRIBER_ID = 'user_subscriber'
@@ -253,6 +254,9 @@ describe('approveSubmission — the subscription clock', () => {
     expect(users[SUBSCRIBER_ID].subscriptionPeriodEnd).toEqual(
       new Date('2026-12-15T00:00:00.000Z')
     )
+    // the stacked end as every surface renders it (issue 11): a clamped
+    // calendar date, so the arithmetic and the display can't drift apart
+    expect(formatRenewalDate(users[SUBSCRIBER_ID].subscriptionPeriodEnd!)).toBe('15 December')
   })
 
   it('restarts at the approval instant when the previous period has lapsed', async () => {

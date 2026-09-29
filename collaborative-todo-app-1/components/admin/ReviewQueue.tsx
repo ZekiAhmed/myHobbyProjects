@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { adminKeys, adminReviewQueueQueryOptions } from '@/lib/queries/board-keys'
 import { reviewAgeBadge } from '@/lib/review-aging'
+import { formatRenewalDate } from '@/lib/subscription'
 import { handleActionResult, handleMutationError, toast } from '@/lib/toast'
 import { approveSubmission, rejectSubmission } from '@/actions/payment-review'
 import type { ReviewQueueSubmission } from '@/lib/types'
@@ -176,7 +177,10 @@ export function ReviewQueue() {
       handleActionResult(result, {
         silentSuccess: true,
         onSuccess: (data) => {
-          const paidThrough = formatTimestamp(data.periodEnd)
+          // the period the payment bought, rendered as the same clamped
+          // calendar date the subscriber's surfaces show (issue 11) —
+          // "paid through 28 November", not a clock reading
+          const paidThrough = formatRenewalDate(data.periodEnd)
           toast.success(`Payment approved — subscriber paid through ${paidThrough}`)
           queryClient.invalidateQueries({ queryKey: adminKeys.reviewQueue() })
         },
