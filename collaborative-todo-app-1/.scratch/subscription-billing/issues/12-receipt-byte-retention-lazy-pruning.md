@@ -4,9 +4,9 @@
 
 **Blocked by:** 07 — Admin review queue & approve/reject.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Receipt bytes are removed once a submission's decision is older than 30 days, triggered by ordinary reads (no scheduler)
-- [ ] Submission metadata rows survive untouched; billing history and admin history render fine post-prune
-- [ ] Pruning failures never break the reads that trigger them
-- [ ] Tests cover the 30-day boundary, metadata preservation, and failure isolation
+- [x] Receipt bytes are removed once a submission's decision is older than 30 days, triggered by ordinary reads (no scheduler)
+- [x] Submission metadata rows survive untouched; billing history and admin history render fine post-prune
+- [x] Pruning failures never break the reads that trigger them
+- [x] Tests cover the 30-day boundary, metadata preservation, and failure isolation
