@@ -2,16 +2,20 @@
  * @fileoverview Invitation Server Actions
  *
  * This file contains Server Actions for managing board invitations:
- * - createInvitation: Send an invite by email (owner only)
+ * - createInvitation: Send an invite by email (owner only, Pro) — the
+ *   product's single paid moment (subscription-billing issue 10)
  * - revokeInvitation: Cancel a pending invitation (owner only)
  * - acceptInvitation: Consume an invitation token and become a member
+ *   (never gated — joining someone else's subscription is free)
  *
  * INVITATION FLOW:
  * 1. Owner enters an email address on the board settings page
- * 2. createInvitation generates a secure token and stores it in the Invitation table
- * 3. An email is sent with a link: /invite/[token]
- * 4. The invitee clicks the link and is handled by /invite/[token] page
- * 5. acceptInvitation validates the token and creates a BoardMember record
+ * 2. createInvitation checks the Owner's entitlement: free Owners are
+ *    refused with the paywall, lapsed ones with the renew prompt
+ * 3. createInvitation generates a secure token and stores it in the Invitation table
+ * 4. An email is sent with a link: /invite/[token]
+ * 5. The invitee clicks the link and is handled by /invite/[token] page
+ * 6. acceptInvitation validates the token and creates a BoardMember record
  *
  * SECURITY:
  * - Only board owners can create/revoke invitations
@@ -30,8 +34,21 @@ import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { generateInviteToken, getInvitationExpiry, isTokenExpired } from '@/lib/utils/invite-tokens'
 import { sendInvitationEmail } from '@/lib/email'
-import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
+import { actionSuccess, actionError, paywallError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
+import { deriveSubscription, type NotProReason } from '@/lib/subscription'
+
+/**
+ * Why a non-Pro Owner cannot send an Invitation, per reason — the
+ * paywall copy shown AT the paid moment (spec story 25). Each pairs
+ * with the matching CTA on the client: `none` ⇒ upgrade, `expired`
+ * ⇒ renew.
+ */
+const INVITE_BLOCK_MESSAGES: Record<NotProReason, string> = {
+  expired:
+    'Your Pro subscription has expired. Renew Pro to invite members to this board.',
+  none: 'Inviting members to a board needs an active Pro subscription. Upgrade to Pro to invite your team.',
+}
 
 type InvitationData = {
   id: string
@@ -49,12 +66,16 @@ type InvitationData = {
  * WHAT HAPPENS:
  * 1. Authenticates the current user
  * 2. Verifies the user is the board owner
- * 3. Checks if the email is already a member or has a pending invite
- * 4. Generates a cryptographically secure token
- * 5. Creates an Invitation record with 48h expiry, and a `member.invited`
+ * 3. Checks the Owner's entitlement — sending an Invitation is the
+ *    free tier's single paid moment, so a non-Pro Owner is refused
+ *    here with the paywall (reason "none") or the renew prompt (reason
+ *    "expired"), before anything is written
+ * 4. Checks if the email is already a member or has a pending invite
+ * 5. Generates a cryptographically secure token
+ * 6. Creates an Invitation record with 48h expiry, and a `member.invited`
  *    Activity entry in the same transaction (ADR-0002 taxonomy)
- * 6. Sends an invitation email via Resend
- * 7. Invalidates the board-detail cache
+ * 7. Sends an invitation email via Resend
+ * 8. Invalidates the board-detail cache
  *
  * @param boardId - The board to invite the user to
  * @param email - The email address of the person to invite
@@ -72,10 +93,21 @@ export async function createInvitation(boardId: string, email: string): Promise<
 
     const board = await prisma.board.findUniqueOrThrow({
       where: { id: boardId },
+      include: { owner: { select: { subscriptionPeriodEnd: true } } },
     })
 
     if (board.ownerId !== session.user.id) {
       return actionError('authorization', 'Only the board owner can invite members')
+    }
+
+    // The paid moment (issue 10): entitlement is read off the Owner,
+    // never off the Board — Pro applies to every Board they own. The
+    // state carries the reason, so a lapsed Owner is offered renewal
+    // rather than a never-subscribed one's upgrade.
+    const subscriptionState = deriveSubscription(board.owner.subscriptionPeriodEnd, new Date()).state
+
+    if (subscriptionState !== 'active') {
+      return paywallError(subscriptionState, INVITE_BLOCK_MESSAGES[subscriptionState])
     }
 
     const existingMember = await prisma.boardMember.findFirst({
@@ -196,6 +228,10 @@ export async function revokeInvitation(invitationId: string): Promise<ActionResu
  * - Token must be a valid hex string
  * - Token must not be expired (48h window)
  * - Token must have PENDING status (not already used)
+ *
+ * ENTITLEMENT: never gated here — accepting is not a paid moment, so
+ * the invitee joins regardless of the Owner's subscription state
+ * (spec story 26).
  *
  * @param token - The invitation token from the URL
  * @returns The board ID the user was invited to

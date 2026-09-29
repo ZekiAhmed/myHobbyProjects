@@ -100,6 +100,9 @@ function primeBoard(ownerId = OWNER_ID) {
     name: 'Sprint 42',
     createdAt: new Date('2026-01-01T00:00:00Z'),
     updatedAt: new Date('2026-01-01T00:00:00Z'),
+    // createInvitation reads the Owner's entitlement off this relation —
+    // a Pro Owner so the invite gate lets these emission tests through
+    owner: { subscriptionPeriodEnd: new Date(Date.now() + 60 * 60 * 1000) },
   }
   prismaMock.board.findUnique.mockResolvedValue(board)
   prismaMock.board.findUniqueOrThrow.mockResolvedValue(board)

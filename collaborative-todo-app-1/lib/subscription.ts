@@ -125,14 +125,24 @@ export function isProSubscriber(periodEnd: Date | null, now: Date): boolean {
 }
 
 /**
+ * Why entitlement is absent — the derived SubscriptionState minus
+ * 'active':
+ * - 'expired' — the paid period ended (lapsed subscriber)
+ * - 'none'    — never had a paid period at all
+ *
+ * Shared by every surface that must tell an upgrade apart from a
+ * renewal: the Board write lock (issue 09) and the invite paywall
+ * (issue 10).
+ */
+export type NotProReason = Extract<SubscriptionState, 'expired' | 'none'>
+
+/**
  * Why a Board is locked for writing, mirroring the derived
- * SubscriptionState that caused it:
- * - 'expired' — the Owner's paid period ended (lapsed subscriber)
- * - 'none'    — the Owner has never had a paid period
+ * SubscriptionState that caused it (see NotProReason).
  *
  * `null` reason always accompanies `locked: false`.
  */
-export type BoardWriteLockReason = Extract<SubscriptionState, 'expired' | 'none'>
+export type BoardWriteLockReason = NotProReason
 
 export interface BoardWriteLock {
   locked: boolean

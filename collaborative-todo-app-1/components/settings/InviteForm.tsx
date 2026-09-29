@@ -7,6 +7,8 @@ import { createInvitation, revokeInvitation } from '@/app/actions/invitations'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { PaywallBanner } from '@/components/subscription/PaywallBanner'
+import type { NotProReason } from '@/lib/subscription'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +28,10 @@ export function InviteForm({ boardId }: InviteFormProps) {
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  // The paywall is only ever set from a REFUSED attempt — the paid
+  // moment is the click, so nothing paywall-shaped shows before it
+  // (subscription-billing issue 10).
+  const [paywall, setPaywall] = useState<{ reason: NotProReason; message: string } | null>(null)
   const [revokeTarget, setRevokeTarget] = useState<{ id: string; email: string } | null>(null)
 
   const { data: invitations = [] } = useQuery(invitationsQueryOptions(boardId))
@@ -34,6 +40,7 @@ export function InviteForm({ boardId }: InviteFormProps) {
     mutationFn: (inviteEmail: string) => createInvitation(boardId, inviteEmail),
     onMutate: () => {
       setEmailError('')
+      setPaywall(null)
     },
     onSuccess: (result) => {
       if (result.success) {
@@ -41,14 +48,15 @@ export function InviteForm({ boardId }: InviteFormProps) {
         setEmail('')
         setEmailError('')
         queryClient.invalidateQueries({ queryKey: boardKeys.invitations(boardId) })
+      } else if (result.error.reason) {
+        // The paywall: the server named WHY the Owner is not Pro, so
+        // the banner pairs that message with the matching prompt
+        // (upgrade vs renew) instead of a generic error toast.
+        setPaywall({ reason: result.error.reason, message: result.error.message })
+      } else if (result.error.type === 'validation') {
+        setEmailError(result.error.message)
       } else {
-        if (result.error.type === 'validation') {
-          setEmailError(result.error.message)
-        } else if (result.error.type === 'authorization') {
-          toast.error(result.error.message)
-        } else {
-          toast.error(result.error.message)
-        }
+        toast.error(result.error.message)
       }
     },
     onError: () => {
@@ -87,6 +95,8 @@ export function InviteForm({ boardId }: InviteFormProps) {
   return (
     <div>
       <h3 className="text-xl font-semibold text-gray-900 mb-3">Invite by email</h3>
+
+      {paywall && <PaywallBanner reason={paywall.reason} message={paywall.message} />}
 
       <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
         <div className="flex-1 space-y-1">

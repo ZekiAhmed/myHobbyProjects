@@ -8,7 +8,14 @@
  * - validation: Client input errors (inline in forms)
  * - authorization: Permission errors (toast with specific message)
  * - server: Network/database errors (generic toast with retry)
+ *
+ * A paywall refusal is an authorization error that additionally carries
+ * a `reason` ('none' | 'expired'), so the client can show the upgrade
+ * or renew PROMPT instead of a generic toast (subscription-billing
+ * issue 10).
  */
+
+import type { NotProReason } from '@/lib/subscription'
 
 export type ErrorType = 'validation' | 'authorization' | 'server'
 
@@ -22,6 +29,8 @@ export interface ActionError {
   error: {
     type: ErrorType
     message: string
+    /** Present only on a paywall refusal: which prompt to show. */
+    reason?: NotProReason
   }
 }
 
@@ -33,6 +42,16 @@ export function actionSuccess<T>(data: T): ActionSuccess<T> {
 
 export function actionError(type: ErrorType, message: string): ActionError {
   return { success: false, error: { type, message } }
+}
+
+/**
+ * The paywall refusal: an authorization error that also names WHY the
+ * caller is not Pro, so the client can pair the message with the
+ * self-service prompt for that reason (never-subscribed ⇒ upgrade,
+ * lapsed ⇒ renew) rather than a generic error toast.
+ */
+export function paywallError(reason: NotProReason, message: string): ActionError {
+  return { success: false, error: { type: 'authorization', message, reason } }
 }
 
 export function isActionError<T>(result: ActionResult<T>): result is ActionError {
