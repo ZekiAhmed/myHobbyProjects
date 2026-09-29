@@ -200,6 +200,7 @@ export async function approveSubmission(input: {
     if (error instanceof GuardError) {
       return actionError(error.kind, error.message)
     }
+    console.error('[payment-review] approveSubmission failed', error)
     return actionError('server', 'Failed to approve payment')
   }
 }
@@ -315,6 +316,7 @@ export async function rejectSubmission(input: {
     if (error instanceof GuardError) {
       return actionError(error.kind, error.message)
     }
+    console.error('[payment-review] rejectSubmission failed', error)
     return actionError('server', 'Failed to reject payment')
   }
 }
