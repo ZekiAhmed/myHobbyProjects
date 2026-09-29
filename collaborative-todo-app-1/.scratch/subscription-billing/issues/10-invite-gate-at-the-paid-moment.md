@@ -4,10 +4,10 @@
 
 **Blocked by:** 09 — Pro entitlement & expiry lock.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Invitation send action checks the owner's entitlement and blocks free owners with a paywall response
-- [ ] The client surfaces the paywall/upgrade prompt at the invite moment (not before)
-- [ ] Pro owners send invitations normally; accepting an Invitation works for everyone regardless of the owner's state
-- [ ] Lapsed owners get the renew prompt, not a generic error
-- [ ] Tests cover free-blocked, Pro-allowed, expired-blocked, and member-acceptance paths
+- [x] Invitation send action checks the owner's entitlement and blocks free owners with a paywall response
+- [x] The client surfaces the paywall/upgrade prompt at the invite moment (not before)
+- [x] Pro owners send invitations normally; accepting an Invitation works for everyone regardless of the owner's state
+- [x] Lapsed owners get the renew prompt, not a generic error
+- [x] Tests cover free-blocked, Pro-allowed, expired-blocked, and member-acceptance paths
