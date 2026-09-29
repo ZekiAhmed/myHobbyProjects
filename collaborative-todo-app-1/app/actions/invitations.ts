@@ -91,9 +91,15 @@ export async function createInvitation(boardId: string, email: string): Promise<
   try {
     const session = await getRequiredSession()
 
+    // Narrow select (TRD §Data minimization): the Owner's period end
+    // plus exactly the two columns this action reads.
     const board = await prisma.board.findUniqueOrThrow({
       where: { id: boardId },
-      include: { owner: { select: { subscriptionPeriodEnd: true } } },
+      select: {
+        ownerId: true,
+        name: true,
+        owner: { select: { subscriptionPeriodEnd: true } },
+      },
     })
 
     if (board.ownerId !== session.user.id) {
@@ -104,6 +110,12 @@ export async function createInvitation(boardId: string, email: string): Promise<
     // never off the Board — Pro applies to every Board they own. The
     // state carries the reason, so a lapsed Owner is offered renewal
     // rather than a never-subscribed one's upgrade.
+    //
+    // ORDER: identity first (board-access.ts:111 — a stranger is told
+    // they are not the Owner, never about billing), entitlement second
+    // and BEFORE invite-specific validation: it is the precondition for
+    // sending, so a non-Pro Owner is never shown duplicate/pending
+    // feedback for an Invitation that could not be sent anyway.
     const subscriptionState = deriveSubscription(board.owner.subscriptionPeriodEnd, new Date()).state
 
     if (subscriptionState !== 'active') {

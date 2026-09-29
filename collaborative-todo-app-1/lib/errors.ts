@@ -6,7 +6,9 @@
  *
  * Error types:
  * - validation: Client input errors (inline in forms)
- * - authorization: Permission errors (toast with specific message)
+ * - authorization: Permission errors (toast with specific message) —
+ *   except a paywall refusal, which carries a `reason` and is shown as
+ *   a prompt instead (see below)
  * - server: Network/database errors (generic toast with retry)
  *
  * A paywall refusal is an authorization error that additionally carries

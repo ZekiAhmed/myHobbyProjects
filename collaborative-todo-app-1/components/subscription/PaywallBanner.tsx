@@ -9,7 +9,7 @@
  * that surface: the server's refusal message plus the self-service
  * prompt for WHY they are not Pro.
  *
- * REASON WORDING (mirrors BoardLockBanner's promptFor):
+ * REASON WORDING comes from the shared UpgradePromptLink:
  * - "expired" — a Pro period ended; the Owner is offered renewal
  * - "none"    — no Pro period at all; the Owner is offered an upgrade
  *
@@ -18,14 +18,9 @@
  * Owner who upgrades in another tab can simply try again.
  */
 
-import Link from 'next/link'
 import { CreditCard } from 'lucide-react'
 import type { NotProReason } from '@/lib/subscription'
-
-const CTA_LABELS: Record<NotProReason, string> = {
-  expired: 'Renew Pro',
-  none: 'Upgrade to Pro',
-}
+import { UpgradePromptLink } from '@/components/subscription/UpgradePromptLink'
 
 interface PaywallBannerProps {
   /** Why the caller is not Pro — derived, never stored */
@@ -46,12 +41,7 @@ export function PaywallBanner({ reason, message }: PaywallBannerProps) {
         <p className="text-sm text-amber-900">{message}</p>
       </div>
 
-      <Link
-        href="/upgrade"
-        className="ml-auto inline-flex h-8 shrink-0 items-center justify-center rounded-[4px] border border-black bg-white px-4 text-sm font-medium tracking-[0.01em] text-black no-underline transition-[transform,background-color,color] duration-100 hover:bg-black hover:text-white active:translate-y-px"
-      >
-        {CTA_LABELS[reason]}
-      </Link>
+      <UpgradePromptLink reason={reason} />
     </div>
   )
 }

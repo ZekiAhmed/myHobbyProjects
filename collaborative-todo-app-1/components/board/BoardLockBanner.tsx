@@ -22,11 +22,13 @@
  * - "expired" — a Pro period ended; the Owner is offered renewal
  * - "none"    — no Pro period at all (the Board gained Members without
  *               one); the Owner is offered an upgrade instead
+ * Both CTAs come from the shared UpgradePromptLink, worded the same
+ * way as every other paywall surface (subscription-billing issue 10).
  */
 
-import Link from 'next/link'
 import { Lock } from 'lucide-react'
 import type { BoardWriteLockReason } from '@/lib/subscription'
+import { UpgradePromptLink } from '@/components/subscription/UpgradePromptLink'
 
 interface BoardLockBannerProps {
   /** Why the Board is locked — derived, never stored (issue 09) */
@@ -46,15 +48,7 @@ function messageFor(reason: BoardWriteLockReason, isOwner: boolean): string {
     : 'This board is read-only — this board needs an active Pro subscription before anyone can edit.'
 }
 
-function promptFor(reason: BoardWriteLockReason): { label: string; href: string } {
-  return reason === 'expired'
-    ? { label: 'Renew Pro', href: '/upgrade' }
-    : { label: 'Upgrade to Pro', href: '/upgrade' }
-}
-
 export function BoardLockBanner({ reason, isOwner }: BoardLockBannerProps) {
-  const prompt = promptFor(reason)
-
   return (
     <div
       role="status"
@@ -66,14 +60,7 @@ export function BoardLockBanner({ reason, isOwner }: BoardLockBannerProps) {
         <p className="text-sm text-amber-900">{messageFor(reason, isOwner)}</p>
       </div>
 
-      {isOwner && (
-        <Link
-          href={prompt.href}
-          className="ml-auto inline-flex h-8 shrink-0 items-center justify-center rounded-[4px] border border-black bg-white px-4 text-sm font-medium tracking-[0.01em] text-black no-underline transition-[transform,background-color,color] duration-100 hover:bg-black hover:text-white active:translate-y-px"
-        >
-          {prompt.label}
-        </Link>
-      )}
+      {isOwner && <UpgradePromptLink reason={reason} />}
     </div>
   )
 }
