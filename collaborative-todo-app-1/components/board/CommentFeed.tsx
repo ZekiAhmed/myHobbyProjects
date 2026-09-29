@@ -28,6 +28,12 @@ interface CommentFeedProps {
   currentUserId: string
   /** Board Owner — Delete appears on every Comment (ADR-0001) */
   isOwner: boolean
+  /**
+   * Locked Board (issue 09): comments stay fully readable, but the
+   * composer and the Edit/Delete controls are not offered — the Server
+   * Actions refuse comment writes on a read-only Board.
+   */
+  readOnly?: boolean
 }
 
 function formatCommentTime(createdAt: Date | string): string {
@@ -71,6 +77,7 @@ export function CommentFeed({
   todoId,
   currentUserId,
   isOwner,
+  readOnly = false,
 }: CommentFeedProps) {
   const queryClient = useQueryClient()
   const [body, setBody] = useState('')
@@ -203,7 +210,7 @@ export function CommentFeed({
         <ul className="flex flex-col gap-3">
           {comments.map((comment) => {
             const isAuthor = comment.author.id === currentUserId
-            const canDelete = isAuthor || isOwner
+            const canDelete = !readOnly && (isAuthor || isOwner)
             const isEdited =
               new Date(comment.updatedAt).getTime() -
                 new Date(comment.createdAt).getTime() >
@@ -302,29 +309,31 @@ export function CommentFeed({
         </ul>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <Label htmlFor={`comment-composer-${todoId}`}>Add a comment</Label>
-        <Textarea
-          id={`comment-composer-${todoId}`}
-          value={body}
-          onChange={(e) => {
-            setBody(e.target.value)
-            if (bodyError) setBodyError('')
-          }}
-          placeholder="Write a comment… (Enter adds a new line)"
-          rows={3}
-          aria-invalid={!!bodyError}
-          aria-describedby={bodyError ? `comment-error-${todoId}` : undefined}
-        />
-        {bodyError && (
-          <p id={`comment-error-${todoId}`} className="text-sm text-destructive">
-            {bodyError}
-          </p>
-        )}
-        <Button type="submit" disabled={postMutation.isPending || !body.trim()}>
-          {postMutation.isPending ? 'Posting…' : 'Post comment'}
-        </Button>
-      </form>
+      {readOnly ? null : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+          <Label htmlFor={`comment-composer-${todoId}`}>Add a comment</Label>
+          <Textarea
+            id={`comment-composer-${todoId}`}
+            value={body}
+            onChange={(e) => {
+              setBody(e.target.value)
+              if (bodyError) setBodyError('')
+            }}
+            placeholder="Write a comment… (Enter adds a new line)"
+            rows={3}
+            aria-invalid={!!bodyError}
+            aria-describedby={bodyError ? `comment-error-${todoId}` : undefined}
+          />
+          {bodyError && (
+            <p id={`comment-error-${todoId}`} className="text-sm text-destructive">
+              {bodyError}
+            </p>
+          )}
+          <Button type="submit" disabled={postMutation.isPending || !body.trim()}>
+            {postMutation.isPending ? 'Posting…' : 'Post comment'}
+          </Button>
+        </form>
+      )}
 
       <AlertDialog
         open={pendingDeleteId !== null}

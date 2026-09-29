@@ -108,6 +108,63 @@ export function deriveSubscription(periodEnd: Date | null, now: Date): Subscript
 }
 
 /**
+ * The entitlement check as a yes/no: is this subscriber Pro right now?
+ *
+ * Answers from the stored period end alone (subscription-billing issue
+ * 09), so the paywall, the expiry lock and the UI can never disagree
+ * about what "Pro" means. Use it wherever a boolean answer is enough;
+ * `deriveBoardWriteLock` also needs the REASON it is not Pro, so it goes
+ * through `deriveSubscription` for both the state and the boundary.
+ *
+ * Boundary: the period has ended AT `periodEnd`, so Pro is lost at the
+ * instant itself (no grace period) — the same convention as
+ * deriveSubscription.
+ */
+export function isProSubscriber(periodEnd: Date | null, now: Date): boolean {
+  return deriveSubscription(periodEnd, now).state === 'active'
+}
+
+/**
+ * Why a Board is locked for writing, mirroring the derived
+ * SubscriptionState that caused it:
+ * - 'expired' — the Owner's paid period ended (lapsed subscriber)
+ * - 'none'    — the Owner has never had a paid period
+ *
+ * `null` reason always accompanies `locked: false`.
+ */
+export type BoardWriteLockReason = Extract<SubscriptionState, 'expired' | 'none'>
+
+export interface BoardWriteLock {
+  locked: boolean
+  reason: BoardWriteLockReason | null
+}
+
+/**
+ * The expiry rule as pure math (spec §Domain & entitlement): a Board
+ * WITH Members requires its Owner to be Pro; a Board WITHOUT Members is
+ * ordinary free-tier work and is never locked.
+ *
+ * Nothing is stored, scheduled or mutated — the lock is re-derived from
+ * the Owner's period end on every read and write, so it turns on and off
+ * by itself the moment the clock crosses `periodEnd`.
+ */
+export function deriveBoardWriteLock(input: {
+  hasMembers: boolean
+  ownerPeriodEnd: Date | null
+  now: Date
+}): BoardWriteLock {
+  if (!input.hasMembers) {
+    return { locked: false, reason: null }
+  }
+
+  const state = deriveSubscription(input.ownerPeriodEnd, input.now).state
+
+  return state === 'active'
+    ? { locked: false, reason: null }
+    : { locked: true, reason: state }
+}
+
+/**
  * Characters used in a payment reference: uppercase Latin letters and
  * digits with I, O, 0 and 1 removed, so a reference survives being read
  * aloud or transcribed into a bank memo. 32 symbols ⇒ 256 % 32 === 0,

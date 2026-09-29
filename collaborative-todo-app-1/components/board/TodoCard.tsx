@@ -27,6 +27,8 @@ interface TodoCardProps {
   todo: TodoWithRelations
   isActive: boolean
   isOverlay?: boolean
+  /** Locked Board (issue 09): not draggable, no quick-complete */
+  readOnly?: boolean
   onQuickComplete?: (todoId: string) => void
   onClick?: (todo: TodoWithRelations) => void
 }
@@ -89,8 +91,10 @@ function getInitials(name: string) {
  *
  * @param todo - The todo data with relations
  * @param isActive - Whether this todo is currently being dragged
+ * @param readOnly - Locked Board (issue 09): the card stays clickable so
+ *   the Todo can be read, but it will not drag and offers no write control
  */
-export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, onClick }: TodoCardProps) {
+export function TodoCard({ todo, isActive, isOverlay = false, readOnly = false, onQuickComplete, onClick }: TodoCardProps) {
   const {
     attributes,
     listeners,
@@ -98,7 +102,7 @@ export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, o
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: todo.id })
+  } = useSortable({ id: todo.id, disabled: readOnly })
 
   const style = isOverlay
     ? {}
@@ -125,10 +129,15 @@ export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, o
     ? {}
     : { ref: setNodeRef, style, ...attributes, ...listeners }
 
+  // A locked Board's card reads like any other — it simply has nothing
+  // to drag with and no quick-complete control to click (issue 09).
+  const quickComplete = readOnly ? undefined : onQuickComplete
+  const cursorClass = readOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+
   return (
     <Card
       {...cardProps}
-      className={`cursor-grab active:cursor-grabbing transition-shadow ${
+      className={`${cursorClass} transition-shadow ${
         isDragging && !isOverlay ? 'opacity-50 shadow-lg' : ''
       } ${isActive ? 'ring-2 ring-primary' : ''} ${
         isOverlay ? 'shadow-xl rotate-2' : ''
@@ -172,7 +181,7 @@ export function TodoCard({ todo, isActive, isOverlay = false, onQuickComplete, o
 
           <div className="flex items-center gap-2">
             {/* Quick complete button */}
-            {onQuickComplete && (
+            {quickComplete && (
               <button
                 type="button"
                 onClick={handleQuickComplete}

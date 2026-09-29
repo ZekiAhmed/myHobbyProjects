@@ -25,6 +25,7 @@ import { prisma } from '@/lib/db'
 import { getRequiredSession } from '@/lib/session'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
+import { boardLockedError } from '@/lib/board-access'
 
 /**
  * Removes a member from a board. Only the board owner can do this.
@@ -58,6 +59,11 @@ export async function removeMember(boardId: string, userId: string): Promise<Act
     if (board.ownerId !== session.user.id) {
       return actionError('authorization', 'Only the board owner can remove members')
     }
+
+    // Entitlement (subscription-billing issue 09): membership itself is
+    // Board state — a locked Board keeps its Members as it found them.
+    const locked = await boardLockedError(boardId)
+    if (locked) return locked
 
     if (board.ownerId === userId) {
       return actionError('validation', 'Cannot remove the board owner')
@@ -140,6 +146,13 @@ export async function leaveBoard(boardId: string): Promise<ActionResult<{ succes
     if (!member) {
       return actionError('validation', 'You are not a member of this board')
     }
+
+    // Entitlement: leaving changes the Member count that decides whether
+    // the Board is read-only, so a locked Board refuses it too. Checked
+    // AFTER membership so a stranger is told they are not a member
+    // rather than handed the lock message.
+    const locked = await boardLockedError(boardId)
+    if (locked) return locked
 
     const ipAddress = await getBestEffortIp()
 

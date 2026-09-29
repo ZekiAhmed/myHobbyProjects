@@ -8,6 +8,7 @@ import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
 import { assignmentNotificationData, isAssignedToSomeoneElse } from '@/lib/notifications'
+import { verifyBoardMembership } from '@/lib/board-access'
 
 const CreateTodoSchema = z.object({
   boardId: z.string(),
@@ -34,25 +35,6 @@ const todoInclude = {
   assignee: { select: { id: true, name: true, image: true } },
   tags: { include: { tag: { select: { id: true, name: true, color: true } } } },
 } as const
-
-async function verifyBoardMembership(boardId: string, userId: string) {
-  const board = await prisma.board.findUnique({
-    where: { id: boardId },
-    select: { ownerId: true },
-  })
-
-  if (!board) return actionError('server', 'Board not found')
-
-  const isOwner = board.ownerId === userId
-  if (!isOwner) {
-    const membership = await prisma.boardMember.findFirst({
-      where: { boardId, userId },
-    })
-    if (!membership) return actionError('authorization', 'You are not a member of this board')
-  }
-
-  return { isOwner, error: null }
-}
 
 type TodoWithRelations = {
   id: string

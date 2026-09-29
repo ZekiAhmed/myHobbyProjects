@@ -14,6 +14,8 @@ import {
   computePeriodEnd,
   deriveSubscription,
   generatePaymentReference,
+  isProSubscriber,
+  deriveBoardWriteLock,
 } from '../subscription'
 
 describe('subscription date & entitlement math', () => {
@@ -142,6 +144,103 @@ describe('subscription date & entitlement math', () => {
         state: 'active',
         expiringSoon: false,
       })
+    })
+  })
+
+  describe('isProSubscriber — the single entitlement check', () => {
+    const periodEnd = new Date(2026, 4, 25)
+
+    it('answers Pro while the paid period is running', () => {
+      expect(isProSubscriber(periodEnd, new Date(2026, 4, 10))).toBe(true)
+    })
+
+    it('answers Pro one millisecond before the period ends', () => {
+      expect(isProSubscriber(periodEnd, new Date(periodEnd.getTime() - 1))).toBe(true)
+    })
+
+    it('stops answering Pro at the exact expiry instant (no grace period)', () => {
+      expect(isProSubscriber(periodEnd, periodEnd)).toBe(false)
+    })
+
+    it('answers not-Pro after expiry', () => {
+      expect(isProSubscriber(periodEnd, new Date(periodEnd.getTime() + 1))).toBe(false)
+    })
+
+    it('answers not-Pro when the user never had a period', () => {
+      expect(isProSubscriber(null, new Date(2026, 4, 10))).toBe(false)
+    })
+  })
+
+  describe('deriveBoardWriteLock — Boards with Members at expiry', () => {
+    const periodEnd = new Date(2026, 4, 25)
+
+    it('locks a Board with Members at the exact expiry instant, naming the lapse', () => {
+      expect(
+        deriveBoardWriteLock({ hasMembers: true, ownerPeriodEnd: periodEnd, now: periodEnd })
+      ).toEqual({ locked: true, reason: 'expired' })
+    })
+
+    it('locks a Board with Members after expiry', () => {
+      expect(
+        deriveBoardWriteLock({
+          hasMembers: true,
+          ownerPeriodEnd: periodEnd,
+          now: new Date(periodEnd.getTime() + 1),
+        })
+      ).toEqual({ locked: true, reason: 'expired' })
+    })
+
+    it('leaves a Board with Members writable one millisecond before expiry', () => {
+      expect(
+        deriveBoardWriteLock({
+          hasMembers: true,
+          ownerPeriodEnd: periodEnd,
+          now: new Date(periodEnd.getTime() - 1),
+        })
+      ).toEqual({ locked: false, reason: null })
+    })
+
+    it('leaves a Board with Members writable for a Pro subscriber', () => {
+      expect(
+        deriveBoardWriteLock({
+          hasMembers: true,
+          ownerPeriodEnd: periodEnd,
+          now: new Date(2026, 4, 10),
+        })
+      ).toEqual({ locked: false, reason: null })
+    })
+
+    it('locks a Board with Members whose Owner never subscribed, naming that fact', () => {
+      expect(deriveBoardWriteLock({ hasMembers: true, ownerPeriodEnd: null, now: new Date() })).toEqual({
+        locked: true,
+        reason: 'none',
+      })
+    })
+
+    it('leaves a Board without Members writable after expiry — the free tier keeps solo work editable', () => {
+      expect(
+        deriveBoardWriteLock({
+          hasMembers: false,
+          ownerPeriodEnd: periodEnd,
+          now: new Date(periodEnd.getTime() + 1),
+        })
+      ).toEqual({ locked: false, reason: null })
+    })
+
+    it('leaves a Board without Members writable for a user who never subscribed', () => {
+      expect(
+        deriveBoardWriteLock({ hasMembers: false, ownerPeriodEnd: null, now: new Date() })
+      ).toEqual({ locked: false, reason: null })
+    })
+
+    it('leaves a Board without Members writable while the Owner is Pro', () => {
+      expect(
+        deriveBoardWriteLock({
+          hasMembers: false,
+          ownerPeriodEnd: periodEnd,
+          now: new Date(2026, 4, 10),
+        })
+      ).toEqual({ locked: false, reason: null })
     })
   })
 

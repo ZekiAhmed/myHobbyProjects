@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/select'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
 import type { TodoWithRelations } from '@/lib/types'
 
 interface BoardMember {
@@ -68,6 +69,12 @@ interface TodoSidePanelProps {
   currentUserId: string
   /** Board Owner — Comment feed shows Delete on any Comment (ADR-0001) */
   isOwner: boolean
+  /**
+   * Locked Board (issue 09): the panel becomes a read-only view. The
+   * Todo stays fully readable — nothing is hidden — but there is no
+   * form, no Delete control, and no comment composer to press.
+   */
+  readOnly?: boolean
 }
 
 export function TodoSidePanel({
@@ -79,6 +86,7 @@ export function TodoSidePanel({
   tags,
   currentUserId,
   isOwner,
+  readOnly = false,
 }: TodoSidePanelProps) {
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
@@ -219,6 +227,86 @@ export function TodoSidePanel({
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending
+
+  /**
+   * Locked Board (issue 09): every field the form would have edited is
+   * still on show — the Board is read-only, never empty — but there is
+   * nothing here that can write.
+   */
+  const readOnlyContent = todo ? (
+    <>
+      <div className="flex flex-col gap-4 p-4">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Title</p>
+          <p className="text-base font-medium">{todo.title}</p>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {todo.description || 'No description'}
+          </p>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</dt>
+            <dd className="text-sm">
+              {todo.status === 'TO_DO'
+                ? 'To Do'
+                : todo.status === 'IN_PROGRESS'
+                  ? 'In Progress'
+                  : 'Done'}
+            </dd>
+          </div>
+          <div className="space-y-1">
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Priority</dt>
+            <dd className="text-sm">{todo.priority.charAt(0) + todo.priority.slice(1).toLowerCase()}</dd>
+          </div>
+          <div className="space-y-1">
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Due Date</dt>
+            <dd className="text-sm">
+              {todo.dueDate ? format(new Date(todo.dueDate), 'MMM d, yyyy') : 'None'}
+            </dd>
+          </div>
+          <div className="space-y-1">
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Assignee</dt>
+            <dd className="text-sm">{todo.assignee?.name || 'Unassigned'}</dd>
+          </div>
+        </dl>
+
+        {todo.tags.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tags</p>
+            <div className="flex flex-wrap gap-2">
+              {todo.tags.map(({ tag }) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                  style={{ backgroundColor: tag.color + '20', color: tag.color }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-sm text-muted-foreground">
+          Read-only — editing resumes once this board&apos;s subscription is renewed.
+        </p>
+      </div>
+
+      <CommentFeed
+        key={todo.id}
+        boardId={boardId}
+        todoId={todo.id}
+        currentUserId={currentUserId}
+        isOwner={isOwner}
+        readOnly
+      />
+    </>
+  ) : null
 
   const formContent = (
     <>
@@ -398,18 +486,23 @@ export function TodoSidePanel({
   )
 
   // Mobile: full-screen dialog
+  const panelTitle = readOnly ? todo?.title : isEditing ? 'Edit Todo' : 'Create Todo'
+  const panelDescription = readOnly
+    ? 'Read-only view of this todo.'
+    : isEditing
+      ? 'Update the todo details below.'
+      : 'Add a new todo to the board.'
+
   if (isMobile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-full h-[100dvh] sm:max-w-sm sm:h-auto sm:rounded-xl rounded-none top-0 left-0 -translate-x-0 -translate-y-0 flex flex-col p-0">
           <DialogHeader className="p-4 pb-0">
-            <DialogTitle>{isEditing ? 'Edit Todo' : 'Create Todo'}</DialogTitle>
-            <DialogDescription>
-              {isEditing ? 'Update the todo details below.' : 'Add a new todo to the board.'}
-            </DialogDescription>
+            <DialogTitle>{panelTitle}</DialogTitle>
+            <DialogDescription>{panelDescription}</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
-            {formContent}
+            {readOnly ? readOnlyContent : formContent}
           </div>
         </DialogContent>
       </Dialog>
@@ -421,12 +514,10 @@ export function TodoSidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[400px] sm:w-[540px]">
         <SheetHeader>
-          <SheetTitle>{isEditing ? 'Edit Todo' : 'Create Todo'}</SheetTitle>
-          <SheetDescription>
-            {isEditing ? 'Update the todo details below.' : 'Add a new todo to the board.'}
-          </SheetDescription>
+          <SheetTitle>{panelTitle}</SheetTitle>
+          <SheetDescription>{panelDescription}</SheetDescription>
         </SheetHeader>
-        {formContent}
+        {readOnly ? readOnlyContent : formContent}
       </SheetContent>
     </Sheet>
   )

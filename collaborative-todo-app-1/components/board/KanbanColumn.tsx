@@ -31,6 +31,8 @@ interface KanbanColumnProps {
   todos: TodoWithRelations[]
   activeId: string | null
   collapsible?: boolean
+  /** Locked Board (issue 09): cards stop being draggable */
+  readOnly?: boolean
   onQuickComplete?: (todoId: string) => void
   onTodoClick?: (todo: TodoWithRelations) => void
 }
@@ -51,6 +53,7 @@ const MAX_VISIBLE_DONE = 10
  * @param todos - Array of todos in this column
  * @param activeId - ID of the todo being dragged (for visual feedback)
  * @param collapsible - Whether the column can be collapsed (DONE column)
+ * @param readOnly - Locked Board (issue 09): cards render view-only
  */
 export function KanbanColumn({
   id,
@@ -58,6 +61,7 @@ export function KanbanColumn({
   todos,
   activeId,
   collapsible = false,
+  readOnly = false,
   onQuickComplete,
   onTodoClick,
 }: KanbanColumnProps) {
@@ -115,6 +119,7 @@ export function KanbanColumn({
                 key={todo.id}
                 todo={todo}
                 isActive={todo.id === activeId}
+                readOnly={readOnly}
                 onQuickComplete={onQuickComplete}
                 onClick={onTodoClick}
               />

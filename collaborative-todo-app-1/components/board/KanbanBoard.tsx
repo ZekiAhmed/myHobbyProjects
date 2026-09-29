@@ -44,6 +44,7 @@ import { KanbanColumn } from '@/components/board/KanbanColumn'
 import { TodoCard } from '@/components/board/TodoCard'
 import { FilterBar } from '@/components/board/FilterBar'
 import { TodoSidePanel } from '@/components/board/TodoSidePanel'
+import { BoardLockBanner } from '@/components/board/BoardLockBanner'
 import { PageShell } from '@/components/PageShell'
 import { Button } from '@/components/ui/button'
 import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
@@ -55,6 +56,7 @@ import { generateKeyBetween } from 'fractional-indexing'
 import { onFocusTodo } from '@/lib/focus-todo'
 import type { Todo } from '@/lib/generated/prisma/browser'
 import type { TodoWithRelations, BoardDetail } from '@/lib/types'
+import type { BoardWriteLock } from '@/lib/subscription'
 
 /**
  * KanbanBoard — renders the Kanban board with drag-and-drop
@@ -66,23 +68,38 @@ import type { TodoWithRelations, BoardDetail } from '@/lib/types'
  * 4. Renders three KanbanColumn components (To Do, In Progress, Done)
  * 5. Provides FilterBar for client-side filtering
  *
+ * READ-ONLY (issue 09): when `writeLock` says the Board is locked, the
+ * board is still fully viewable but every write affordance is withdrawn
+ * — no Add Todo, no drag-and-drop, no quick-complete, and the side panel
+ * opens as a read-only view. The Server Actions refuse the writes
+ * anyway; the UI must not offer what the server will bounce.
+ *
  * @param boardId - The ID of the board to display
  * @param currentUserId - The ID of the current user (used to show settings only for owner)
  * @param focusTodoId - Todo id from a `?todo=` deep link (Notification
  *   click-through) — opens the side panel on that Todo once it is loaded
+ * @param writeLock - Derived entitlement lock for this Board, or null
+ *   when it is writable
  */
 export function KanbanBoard({
   boardId,
   currentUserId,
   focusTodoId = null,
+  writeLock = null,
 }: {
   boardId: string
   currentUserId: string
   focusTodoId?: string | null
+  writeLock?: BoardWriteLock | null
 }) {
   const queryClient = useQueryClient()
   const isMobile = useIsMobile()
-  
+
+  // Entitlement lock (issue 09): the Board is fully viewable, but every
+  // write affordance below is withdrawn while this is true.
+  const readOnly = writeLock?.locked === true
+  const lockReason = writeLock?.locked ? writeLock.reason : null
+
   // Filter state
   const [filters, setFilters] = useState({
     priority: [] as string[],
@@ -194,8 +211,9 @@ export function KanbanBoard({
 
   // Handle quick complete
   const handleQuickComplete = useCallback((todoId: string) => {
+    if (readOnly) return
     completeMutation.mutate(todoId)
-  }, [completeMutation])
+  }, [completeMutation, readOnly])
 
   // Handle todo click (open side panel)
   const handleTodoClick = useCallback((todo: TodoWithRelations) => {
@@ -205,9 +223,10 @@ export function KanbanBoard({
 
   // Handle add todo
   const handleAddTodo = useCallback(() => {
+    if (readOnly) return
     setSelectedTodo(null)
     setSidePanelOpen(true)
-  }, [])
+  }, [readOnly])
 
   // Configure drag-and-drop sensors
   const sensors = useSensors(
@@ -442,16 +461,21 @@ export function KanbanBoard({
               {isMobile ? <Settings className="h-5 w-5" /> : 'Settings'}
             </Link>
           )}
-          <Button
-            className="min-w-[8.5rem] justify-center rounded-[4px] text-center"
-            onClick={handleAddTodo}
-          >
-            Add Todo
-          </Button>
+          {!readOnly && (
+            <Button
+              className="min-w-[8.5rem] justify-center rounded-[4px] text-center"
+              onClick={handleAddTodo}
+            >
+              Add Todo
+            </Button>
+          )}
         </div>
       }
     >
       <div className="flex flex-col">
+        {/* Read-only notice — the Board stays viewable, editing resumes on renewal */}
+        {lockReason && <BoardLockBanner reason={lockReason} isOwner={isOwner} />}
+
         {/* Filter bar */}
         <FilterBar
           members={members}
@@ -475,6 +499,7 @@ export function KanbanBoard({
               title="To Do"
               todos={todosByStatus.TO_DO}
               activeId={activeId}
+              readOnly={readOnly}
               onQuickComplete={handleQuickComplete}
               onTodoClick={handleTodoClick}
             />
@@ -483,6 +508,7 @@ export function KanbanBoard({
               title="In Progress"
               todos={todosByStatus.IN_PROGRESS}
               activeId={activeId}
+              readOnly={readOnly}
               onQuickComplete={handleQuickComplete}
               onTodoClick={handleTodoClick}
             />
@@ -492,6 +518,7 @@ export function KanbanBoard({
               todos={todosByStatus.DONE}
               activeId={activeId}
               collapsible
+              readOnly={readOnly}
               onQuickComplete={handleQuickComplete}
               onTodoClick={handleTodoClick}
             />
@@ -531,7 +558,8 @@ export function KanbanBoard({
                         key={todo.id}
                         todo={todo}
                         isActive={false}
-                        onQuickComplete={handleQuickComplete}
+                        readOnly={readOnly}
+                        onQuickComplete={readOnly ? undefined : handleQuickComplete}
                         onClick={handleTodoClick}
                       />
                     ))
@@ -555,6 +583,7 @@ export function KanbanBoard({
         tags={tags}
         currentUserId={currentUserId}
         isOwner={isOwner}
+        readOnly={readOnly}
       />
       </div>
     </PageShell>

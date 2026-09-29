@@ -22,6 +22,7 @@ import { boardDetailQueryOptions, todosQueryOptions } from '@/lib/queries/board-
 import { KanbanBoard } from '@/components/board/KanbanBoard'
 import { getRequiredSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
+import { deriveBoardWriteLock } from '@/lib/subscription'
 
 /**
  * Board Detail Page — Server Component
@@ -30,8 +31,11 @@ import { prisma } from '@/lib/db'
  * 1. Authenticates (redirects to sign-in if no session)
  * 2. Authorizes — owner OR member, same rule as GET /api/boards/[id]
  *    (without this, a stranger got a 200 shell while APIs returned 403)
- * 3. Prefetches board detail + todos into the React Query cache
- * 4. Renders KanbanBoard
+ * 3. Derives the entitlement lock (subscription-billing issue 09): a
+ *    Board with Members whose Owner's period has ended is read-only —
+ *    rendered viewable, but with every write affordance withdrawn
+ * 4. Prefetches board detail + todos into the React Query cache
+ * 5. Renders KanbanBoard
  *
  * @returns The Kanban board UI
  */
@@ -53,6 +57,7 @@ export default async function BoardPage({
     select: {
       ownerId: true,
       members: { select: { userId: true } },
+      owner: { select: { subscriptionPeriodEnd: true } },
     },
   })
   if (!board) {
@@ -64,6 +69,15 @@ export default async function BoardPage({
     // Same denial as API 403 — do not render the board shell
     notFound()
   }
+
+  // Entitlement (issue 09): derived at read time — no cron, no flag to
+  // clear. The owner relation and the member list are already loaded
+  // for authorization, so the lock costs no extra query.
+  const writeLock = deriveBoardWriteLock({
+    hasMembers: board.members.length > 0,
+    ownerPeriodEnd: board.owner?.subscriptionPeriodEnd ?? null,
+    now: new Date(),
+  })
 
   const queryClient = new QueryClient()
 
@@ -80,6 +94,7 @@ export default async function BoardPage({
           boardId={id}
           currentUserId={session.user.id}
           focusTodoId={focusTodoId ?? null}
+          writeLock={writeLock}
         />
       </Suspense>
     </HydrationBoundary>

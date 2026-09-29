@@ -32,6 +32,7 @@ import { prisma } from "@/lib/db";
 import { getRequiredSession } from "@/lib/session";
 import { actionSuccess, actionError, type ActionResult } from "@/lib/errors";
 import { activityData, getBestEffortIp } from "@/lib/activity";
+import { boardLockedError } from "@/lib/board-access";
 
 type BoardData = {
   id: string;
@@ -145,6 +146,11 @@ export async function renameBoard(
       );
     }
 
+    // Entitlement (subscription-billing issue 09): a Board with Members
+    // is read-only once the Owner's period ends — renaming is a write.
+    const locked = await boardLockedError(boardId);
+    if (locked) return locked;
+
     // Step 4: Update the board name, and emit the board renamed Activity
     // entry in the same transaction (ADR-0002 taxonomy — atomic with the
     // domain change so the feed cannot drift from reality).
@@ -232,6 +238,11 @@ export async function deleteBoard(
       );
     }
 
+    // Entitlement: a locked Board's contents are preserved, never
+    // deleted — refusing here is what keeps expiry lossless.
+    const locked = await boardLockedError(boardId);
+    if (locked) return locked;
+
     // Step 4: Delete the board (and all related data via cascade)
     await prisma.board.delete({
       where: { id: boardId },
@@ -288,6 +299,11 @@ export async function transferOwnership(
         "Only the board owner can transfer ownership",
       );
     }
+
+    // Entitlement: ownership transfer is a Board write — locked Board
+    // (with Members, lapsed Owner) refuses it like any other.
+    const locked = await boardLockedError(boardId);
+    if (locked) return locked;
 
     // Step 4: Cannot transfer to yourself
     if (newOwnerId === session.user.id) {

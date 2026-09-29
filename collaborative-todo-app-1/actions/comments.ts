@@ -7,6 +7,7 @@ import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
 import { commentNotifications } from '@/lib/notifications'
+import { verifyBoardMembership } from '@/lib/board-access'
 import type { CommentWithAuthor } from '@/lib/types'
 
 /** Plain-text body rule shared by create and edit: non-blank, no length cap. */
@@ -23,25 +24,6 @@ const UpdateCommentSchema = z.object({
   commentId: z.string().min(1),
   body: CommentBodySchema,
 })
-
-async function verifyBoardMembership(boardId: string, userId: string) {
-  const board = await prisma.board.findUnique({
-    where: { id: boardId },
-    select: { ownerId: true },
-  })
-
-  if (!board) return actionError('server', 'Board not found')
-
-  const isOwner = board.ownerId === userId
-  if (!isOwner) {
-    const membership = await prisma.boardMember.findFirst({
-      where: { boardId, userId },
-    })
-    if (!membership) return actionError('authorization', 'You are not a member of this board')
-  }
-
-  return { isOwner, error: null }
-}
 
 /**
  * Create a Comment on a Todo — board members and the board Owner alike.

@@ -67,7 +67,12 @@ function pageProps() {
   return { params: Promise.resolve({ id: BOARD_ID }) }
 }
 
-function prime(sessionUserId: string, ownerId: string, memberUserIds: string[]) {
+function prime(
+  sessionUserId: string,
+  ownerId: string,
+  memberUserIds: string[],
+  ownerPeriodEnd: Date | null = null
+) {
   sessionMock.getSession.mockResolvedValue({
     user: { id: sessionUserId, email: `${sessionUserId}@t.dev` },
     session: { id: 's1' },
@@ -78,7 +83,13 @@ function prime(sessionUserId: string, ownerId: string, memberUserIds: string[]) 
     ownerId,
     createdAt: new Date(),
     updatedAt: new Date(),
-    owner: { id: ownerId, name: 'Owner', email: 'o@t.dev', image: null },
+    owner: {
+      id: ownerId,
+      name: 'Owner',
+      email: 'o@t.dev',
+      image: null,
+      subscriptionPeriodEnd: ownerPeriodEnd,
+    },
     members: memberUserIds.map((userId, i) => ({
       id: `bm_${i}`,
       boardId: BOARD_ID,
@@ -132,5 +143,59 @@ describe('BoardPage membership gate (matches API owner-or-member rule)', () => {
     })
     prismaMock.board.findUnique.mockResolvedValue(null)
     await expect(BoardPage(pageProps())).rejects.toThrow(/NEXT_NOT_FOUND/)
+  })
+})
+
+/**
+ * Walks the returned element tree for a prop the Server Component hands
+ * to KanbanBoard (issue 09 hands it the derived write lock).
+ */
+function findProp(node: unknown, key: string): unknown {
+  if (!node || typeof node !== 'object') return undefined
+  const el = node as { props?: Record<string, unknown> }
+  const props = el.props
+  if (!props) return undefined
+  if (key in props) return props[key]
+
+  const children = props.children
+  if (Array.isArray(children)) {
+    for (const child of children) {
+      const found = findProp(child, key)
+      if (found !== undefined) return found
+    }
+    return undefined
+  }
+  return findProp(children, key)
+}
+
+describe('BoardPage entitlement lock — a locked Board stays fully viewable (issue 09)', () => {
+  it('renders a lapsed Owner\'s Board WITH Members, and hands KanbanBoard the lock', async () => {
+    prime(OWNER_ID, OWNER_ID, [MEMBER_ID], new Date(Date.now() - 60_000))
+
+    const el = await BoardPage(pageProps())
+
+    // Readable, never hidden or deleted — the page still renders
+    expect(notFound).not.toHaveBeenCalled()
+    expect(redirect).not.toHaveBeenCalled()
+    expect(el).toBeTruthy()
+    expect(findProp(el, 'writeLock')).toEqual({ locked: true, reason: 'expired' })
+  })
+
+  it('hands KanbanBoard no lock while the Owner is Pro (Board WITH Members)', async () => {
+    prime(MEMBER_ID, OWNER_ID, [MEMBER_ID], new Date(Date.now() + 60_000))
+
+    const el = await BoardPage(pageProps())
+
+    expect(notFound).not.toHaveBeenCalled()
+    expect(findProp(el, 'writeLock')).toEqual({ locked: false, reason: null })
+  })
+
+  it('never locks a Board WITHOUT Members, however lapsed its Owner', async () => {
+    prime(OWNER_ID, OWNER_ID, [], new Date(Date.now() - 60_000))
+
+    const el = await BoardPage(pageProps())
+
+    expect(notFound).not.toHaveBeenCalled()
+    expect(findProp(el, 'writeLock')).toEqual({ locked: false, reason: null })
   })
 })

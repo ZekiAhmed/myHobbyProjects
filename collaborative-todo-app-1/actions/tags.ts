@@ -6,23 +6,13 @@ import { getRequiredSession } from '@/lib/session'
 import { z } from 'zod/v4'
 import { actionSuccess, actionError, type ActionResult } from '@/lib/errors'
 import { activityData, getBestEffortIp } from '@/lib/activity'
+import { verifyBoardOwnership } from '@/lib/board-access'
 
 const CreateTagSchema = z.object({
   boardId: z.string(),
   name: z.string().min(1).max(50),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 })
-
-async function verifyBoardOwnership(boardId: string, userId: string) {
-  const board = await prisma.board.findUnique({
-    where: { id: boardId },
-    select: { ownerId: true },
-  })
-
-  if (!board) return actionError('server', 'Board not found')
-  if (board.ownerId !== userId) return actionError('authorization', 'Only the board owner can manage tags')
-  return null
-}
 
 export async function createTag(input: {
   boardId: string
