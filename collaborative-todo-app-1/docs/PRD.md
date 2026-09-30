@@ -139,7 +139,7 @@ Work teams need a lightweight, shared task manager they can adopt instantly — 
 | Kanban customization (custom columns, WIP limits) | Post-MVP |
 | i18n | Not scoped — flag if non-English audience is confirmed |
 
-> **Note:** A minimal public landing page now exists at `/` (shipped after initial MVP scope); the dashboard lives at `/boards`.
+> **Note:** A full public marketing landing page now exists at `/` (shipped after initial MVP scope, completed as `.scratch/landing-page/`); the dashboard lives at `/boards`.
 
 > **Note:** Comments, Activity log, and Notifications were formerly listed here as "Post-MVP" *and* in §4 Should Have. They now live **only** in §4, where their designs are specified.
 
@@ -315,7 +315,7 @@ Near-real-time:
 | `/reset-password` | ❌ | Token validated server-side |
 | `/verify-email` | ❌ | |
 | `/invite/[token]` | ❌ Semi-public | Accessible without auth; token preserved through sign-in/sign-up |
-| `/` (public landing) | ❌ | Minimal hero + CTA; CTA branches on session (signed-in → `/boards`) |
+| `/` (public landing) | ❌ | Full marketing landing — hero with board preview, how-it-works, features, live Free/Pro pricing, FAQ, final CTA; CTA branches on session (signed-in → `/boards`) |
 | `/boards` (dashboard) | ✅ | `getRequiredSession()` + `proxy.ts` |
 | `/boards/[id]` | ✅ | `getRequiredSession()` + membership check |
 | `/boards/[id]/settings` | ✅ | `getRequiredSession()` + owner check |
