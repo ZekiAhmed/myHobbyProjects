@@ -3,13 +3,14 @@
  * marketing landing)
  *
  * CONTRACT UNDER TEST (app/(marketing)/layout.tsx):
- * 1. A signed-out header offers Sign in + Get started, and the nav
- *    anchors to #how-it-works / #features / #pricing — every id the
+ * 1. A signed-out header offers Sign in + Create a free board, and the
+ *    nav anchors to #how-it-works / #features / #pricing — every id the
  *    landing page exposes
  * 2. A signed-in header swaps to "Go to dashboard" only — no sign-in or
  *    sign-up offer anywhere in the shell (matches the hero's branching)
  * 3. The footer carries the brand/tagline, the same section anchors, an
- *    auth column that branches with the session, and a © year line
+ *    auth column that branches with the session, Support + Legal columns,
+ *    and a © year line
  *
  * Module-boundary mocks: session source, next/headers
  * (prior art: app/(app)/upgrade/__tests__/page.test.tsx — the real
@@ -53,7 +54,7 @@ beforeEach(() => {
 })
 
 describe('marketing header (session-aware chrome)', () => {
-  it('offers Sign in + Get started to a signed-out visitor', async () => {
+  it('offers Sign in + Create a free board to a signed-out visitor', async () => {
     signOut()
 
     const html = await renderShell()
@@ -61,7 +62,7 @@ describe('marketing header (session-aware chrome)', () => {
     expect(html).toContain('/sign-in')
     expect(html).toContain('/sign-up')
     expect(html).toContain('Sign in')
-    expect(html).toContain('Get started')
+    expect(html).toContain('Create a free board')
     expect(html).not.toContain('/boards')
   })
 
@@ -91,7 +92,7 @@ describe('marketing footer', () => {
     const html = await renderShell()
 
     expect(html).toContain('A collaborative todo app for small teams')
-    expect(html).toContain(`© ${new Date().getFullYear()} Kanban`)
+    expect(html).toContain(`© ${new Date().getFullYear()} Kanify`)
     // the product column repeats the section anchors
     expect(html).toContain('href="#features"')
     expect(html).toContain('href="#pricing"')
@@ -102,8 +103,7 @@ describe('marketing footer', () => {
   it('branches the auth column with the session', async () => {
     signOut()
     const signedOutHtml = await renderShell()
-    expect(signedOutHtml).toContain('Get started')
-    expect(signedOutHtml).toContain('Create an account')
+    expect(signedOutHtml).toContain('Create a free board')
     expect(signedOutHtml).not.toContain('/boards')
 
     signIn()
@@ -112,5 +112,17 @@ describe('marketing footer', () => {
     expect(signedInHtml).toContain('/boards')
     expect(signedInHtml).not.toContain('/sign-in')
     expect(signedInHtml).not.toContain('/sign-up')
+  })
+
+  it('carries Support and Legal columns with live destinations', async () => {
+    const html = await renderShell()
+
+    expect(html).toContain('aria-label="Footer support links"')
+    expect(html).toContain('aria-label="Footer legal links"')
+    expect(html).toContain('href="/#faq"')
+    expect(html).toContain('href="mailto:onboarding@ZekiAhmed.dev"')
+    expect(html).toContain('href="/privacy"')
+    expect(html).toContain('href="/terms"')
+    expect(html).not.toContain('Create an account')
   })
 })

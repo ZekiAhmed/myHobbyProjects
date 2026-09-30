@@ -7,8 +7,8 @@ import { PendingReviewBanner } from '@/components/subscription/PendingReviewBann
 import { ExpiryWarningBanner } from '@/components/subscription/ExpiryWarningBanner'
 
 export const metadata: Metadata = {
-  title: 'Kanban',
-  description: 'A collaborative Kanban todo app for small teams.',
+  title: 'Kanify',
+  description: 'A shared todo board for small teams. Organize tasks and ship work together.',
 }
 
 export default async function AppLayout({

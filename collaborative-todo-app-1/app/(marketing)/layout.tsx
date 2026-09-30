@@ -6,8 +6,8 @@
  * public root — the dashboard lives at /boards.
  *
  * Async because getOptionalSession() branches the header/footer CTAs on
- * auth state (signed out → Sign in / Get started; signed in → Go to
- * dashboard). Same pattern documented in lib/session.ts and used by
+ * auth state (signed out → Sign in / Create a free board; signed in → Go
+ * to dashboard). Same pattern documented in lib/session.ts and used by
  * app/(marketing)/page.tsx.
  */
 
@@ -17,13 +17,13 @@ import { getOptionalSession } from '@/lib/session'
 import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
-  title: 'Kanban — Collaborative todo app for small teams',
+  title: 'Kanify — Collaborative todo app for small teams',
   description:
-    'A collaborative Kanban board for small teams. Organize tasks, track progress, and ship work together in real time.',
+    'A shared todo board for small teams. Organize tasks, track progress, and see your team’s moves within seconds.',
   openGraph: {
-    title: 'Kanban — Collaborative todo app for small teams',
+    title: 'Kanify — Collaborative todo app for small teams',
     description:
-      'A collaborative Kanban board for small teams. Organize tasks, track progress, and ship work together in real time.',
+      'A shared todo board for small teams. Organize tasks, track progress, and see your team’s moves within seconds.',
     type: 'website',
   },
 }
@@ -45,14 +45,14 @@ export default async function MarketingLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background">
         <div className="container mx-auto flex h-12 items-center justify-between gap-4 px-4 md:px-6">
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground"
+              className="py-2 text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground"
             >
-              Kanban
+              Kanify
             </Link>
             <nav
               aria-label="Page sections"
@@ -62,7 +62,7 @@ export default async function MarketingLayout({
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}
                 </a>
@@ -73,6 +73,7 @@ export default async function MarketingLayout({
             {session ? (
               <Button
                 size="sm"
+                className="min-h-11 bg-blue-600 text-sm text-white hover:bg-blue-700 md:min-h-0"
                 render={<Link href="/boards" />}
                 nativeButton={false}
               >
@@ -83,6 +84,7 @@ export default async function MarketingLayout({
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="min-h-11 text-sm md:min-h-0"
                   render={<Link href="/sign-in" />}
                   nativeButton={false}
                 >
@@ -90,28 +92,45 @@ export default async function MarketingLayout({
                 </Button>
                 <Button
                   size="sm"
+                  className="min-h-11 bg-blue-600 text-sm text-white hover:bg-blue-700 md:min-h-0"
                   render={<Link href="/sign-up" />}
                   nativeButton={false}
                 >
-                  Get started
+                  Create a free board
                 </Button>
               </>
             )}
           </div>
         </div>
+        {/* Mobile section jump — the desktop nav is hidden below md, so
+            sticky chrome carries its own row of anchors at 390px */}
+        <nav
+          aria-label="Page sections"
+          className="container mx-auto flex items-center gap-5 border-t border-border/50 px-4 py-1 md:hidden"
+        >
+          {NAV_LINKS.map((link) => (
+            <a
+              key={`mobile-${link.href}`}
+              href={link.href}
+              className="flex items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <main className="flex-1">{children}</main>
 
       <footer className="border-t bg-background">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid gap-8 py-10 md:grid-cols-3">
+          <div className="grid gap-8 py-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="max-w-xs">
               <Link
                 href="/"
                 className="text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground"
               >
-                Kanban
+                Kanify
               </Link>
               <p className="mt-2 text-sm text-muted-foreground">
                 A collaborative todo app for small teams. Organize tasks, track
@@ -139,7 +158,7 @@ export default async function MarketingLayout({
 
             <div>
               <h2 className="text-sm font-semibold text-foreground">
-                {session ? 'Dashboard' : 'Get started'}
+                {session ? 'Dashboard' : 'Account'}
               </h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {session ? (
@@ -166,17 +185,63 @@ export default async function MarketingLayout({
                         href="/sign-up"
                         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        Create an account
+                        Create a free board
                       </Link>
                     </li>
                   </>
                 )}
               </ul>
             </div>
+
+            <nav aria-label="Footer support links">
+              <h2 className="text-sm font-semibold text-foreground">
+                Support
+              </h2>
+              <ul className="mt-3 flex flex-col gap-2">
+                <li>
+                  <Link
+                    href="/#faq"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Help &amp; FAQ
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="mailto:onboarding@ZekiAhmed.dev"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Email us
+                  </a>
+                </li>
+              </ul>
+            </nav>
+
+            <nav aria-label="Footer legal links">
+              <h2 className="text-sm font-semibold text-foreground">Legal</h2>
+              <ul className="mt-3 flex flex-col gap-2">
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Terms
+                  </Link>
+                </li>
+              </ul>
+            </nav>
           </div>
 
           <div className="border-t py-4 text-xs text-muted-foreground">
-            © {year} Kanban
+            © {year} Kanify
           </div>
         </div>
       </footer>

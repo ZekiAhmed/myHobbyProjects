@@ -141,7 +141,7 @@ export default async function InvitePage({
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;ve been invited!</h1>
         <p className="text-gray-600 mb-6">
-          Join <span className="font-semibold">{invitation.board.name}</span> on Kanban
+          Join <span className="font-semibold">{invitation.board.name}</span> on Kanify
         </p>
 
         <div className="space-y-3">

@@ -28,7 +28,7 @@ The mechanism a neighboring product could not truthfully copy is **deliberate su
 
 ## Operating Context
 
-- **Billing:** Free vs Pro. Free covers unlimited personal boards; the landing page states *"Inviting teammates — Pro only."* Pro is paid by **bank transfer in ETB** — no cards. The subscriber transfers the listed price to the product's bank account, uploads a photo of the receipt in-app, and an **Administrator** activates Pro within 24 hours. Bank details live behind the session at `/upgrade`; only price and currency reach the public page.
+- **Billing:** Free vs Pro. Free covers unlimited personal boards; the landing page states *"Inviting teammates — Pro only."* Pro is paid by **bank transfer in ETB** — no cards. The subscriber transfers the listed price to the product's bank account, uploads a photo of the receipt in-app, and an **Administrator** activates Pro within 24 hours. Bank details live behind the session at `/upgrade`; only price and currency reach the public page. At expiry, boards with members become read-only (nothing is deleted; renewal restores editing); personal boards stay fully editable.
 - **Sync model:** near-real-time by polling — board and notifications refetch every 8 seconds; last-write-wins on concurrent reorders is a documented known limitation.
 - **Email:** Resend is strictly transactional — verification, password reset, invitation, payment approval/rejection. Every other notification is in-app only.
 - **Deployment:** Vercel + Prisma Accelerate + Postgres, Upstash rate limiting.
@@ -37,9 +37,9 @@ The mechanism a neighboring product could not truthfully copy is **deliberate su
 
 ## Capabilities and Constraints
 
-**Shipped (MVP):** email+password auth with verification and password reset · board create/rename/delete · dashboard of owned and member boards · token invitations with 48h expiry and all four accept branches · member removal and self-leaving · 3-column Kanban (To Do / In Progress / Done) · todo CRUD with title, description, status, priority, due date, assignee, tags · quick-complete · drag-and-drop within and across columns with optimistic updates · per-board tags (owner manages, members assign) · client-side filters (priority / assignee / tag / due date) · owner-only board settings · account settings (name, password, delete account) · responsive layout (mobile switches to a stacked single-column list, full-screen todo dialog, collapsible filters).
+**Shipped (MVP):** email+password auth with verification and password reset · board create/rename/delete · dashboard of owned and member boards · token invitations with 48h expiry and all four accept branches · member removal and self-leaving · 3-column Kanban (To Do / In Progress / Done) · todo CRUD with title, description, status, priority, due date, assignee, tags · quick-complete · drag-and-drop within and across columns with optimistic updates · per-board tags (owner manages, members assign) · client-side filters (priority / assignee / tag / due date) · owner-only board settings · account settings (name/email display, sign out) · responsive layout (mobile switches to a stacked single-column list, full-screen todo dialog, collapsible filters).
 
-**Specified for post-MVP (designs committed):** todo comments (flat, hard-deleted, oldest-first pagination) · per-board Activity log with fixed taxonomy (ADR-0002) · session enumeration and revocation ("Security" tab) · synchronous personal data export · targeted notifications with an unread bell and 8s polling · Administrator role for payment-receipt approval and admin admission/release.
+**Shipped (post-MVP — all six committed designs have landed):** todo comments (flat, hard-deleted, oldest-first pagination; ADR-0001) · per-board Activity log with fixed taxonomy (ADR-0002) · session enumeration and revocation ("Security" tab) · synchronous personal data export (JSON download via `/api/me/export`) · targeted notifications with an unread bell and 8s polling · Administrator role for payment-receipt approval and admin admission/release.
 
 **Constraints and boundaries:**
 - One owner per board; single-owner authorization model. No co-owners, no member admin roles.
@@ -49,7 +49,7 @@ The mechanism a neighboring product could not truthfully copy is **deliberate su
 
 ## Brand Commitments
 
-- **Product name: Kanify.** Confirmed by the owner. The `"Kanban"` string still rendered in the header, footer, and metadata is a stale placeholder awaiting replacement with "Kanify".
+- **Product name: Kanify.** Confirmed by the owner. The earlier `"Kanban"` placeholders in the header, footer, and metadata have been replaced; the word survives only as internal/code vocabulary (component names, docs) and must never surface to users.
 - English is the product language.
 - No logo, wordmark, or other brand asset exists yet — do not invent or imply one.
 - The competitive anti-reference is enterprise project-management chrome (Jira/Asana density, configuration-first surfaces). This is a confirmed product stance, not merely a taste preference.

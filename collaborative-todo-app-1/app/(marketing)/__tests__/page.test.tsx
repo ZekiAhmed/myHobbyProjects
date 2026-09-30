@@ -2,8 +2,8 @@
  * @fileoverview Landing page content test (full marketing landing)
  *
  * CONTRACT UNDER TEST (GET /, rendered):
- * 1. A signed-out visitor sees the branched hero CTAs (Get started +
- *    Sign in) and no link into the protected dashboard
+ * 1. A signed-out visitor sees the branched hero CTAs (Create a free
+ *    board + Sign in) and no link into the protected dashboard
  * 2. A signed-in visitor sees "Go to dashboard" and no sign-in/sign-up
  *    offers anywhere on the page
  * 3. The Pro price renders live from the settings singleton row (250 ETB
@@ -74,12 +74,12 @@ beforeEach(() => {
 })
 
 describe('landing CTA branching (session-aware hero)', () => {
-  it('shows Get started + Sign in for a signed-out visitor, with no dashboard link', async () => {
+  it('shows Create a free board + Sign in for a signed-out visitor, with no dashboard link', async () => {
     signOut()
 
     const html = await renderPage()
 
-    expect(html).toContain('Get started')
+    expect(html).toContain('Create a free board')
     expect(html).toContain('Sign in')
     expect(html).toContain('/sign-up')
     expect(html).toContain('/sign-in')

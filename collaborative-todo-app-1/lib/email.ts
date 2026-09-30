@@ -69,11 +69,11 @@ export async function sendVerificationEmail(
   await resend.emails.send({
     // The "from" address must be from a verified domain in Resend
     // For development, Resend provides a default domain
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: email,
     subject: 'Verify your email address',
     html: `
-      <h1>Welcome to Kanban!</h1>
+      <h1>Welcome to Kanify!</h1>
       <p>Please verify your email address by clicking the link below:</p>
       <a href="${verificationUrl}">Verify Email</a>
       <p>This link will expire in 24 hours.</p>
@@ -111,7 +111,7 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
 
   await resend.emails.send({
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: email,
     subject: 'Reset your password',
     html: `
@@ -149,7 +149,7 @@ export async function sendInvitationEmail(
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`
 
   await resend.emails.send({
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: email,
     subject: `You've been invited to join "${boardName}"`,
     html: `
@@ -207,7 +207,7 @@ export async function sendPaymentPendingEmail(
   submission: PaymentPendingEmailSubmission
 ) {
   await resend.emails.send({
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: admin.email,
     subject: `Receipt pending review — ${submission.reference}`,
     html: `
@@ -284,7 +284,7 @@ export async function sendPaymentApprovedEmail(
   })
 
   await resend.emails.send({
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: subscriber.email,
     subject: `Payment approved — ${submission.reference}`,
     html: `
@@ -330,7 +330,7 @@ export async function sendPaymentRejectedEmail(
   const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/billing`
 
   await resend.emails.send({
-    from: 'Kanban <onboarding@ZekiAhmed.dev>',
+    from: 'Kanify <onboarding@ZekiAhmed.dev>',
     to: subscriber.email,
     subject: `Payment rejected — ${submission.reference}`,
     html: `

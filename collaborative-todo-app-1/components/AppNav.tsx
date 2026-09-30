@@ -11,7 +11,7 @@ export function AppNav({ email }: { email: string }) {
           href="/boards"
           className="text-sm font-semibold text-foreground transition-colors hover:text-muted-foreground"
         >
-          Kanban
+          Kanify
         </Link>
         <div className="flex min-w-0 items-center gap-3">
           <span
