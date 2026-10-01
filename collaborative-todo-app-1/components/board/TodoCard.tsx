@@ -63,7 +63,7 @@ function getDueDateInfo(dueDate: Date | null) {
     return { text: format(date, 'MMM d'), className: 'text-red-600' }
   }
   if (isToday(date)) {
-    return { text: 'Today', className: 'text-amber-600' }
+    return { text: 'Today', className: 'text-amber-700' }
   }
   return { text: format(date, 'MMM d'), className: 'text-muted-foreground' }
 }
@@ -125,6 +125,19 @@ export function TodoCard({ todo, isActive, isOverlay = false, readOnly = false, 
     }
   }
 
+  // Enter opens the todo; Space stays with dnd-kit as the drag lift.
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (e.target === e.currentTarget && !isDragging) {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick?.(todo)
+      }
+      return
+    }
+    listeners?.onKeyDown?.(e)
+  }
+
   const cardProps = isOverlay
     ? {}
     : { ref: setNodeRef, style, ...attributes, ...listeners }
@@ -143,6 +156,7 @@ export function TodoCard({ todo, isActive, isOverlay = false, readOnly = false, 
         isOverlay ? 'shadow-xl rotate-2' : ''
       }`}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <div className="p-3 space-y-2">
         {/* Title */}
@@ -185,7 +199,7 @@ export function TodoCard({ todo, isActive, isOverlay = false, readOnly = false, 
               <button
                 type="button"
                 onClick={handleQuickComplete}
-                className={`p-1 rounded-full transition-colors ${
+                className={`p-1.5 rounded-full transition-colors ${
                   todo.status === 'DONE'
                     ? 'bg-green-100 text-green-600 hover:bg-green-200'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'

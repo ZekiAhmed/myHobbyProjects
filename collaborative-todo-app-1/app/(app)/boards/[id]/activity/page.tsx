@@ -13,11 +13,10 @@
  * page) — never a full-list read.
  */
 
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import { getRequiredSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
+import { BackLink } from '@/components/BackLink'
 import { PageShell } from '@/components/PageShell'
 import { ActivityFeed } from '@/components/board/ActivityFeed'
 
@@ -49,15 +48,7 @@ export default async function BoardActivityPage({ params }: ActivityPageProps) {
   return (
     <PageShell
       title="Activity"
-      leading={
-        <Link
-          href={`/boards/${id}`}
-          className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Back to board"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-      }
+      leading={<BackLink href={`/boards/${id}`} label="Back to board" />}
     >
       <ActivityFeed boardId={id} />
     </PageShell>

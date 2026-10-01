@@ -16,10 +16,13 @@
  * NON-BLOCKING BY DESIGN: a static informational region (role
  * "status"), never a modal — the form underneath stays usable, so an
  * Owner who upgrades in another tab can simply try again.
+ *
+ * Card shell (structure, icon treatment): components/StatusBanner.tsx
  */
 
 import { CreditCard } from 'lucide-react'
 import type { NotProReason } from '@/lib/subscription'
+import { StatusBanner } from '@/components/StatusBanner'
 import { UpgradePromptLink } from '@/components/subscription/UpgradePromptLink'
 
 interface PaywallBannerProps {
@@ -31,17 +34,13 @@ interface PaywallBannerProps {
 
 export function PaywallBanner({ reason, message }: PaywallBannerProps) {
   return (
-    <div
-      role="status"
-      data-testid="paywall-banner"
-      className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3"
-    >
-      <div className="flex min-w-0 items-start gap-2">
-        <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
-        <p className="text-sm text-amber-900">{message}</p>
-      </div>
-
-      <UpgradePromptLink reason={reason} />
-    </div>
+    <StatusBanner
+      variant="card"
+      testId="paywall-banner"
+      icon={CreditCard}
+      message={message}
+      action={<UpgradePromptLink reason={reason} />}
+      className="mb-4"
+    />
   )
 }

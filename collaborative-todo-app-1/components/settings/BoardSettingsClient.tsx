@@ -28,9 +28,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { BackLink } from '@/components/BackLink'
 import { PageShell } from '@/components/PageShell'
+import { SettingsSection } from '@/components/settings/SettingsSection'
 
 type Member = {
   id: string
@@ -181,20 +181,11 @@ export function BoardSettingsClient({
     <PageShell
       title="Board Settings"
       narrow
-      leading={
-        <Link
-          href={`/boards/${boardId}`}
-          className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Back to board"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-      }
+      leading={<BackLink href={`/boards/${boardId}`} label="Back to board" />}
     >
       <div className="space-y-8">
         {/* Rename Section */}
-        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
-          <h3 className="text-xl font-semibold text-gray-900 mb-3">Board Name</h3>
+        <SettingsSection title="Board Name">
           {isEditingName ? (
             <div className="space-y-2">
               <div className="flex gap-2">
@@ -237,7 +228,7 @@ export function BoardSettingsClient({
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <p className="text-gray-900">{boardName}</p>
+              <p className="text-foreground">{boardName}</p>
               <Button
                 onClick={() => setIsEditingName(true)}
                 variant="outline"
@@ -247,10 +238,10 @@ export function BoardSettingsClient({
               </Button>
             </div>
           )}
-        </section>
+        </SettingsSection>
 
         {/* Member Management */}
-        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+        <SettingsSection>
           <MemberList
             boardId={boardId}
             currentUserId={currentUserId}
@@ -258,23 +249,22 @@ export function BoardSettingsClient({
             members={members}
             owner={owner}
           />
-        </section>
+        </SettingsSection>
 
         {/* Invite Form */}
-        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+        <SettingsSection>
           <InviteForm boardId={boardId} />
-        </section>
+        </SettingsSection>
 
         {/* Tag Management */}
-        <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
+        <SettingsSection>
           <TagManager boardId={boardId} tags={tags} />
-        </section>
+        </SettingsSection>
 
         {/* Transfer Ownership Section */}
         {transferableMembers.length > 0 && (
-          <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Transfer Ownership</h3>
-            <p className="text-sm text-gray-500 mb-4">
+          <SettingsSection title="Transfer Ownership">
+            <p className="text-sm text-muted-foreground mb-4">
               Transfer board ownership to another member. You will become a regular member and lose settings access.
             </p>
 
@@ -342,13 +332,12 @@ export function BoardSettingsClient({
                 </Button>
               </div>
             )}
-          </section>
+          </SettingsSection>
         )}
 
         {/* Danger Zone */}
-          <section className="bg-white rounded-xl ring-1 ring-red-200 p-4">
-          <h3 className="text-xl font-semibold text-red-900 mb-3">Danger Zone</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <SettingsSection tone="danger" title="Danger Zone">
+          <p className="text-sm text-muted-foreground mb-4">
             Permanently delete this board and all its data. This action cannot be undone.
           </p>
 
@@ -395,7 +384,7 @@ export function BoardSettingsClient({
               Delete Board
             </Button>
           )}
-        </section>
+        </SettingsSection>
       </div>
     </PageShell>
   )

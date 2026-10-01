@@ -1,342 +1,739 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-23T17:12:19.760+03:00",
-  "title": "Design System: Collaborative Kanban Todo App",
+  "generatedAt": "2026-10-01T04:29:30+03:00",
+  "title": "Design System: Kanify Marketing — The Woven Dark",
   "extensions": {
     "colorMeta": {
-      "background": {
+      "canvas": {
         "role": "neutral",
-        "displayName": "Paper White",
-        "canonical": "oklch(1 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.97 0 0)"]
+        "displayName": "Loom Field",
+        "canonical": "#0a0a0a",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.12 0 0)", "oklch(0.22 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.95 0 0)"]
       },
-      "foreground": {
+      "panel": {
         "role": "neutral",
-        "displayName": "Near Black",
-        "canonical": "oklch(0.145 0 0)",
-        "tonalRamp": ["oklch(0.145 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.6 0 0)", "oklch(0.75 0 0)", "oklch(0.9 0 0)"]
+        "displayName": "Panel Cloth",
+        "canonical": "#161616",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.11 0 0)", "oklch(0.18 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.62 0 0)", "oklch(0.78 0 0)", "oklch(0.95 0 0)"]
       },
-      "surface": {
+      "panel-raised": {
         "role": "neutral",
-        "displayName": "Card Paper",
-        "canonical": "oklch(1 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.985 0 0)"]
+        "displayName": "Raised Thread",
+        "canonical": "#1c1c1c",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.12 0 0)", "oklch(0.2 0 0)", "oklch(0.32 0 0)", "oklch(0.47 0 0)", "oklch(0.63 0 0)", "oklch(0.79 0 0)", "oklch(0.95 0 0)"]
       },
-      "surface-muted": {
+      "board-frame": {
         "role": "neutral",
-        "displayName": "Quiet Gray",
-        "canonical": "oklch(0.97 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.92 0 0)", "oklch(0.97 0 0)"]
+        "displayName": "Board Frame",
+        "canonical": "#0d0d0d",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.1 0 0)", "oklch(0.16 0 0)", "oklch(0.28 0 0)", "oklch(0.44 0 0)", "oklch(0.6 0 0)", "oklch(0.77 0 0)", "oklch(0.95 0 0)"]
       },
-      "mist": {
+      "board-column": {
         "role": "neutral",
-        "displayName": "Mist Wash",
-        "canonical": "#f9fafb",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.88 0 0)", "oklch(0.98 0 0)"]
+        "displayName": "Column Weave",
+        "canonical": "#101010",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.11 0 0)", "oklch(0.17 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.61 0 0)", "oklch(0.78 0 0)", "oklch(0.95 0 0)"]
       },
-      "muted-fg": {
+      "board-card": {
         "role": "neutral",
-        "displayName": "Muted Ink",
-        "canonical": "oklch(0.556 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.95 0 0)"]
+        "displayName": "Card Stitch",
+        "canonical": "#1a1a1a",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.12 0 0)", "oklch(0.19 0 0)", "oklch(0.31 0 0)", "oklch(0.46 0 0)", "oklch(0.62 0 0)", "oklch(0.79 0 0)", "oklch(0.95 0 0)"]
       },
-      "border": {
+      "scroll-thumb": {
         "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "oklch(0.922 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.7 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.922 0 0)"]
+        "displayName": "Scroll Thumb",
+        "canonical": "#2a2a2a",
+        "tonalRamp": ["oklch(0.05 0 0)", "oklch(0.12 0 0)", "oklch(0.22 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.95 0 0)"]
       },
-      "ring": {
+      "scroll-thumb-hover": {
         "role": "neutral",
-        "displayName": "Focus Gray",
-        "canonical": "oklch(0.708 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.65 0 0)", "oklch(0.708 0 0)", "oklch(0.82 0 0)", "oklch(0.93 0 0)"]
+        "displayName": "Scroll Thumb Hover",
+        "canonical": "#3f3f46",
+        "tonalRamp": ["oklch(0.06 0 0)", "oklch(0.14 0 0)", "oklch(0.25 0 0)", "oklch(0.38 0 0)", "oklch(0.52 0 0)", "oklch(0.66 0 0)", "oklch(0.8 0 0)", "oklch(0.95 0 0)"]
       },
       "ink": {
         "role": "primary",
-        "displayName": "Ink",
-        "canonical": "oklch(0.205 0 0)",
-        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.93 0 0)"]
+        "displayName": "Loom Ink",
+        "canonical": "#f4f4f5",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.86 0 0)", "oklch(0.93 0 0)", "oklch(0.985 0 0)"]
       },
-      "on-ink": {
+      "ink-muted": {
         "role": "neutral",
-        "displayName": "On Ink",
-        "canonical": "oklch(0.985 0 0)",
-        "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.94 0 0)", "oklch(0.985 0 0)"]
+        "displayName": "Quiet Ink",
+        "canonical": "#a1a1aa",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.65 0 0)", "oklch(0.72 0 0)", "oklch(0.8 0 0)", "oklch(0.9 0 0)"]
       },
-      "hard-black": {
+      "glow": {
+        "role": "primary",
+        "displayName": "Loom Glow",
+        "canonical": "#93c5fd",
+        "tonalRamp": ["oklch(0.25 0.05 240)", "oklch(0.35 0.07 240)", "oklch(0.45 0.09 240)", "oklch(0.55 0.1 240)", "oklch(0.65 0.11 240)", "oklch(0.75 0.1 240)", "oklch(0.85 0.07 240)", "oklch(0.95 0.03 240)"]
+      },
+      "border-hairline": {
         "role": "neutral",
-        "displayName": "Hard Black",
-        "canonical": "#000000",
-        "tonalRamp": ["oklch(0 0 0)", "oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.8 0 0)", "oklch(0.97 0 0)"]
+        "displayName": "Hairline Thread",
+        "canonical": "rgb(244 244 245 / 0.12)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.72 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.96 0 0)"]
       },
-      "action-blue": {
-        "role": "primary",
-        "displayName": "Signal Blue",
-        "canonical": "#2563eb",
-        "tonalRamp": ["oklch(0.25 0.1 262)", "oklch(0.32 0.12 262)", "oklch(0.4 0.14 262)", "oklch(0.48 0.16 262)", "oklch(0.55 0.18 262)", "oklch(0.62 0.17 262)", "oklch(0.75 0.12 262)", "oklch(0.9 0.06 262)"]
-      },
-      "action-blue-deep": {
-        "role": "primary",
-        "displayName": "Signal Blue Deep",
-        "canonical": "#1d4ed8",
-        "tonalRamp": ["oklch(0.22 0.1 262)", "oklch(0.28 0.12 262)", "oklch(0.35 0.14 262)", "oklch(0.42 0.15 262)", "oklch(0.5 0.17 262)", "oklch(0.6 0.16 262)", "oklch(0.75 0.11 262)", "oklch(0.9 0.05 262)"]
-      },
-      "focus-blue": {
-        "role": "primary",
-        "displayName": "Focus Blue",
-        "canonical": "#3b82f6",
-        "tonalRamp": ["oklch(0.28 0.1 262)", "oklch(0.35 0.12 262)", "oklch(0.42 0.14 262)", "oklch(0.5 0.16 262)", "oklch(0.58 0.17 262)", "oklch(0.66 0.15 262)", "oklch(0.8 0.1 262)", "oklch(0.92 0.05 262)"]
-      },
-      "on-action": {
+      "border-band": {
         "role": "neutral",
-        "displayName": "On Action",
-        "canonical": "#ffffff",
-        "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.95 0 0)", "oklch(1 0 0)"]
+        "displayName": "Band Hairline",
+        "canonical": "rgb(244 244 245 / 0.1)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.72 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.96 0 0)"]
       },
-      "destructive": {
+      "grid-thread": {
+        "role": "neutral",
+        "displayName": "Warp/Weft Thread",
+        "canonical": "rgb(244 244 245 / 0.035)",
+        "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.72 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.96 0 0)"]
+      },
+      "status-urgent": {
         "role": "tertiary",
         "displayName": "Urgent Red",
-        "canonical": "oklch(0.577 0.245 27.325)",
-        "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.5 0.22 27)", "oklch(0.577 0.245 27.325)", "oklch(0.72 0.18 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+        "canonical": "#f87171",
+        "tonalRamp": ["oklch(0.25 0.08 27)", "oklch(0.35 0.12 27)", "oklch(0.45 0.15 27)", "oklch(0.55 0.18 27)", "oklch(0.65 0.2 27)", "oklch(0.75 0.17 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
       },
-      "status-amber": {
-        "role": "secondary",
-        "displayName": "Due Amber",
-        "canonical": "#d97706",
-        "tonalRamp": ["oklch(0.25 0.08 70)", "oklch(0.35 0.11 70)", "oklch(0.45 0.13 70)", "oklch(0.55 0.14 70)", "oklch(0.66 0.15 70)", "oklch(0.76 0.13 70)", "oklch(0.87 0.08 70)", "oklch(0.95 0.04 70)"]
-      },
-      "status-red": {
-        "role": "tertiary",
-        "displayName": "Overdue Red",
-        "canonical": "#dc2626",
-        "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.32 0.15 27)", "oklch(0.42 0.19 27)", "oklch(0.52 0.22 27)", "oklch(0.6 0.22 27)", "oklch(0.72 0.17 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
-      },
-      "status-green": {
+      "status-done": {
         "role": "secondary",
         "displayName": "Done Green",
-        "canonical": "#16a34a",
-        "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.32 0.1 150)", "oklch(0.42 0.12 150)", "oklch(0.52 0.14 150)", "oklch(0.6 0.14 150)", "oklch(0.72 0.12 150)", "oklch(0.85 0.08 150)", "oklch(0.95 0.03 150)"]
-      },
-      "success-soft": {
-        "role": "secondary",
-        "displayName": "Complete Wash",
-        "canonical": "#dcfce7",
-        "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.35 0.1 150)", "oklch(0.48 0.12 150)", "oklch(0.62 0.12 150)", "oklch(0.75 0.1 150)", "oklch(0.85 0.07 150)", "oklch(0.92 0.05 150)", "oklch(0.97 0.02 150)"]
-      },
-      "error-surface": {
-        "role": "tertiary",
-        "displayName": "Error Wash",
-        "canonical": "#fef2f2",
-        "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.35 0.14 27)", "oklch(0.5 0.18 27)", "oklch(0.65 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.87 0.06 27)", "oklch(0.94 0.03 27)", "oklch(0.98 0.01 27)"]
-      },
-      "error-border": {
-        "role": "tertiary",
-        "displayName": "Error Border",
-        "canonical": "#fecaca",
-        "tonalRamp": ["oklch(0.25 0.1 27)", "oklch(0.4 0.15 27)", "oklch(0.55 0.18 27)", "oklch(0.68 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.86 0.07 27)", "oklch(0.92 0.04 27)", "oklch(0.97 0.02 27)"]
-      },
-      "error-ink": {
-        "role": "tertiary",
-        "displayName": "Error Ink",
-        "canonical": "#b91c1c",
-        "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.48 0.2 27)", "oklch(0.55 0.2 27)", "oklch(0.7 0.16 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
-      },
-      "column-todo": {
-        "role": "neutral",
-        "displayName": "To Do Slate",
-        "canonical": "#f1f5f9",
-        "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.25 0.01 250)", "oklch(0.4 0.015 250)", "oklch(0.55 0.015 250)", "oklch(0.7 0.015 250)", "oklch(0.82 0.01 250)", "oklch(0.92 0.008 250)", "oklch(0.97 0.005 250)"]
-      },
-      "column-todo-border": {
-        "role": "neutral",
-        "displayName": "To Do Slate Border",
-        "canonical": "#e2e8f0",
-        "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.28 0.01 250)", "oklch(0.42 0.015 250)", "oklch(0.58 0.015 250)", "oklch(0.72 0.012 250)", "oklch(0.84 0.01 250)", "oklch(0.91 0.006 250)", "oklch(0.95 0.004 250)"]
-      },
-      "column-progress": {
-        "role": "secondary",
-        "displayName": "Progress Sky",
-        "canonical": "#eff6ff",
-        "tonalRamp": ["oklch(0.2 0.05 255)", "oklch(0.32 0.08 255)", "oklch(0.45 0.1 255)", "oklch(0.6 0.1 255)", "oklch(0.75 0.08 255)", "oklch(0.86 0.05 255)", "oklch(0.94 0.02 255)", "oklch(0.98 0.008 255)"]
-      },
-      "column-progress-border": {
-        "role": "secondary",
-        "displayName": "Progress Sky Border",
-        "canonical": "#bfdbfe",
-        "tonalRamp": ["oklch(0.22 0.06 255)", "oklch(0.35 0.09 255)", "oklch(0.5 0.11 255)", "oklch(0.65 0.11 255)", "oklch(0.78 0.09 255)", "oklch(0.87 0.06 255)", "oklch(0.93 0.035 255)", "oklch(0.97 0.015 255)"]
-      },
-      "column-done": {
-        "role": "secondary",
-        "displayName": "Done Mint",
-        "canonical": "#f0fdf4",
-        "tonalRamp": ["oklch(0.2 0.05 155)", "oklch(0.32 0.08 155)", "oklch(0.45 0.1 155)", "oklch(0.6 0.1 155)", "oklch(0.75 0.08 155)", "oklch(0.87 0.05 155)", "oklch(0.95 0.02 155)", "oklch(0.98 0.008 155)"]
-      },
-      "column-done-border": {
-        "role": "secondary",
-        "displayName": "Done Mint Border",
-        "canonical": "#bbf7d0",
-        "tonalRamp": ["oklch(0.22 0.06 155)", "oklch(0.35 0.09 155)", "oklch(0.5 0.11 155)", "oklch(0.65 0.11 155)", "oklch(0.78 0.09 155)", "oklch(0.88 0.06 155)", "oklch(0.94 0.035 155)", "oklch(0.97 0.015 155)"]
-      },
-      "avatar-wash": {
-        "role": "secondary",
-        "displayName": "Avatar Wash",
-        "canonical": "#dbeafe",
-        "tonalRamp": ["oklch(0.22 0.06 255)", "oklch(0.35 0.09 255)", "oklch(0.5 0.11 255)", "oklch(0.65 0.11 255)", "oklch(0.78 0.09 255)", "oklch(0.87 0.06 255)", "oklch(0.94 0.035 255)", "oklch(0.98 0.01 255)"]
-      },
-      "avatar-ink": {
-        "role": "secondary",
-        "displayName": "Avatar Ink",
-        "canonical": "#2563eb",
-        "tonalRamp": ["oklch(0.25 0.1 262)", "oklch(0.32 0.12 262)", "oklch(0.4 0.14 262)", "oklch(0.48 0.16 262)", "oklch(0.55 0.18 262)", "oklch(0.7 0.14 262)", "oklch(0.85 0.08 262)", "oklch(0.93 0.04 262)"]
+        "canonical": "#4ade80",
+        "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.32 0.1 150)", "oklch(0.42 0.12 150)", "oklch(0.52 0.14 150)", "oklch(0.62 0.14 150)", "oklch(0.75 0.12 150)", "oklch(0.86 0.08 150)", "oklch(0.95 0.03 150)"]
       }
     },
     "typographyMeta": {
-      "title": { "displayName": "Title", "purpose": "Page headers — Dashboard, Board Settings, auth headings." },
-      "headline": { "displayName": "Headline", "purpose": "Section headers — Boards I Own, settings groups." },
-      "body": { "displayName": "Body", "purpose": "Default work text, todo titles, descriptions — 14px dense reading." },
-      "label": { "displayName": "Label", "purpose": "Form labels, buttons, field labels — 14px medium." },
-      "micro": { "displayName": "Micro", "purpose": "Badges, chips, due dates, counts — 12px meta." }
+      "display": { "displayName": "Display", "purpose": "Hero headline only — 800 weight, clamp 40–84px, set across the warp." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "\"Kanify\" in header and footer — type only, no logo asset exists." },
+      "section": { "displayName": "Section", "purpose": "Section headings — How it works, features, pricing, FAQ, final close." },
+      "title": { "displayName": "Title", "purpose": "Course titles, feature titles, FAQ questions, pricing tier names." },
+      "body": { "displayName": "Body", "purpose": "Hero supporting line, FAQ answers, lead paragraphs (~54ch cap)." },
+      "body-sm": { "displayName": "Body Small", "purpose": "Feature/course descriptions, pricing lists, footer copy." },
+      "mono-label": { "displayName": "Mono Label", "purpose": "Labels of record — header nav, footer headings, © line, column titles, badges. Uppercase, tracked." },
+      "mono-micro": { "displayName": "Mono Micro", "purpose": "The hero board's in-frame labels only — column titles, count pills, status badges, origin tickets, and the SYNC strip label (fixed 10px). Board-internal scale; never used outside the board preview." },
+      "mono-readout": { "displayName": "Mono Readout", "purpose": "Sync countdown, column count pills, tabular readouts." },
+      "mono-numeral": { "displayName": "Mono Numeral", "purpose": "How-it-works course numerals — 40% ink, scale-as-rank 36→60px." },
+      "mono-price": { "displayName": "Mono Price", "purpose": "Free/Pro price figures — 48px tabular." }
     },
     "shadows": [
-      { "name": "hover-lift", "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)", "purpose": "BoardCard and auth panel hover — interactive lift only, never at rest." },
-      { "name": "drag-source", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Todo being dragged (with 50% opacity)." },
-      { "name": "drag-overlay", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "DragOverlay floating copy (with 2° rotation)." },
-      { "name": "rest", "value": "none", "purpose": "Flat-By-Default: cards/columns/inputs separate via ring-1 and tone, not shadow." }
+      {
+        "name": "rest",
+        "value": "none",
+        "purpose": "Flat-Loom Rule: every surface is flat at rest; separation is hairline + tonal ladder."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 3px rgb(147 197 253 / 0.5)",
+        "purpose": "Glow-colored focus ring on buttons and interactive elements."
+      },
+      {
+        "name": "sync-beat",
+        "value": "0 0 0 0 rgb(147 197 253 / 0.55) → 0 0 0 6px rgb(147 197 253 / 0) over the first 6% of an 8s cycle",
+        "purpose": "Motion, not elevation — the sync dot's pulse ring only."
+      }
     ],
     "motion": [
-      { "name": "transition-shadow", "value": "box-shadow 150ms ease", "purpose": "Card hover lift feedback." },
-      { "name": "transition-colors", "value": "background-color 150ms ease, color 150ms ease", "purpose": "Button/badge state changes." },
-      { "name": "toolbar-invert", "value": "transform 100ms ease, background-color 100ms ease, color 100ms ease", "purpose": "Toolbar secondary white↔black invert hover/active." },
-      { "name": "drag-transition", "value": "transform 200ms ease (dnd-kit CSS.Transform)", "purpose": "Sortable drag reflow." },
-      { "name": "active-press", "value": "transform 100ms ease, translateY(1px)", "purpose": "Button active press." }
+      {
+        "name": "ease-weave",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The world's single easing — entrances, reveals, band stretch, card glides."
+      },
+      {
+        "name": "sync-beat",
+        "value": "8s infinite keyframe (pulse ring + scale 1.35 → 1 in first 6%)",
+        "purpose": "Hero board sync dot — dramatizes the product's real 8-second refetch cadence."
+      },
+      {
+        "name": "hero-rise",
+        "value": "0.7s rise from 20px + 0 opacity, 0.07s stagger per child",
+        "purpose": "Hero entrance choreography (no-preference only)."
+      },
+      {
+        "name": "scroll-reveal",
+        "value": "0.6s rise, animation-timeline: view(), entry 4% cover 24%",
+        "purpose": "Section content reveal on scroll via view timelines."
+      },
+      {
+        "name": "band-stretch",
+        "value": "0.5s scaleX(0.2 → 1), animation-timeline: view(), entry 30% cover 55%",
+        "purpose": "Band rules weave themselves in as they enter view."
+      },
+      {
+        "name": "card-glide",
+        "value": "640ms FLIP translate, ease-weave",
+        "purpose": "Demo cards gliding between board columns on each 8s phase tick."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none for sync/hero/reveal/band; global transition-duration 0.01ms",
+        "purpose": "prefers-reduced-motion: reduce — full static fallback."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
     ]
   },
   "components": [
     {
-      "name": "Primary Action Button",
+      "name": "Primary CTA Button",
       "kind": "button",
-      "refersTo": "button-action",
-      "description": "Solid Signal Blue CTA — auth submit; the only blue primary-action color outside the toolbar.",
-      "html": "<button class=\"ds-btn-action\">Sign in</button>",
-      "css": ".ds-btn-action { background: #2563eb; color: #ffffff; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-action:hover { background: #1d4ed8; } .ds-btn-action:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:disabled { opacity: 0.5; cursor: not-allowed; }"
-    },
-    {
-      "name": "Ink Button (kit default)",
-      "kind": "button",
-      "refersTo": "button-ink",
-      "description": "shadcn default solid button — near-black Ink fill for kit-level primary actions (New Board, dialog submits).",
-      "html": "<button class=\"ds-btn-ink\">Continue</button>",
-      "css": ".ds-btn-ink { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-ink:hover { opacity: 0.8; } .ds-btn-ink:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-ink:active { transform: translateY(1px); }"
-    },
-    {
-      "name": "Toolbar Secondary Button",
-      "kind": "button",
-      "refersTo": "button-toolbar",
-      "description": "Unified page-header toolbar control (Settings, Sign out) — white fill, Hard Black 1px border, invert hover.",
-      "html": "<button class=\"ds-btn-toolbar\">Sign out</button>",
-      "css": ".ds-btn-toolbar { background: #ffffff; color: #000000; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: 0.01em; padding: 8px 16px; height: 32px; border: 1px solid #000000; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: transform 100ms ease, background-color 100ms ease, color 100ms ease; } .ds-btn-toolbar:hover { background: #000000; color: #ffffff; } .ds-btn-toolbar:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-toolbar:active { transform: translateY(1px); } .ds-btn-toolbar:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }"
-    },
-    {
-      "name": "Toolbar Primary Button (Add Todo)",
-      "kind": "button",
-      "refersTo": "button-toolbar-primary",
-      "description": "Ink solid primary in toolbar geometry — Add Todo; min-width 136px, 4px radius, centered label.",
-      "html": "<button class=\"ds-btn-toolbar-primary\">Add Todo</button>",
-      "css": ".ds-btn-toolbar-primary { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; min-width: 136px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; text-align: center; transition: all 150ms ease; } .ds-btn-toolbar-primary:hover { opacity: 0.8; } .ds-btn-toolbar-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); } .ds-btn-toolbar-primary:active { transform: translateY(1px); } .ds-btn-toolbar-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+      "refersTo": "button-primary",
+      "description": "The one solid action per viewport — ink fill on the dark field, 44px, glow focus ring.",
+      "html": "<button class=\"ds-btn-primary\">Get started</button>",
+      "css": ".ds-btn-primary { background: #f4f4f5; color: #0a0a0a; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 15px; font-weight: 500; line-height: 1; padding: 0 24px; height: 44px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-primary:hover { background: rgb(244 244 245 / 0.8); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(147 197 253 / 0.5); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Quiet kit outline for in-panel secondary actions (Cancel, dialogs) — paper fill, hairline border; not the toolbar Hard Black border.",
-      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
-      "css": ".ds-btn-outline { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-outline:hover { background: oklch(0.97 0 0); color: oklch(0.145 0 0); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(120 120 120 / 0.5); border-color: oklch(0.708 0 0); }"
+      "description": "The quiet secondary — hairline border on a faint ink wash; hero secondary and pricing actions.",
+      "html": "<button class=\"ds-btn-outline\">Sign in</button>",
+      "css": ".ds-btn-outline { background: rgb(244 244 245 / 0.05); color: #f4f4f5; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 15px; font-weight: 500; line-height: 1; padding: 0 24px; height: 44px; border: 1px solid rgb(244 244 245 / 0.16); border-radius: 10px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-outline:hover { background: rgb(244 244 245 / 0.08); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(147 197 253 / 0.5); } .ds-btn-outline:active { transform: translateY(1px); }"
     },
     {
-      "name": "Text Input",
-      "kind": "input",
-      "refersTo": "input",
-      "description": "Compact 32px field — paper fill, hairline border, 3px focus ring.",
-      "html": "<input class=\"ds-input\" placeholder=\"Enter your email\" />",
-      "css": ".ds-input { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 1.5; height: 32px; width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; transition: border-color 150ms ease, box-shadow 150ms ease; box-sizing: border-box; } .ds-input::placeholder { color: oklch(0.556 0 0); } .ds-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-input:disabled { opacity: 0.5; background: oklch(0.97 0 0); cursor: not-allowed; }"
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "The quietest tier — transparent header action (Sign in) with a mono label; hover tints to panel-raised.",
+      "html": "<button class=\"ds-btn-ghost\">Sign in</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; height: 28px; padding: 0 10px; background: transparent; color: #f4f4f5; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12.8px; font-weight: 500; letter-spacing: 0.025em; line-height: 1; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-ghost:hover { background: #1c1c1c; } .ds-btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(147 197 253 / 0.5); } .ds-btn-ghost:active { transform: translateY(1px); } .ds-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
     {
-      "name": "Todo / Board Card",
-      "kind": "card",
-      "refersTo": "card",
-      "description": "Flat ring-bordered card — the resting surface for todos and board tiles.",
-      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Draft Q3 plan</p></div>",
-      "css": ".ds-card { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; padding: 16px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgb(14.5% 0 0 / 0.1); transition: box-shadow 150ms ease; } .ds-card:hover { box-shadow: inset 0 0 0 1px rgb(14.5% 0 0 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-card-title { font-size: 14px; font-weight: 500; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }"
-    },
-    {
-      "name": "Priority Badge",
-      "kind": "chip",
-      "refersTo": "chip-priority-urgent",
-      "description": "Pill priority chip — Urgent soft-red variant shown; High is Ink, Medium muted, Low outline.",
-      "html": "<span class=\"ds-badge-urgent\">Urgent</span>",
-      "css": ".ds-badge-urgent { display: inline-flex; align-items: center; height: 20px; width: fit-content; padding: 2px 8px; background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.577 0.245 27.325); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border: 1px solid transparent; border-radius: 9999px; white-space: nowrap; }"
-    },
-    {
-      "name": "Tag Chip",
-      "kind": "chip",
-      "refersTo": "chip-tag",
-      "description": "Small 6px-radius tag with owner color at 20% alpha background.",
-      "html": "<span class=\"ds-chip-tag\">design</span>",
-      "css": ".ds-chip-tag { display: inline-flex; align-items: center; padding: 2px 6px; background: oklch(0.97 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border-radius: 6px; } .ds-chip-tag:hover { background: oklch(0.922 0 0); }"
-    },
-    {
-      "name": "Kanban Column",
+      "name": "Luminous Band Rule",
       "kind": "custom",
       "refersTo": null,
-      "description": "Signature status column — fixed 288px, status wash + 1px border, header with count pill, card stack body.",
-      "html": "<div class=\"ds-column\"><div class=\"ds-column-header\"><span class=\"ds-column-title\">In Progress</span><span class=\"ds-column-count\">4</span></div><div class=\"ds-column-body\"><div class=\"ds-column-empty\">No todos</div></div></div>",
-      "css": ".ds-column { width: 288px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-column-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #bfdbfe; } .ds-column-title { font-size: 14px; font-weight: 600; color: oklch(0.145 0 0); } .ds-column-count { font-size: 12px; font-weight: 500; color: oklch(0.556 0 0); background: oklch(0.97 0 0); padding: 2px 8px; border-radius: 9999px; } .ds-column-body { flex: 1; padding: 8px; min-height: 200px; display: flex; flex-direction: column; gap: 8px; } .ds-column-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: oklch(0.556 0 0); } .ds-column:focus-within, .ds-column:hover { box-shadow: none; }"
+      "description": "Signature section divider — 9px woven strip with a luminous gradient and weft ticks; closes every section.",
+      "html": "<div class=\"ds-band\"></div>",
+      "css": ".ds-band { height: 9px; width: 100%; border-top: 1px solid rgb(244 244 245 / 0.1); border-bottom: 1px solid rgb(244 244 245 / 0.1); background-image: linear-gradient(90deg, transparent 0%, rgb(147 197 253 / 0.45) 22%, rgb(244 244 245 / 0.6) 50%, rgb(147 197 253 / 0.45) 78%, transparent 100%), repeating-linear-gradient(90deg, rgb(244 244 245 / 0.16) 0 1px, transparent 1px 9px); background-size: 100% 1px, 100% 100%; background-position: 0 4px, 0 0; background-repeat: no-repeat, repeat; }"
+    },
+    {
+      "name": "Sync Readout Strip",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature hero-board header — mono SYNC label, glowing pulse dot, tabular 8-second countdown.",
+      "html": "<div class=\"ds-sync\"><span class=\"ds-sync-label\">Sync</span><span class=\"ds-sync-dot\"></span><span class=\"ds-sync-count\">06s</span></div>",
+      "css": ".ds-sync { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 8px 12px; border-bottom: 1px solid rgb(244 244 245 / 0.1); } .ds-sync-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #a1a1aa; } .ds-sync-dot { width: 6px; height: 6px; border-radius: 9999px; background: #93c5fd; animation: ds-sync-beat 8s cubic-bezier(0.16, 1, 0.3, 1) infinite; } .ds-sync-count { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; color: #93c5fd; } @keyframes ds-sync-beat { 0% { box-shadow: 0 0 0 0 rgb(147 197 253 / 0.55); transform: scale(1.35); } 6% { box-shadow: 0 0 0 6px rgb(147 197 253 / 0); transform: scale(1); } 100% { box-shadow: 0 0 0 0 rgb(147 197 253 / 0); transform: scale(1); } } @media (prefers-reduced-motion: reduce) { .ds-sync-dot { animation: none; } }"
+    },
+    {
+      "name": "Feature Cell",
+      "kind": "card",
+      "refersTo": null,
+      "description": "A cell of divided cloth in the border-collapsed feature grid — square corners, hairline edges, glow icon on hover.",
+      "html": "<div class=\"ds-cell\"><span class=\"ds-cell-icon\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><rect x=\"3\" y=\"4\" width=\"5\" height=\"16\" rx=\"1\"/><rect x=\"9.5\" y=\"4\" width=\"5\" height=\"11\" rx=\"1\"/><rect x=\"16\" y=\"4\" width=\"5\" height=\"7\" rx=\"1\"/></svg></span><p class=\"ds-cell-title\">Boards for every project</p><p class=\"ds-cell-desc\">Create a Kanify board per project and organize work into columns that match how your team actually ships.</p></div>",
+      "css": ".ds-cell { border-right: 1px solid rgb(244 244 245 / 0.12); border-bottom: 1px solid rgb(244 244 245 / 0.12); padding: 24px; transition: background-color 150ms ease; } .ds-cell:hover { background: rgb(255 255 255 / 0.025); } .ds-cell-icon { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 1px solid rgb(244 244 245 / 0.12); background: rgb(255 255 255 / 0.03); border-radius: 8px; color: #a1a1aa; transition: color 150ms ease; } .ds-cell-icon svg { width: 20px; height: 20px; } .ds-cell:hover .ds-cell-icon { color: #93c5fd; } .ds-cell-title { margin: 16px 0 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 1.4; color: #f4f4f5; } .ds-cell-desc { margin: 8px 0 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 14px; font-weight: 400; line-height: 1.625; color: #a1a1aa; }"
+    },
+    {
+      "name": "Course Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Numbered how-it-works row — mono numeral at 40% ink scaling 36→60px, hairline-separated, stepping inward as it climbs.",
+      "html": "<div class=\"ds-course\"><span class=\"ds-course-numeral\">01</span><div class=\"ds-course-body\"><p class=\"ds-course-title\">Create a board</p><p class=\"ds-course-desc\">Spin up a Kanify board per project in seconds — To Do, In Progress, Done, ready to fill.</p></div></div>",
+      "css": ".ds-course { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgb(244 244 245 / 0.12); padding: 32px 0; } .ds-course-numeral { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 36px; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; color: rgb(244 244 245 / 0.4); } .ds-course-title { margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 18px; font-weight: 600; line-height: 1.4; color: #f4f4f5; } .ds-course-desc { margin: 8px 0 0; max-width: 62ch; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 16px; line-height: 1.625; color: #a1a1aa; } @media (min-width: 768px) { .ds-course { flex-direction: row; align-items: baseline; gap: 40px; } .ds-course-numeral { font-size: 60px; } }"
+    },
+    {
+      "name": "Pro Pricing Card",
+      "kind": "card",
+      "refersTo": null,
+      "description": "Pro tier panel — glow border and pill badge mark the paid tier; mono 48px price, verbatim checklist, full-width CTA.",
+      "html": "<div class=\"ds-price-card\"><div class=\"ds-price-head\"><span class=\"ds-price-tier\">Pro</span><span class=\"ds-price-badge\">For teams</span></div><p class=\"ds-price-figure\">499 ETB<span class=\"ds-price-unit\">/ month</span></p><ul class=\"ds-price-list\"><li>✓ Everything in Free</li><li>✓ Invite Members to any board you own</li><li>✓ One subscription covers all your boards</li></ul><button class=\"ds-price-cta\">Get Pro</button></div>",
+      "css": ".ds-price-card { display: flex; flex-direction: column; background: #161616; border: 1px solid rgb(147 197 253 / 0.25); border-radius: 14px; padding: 28px; font-family: 'Bricolage Grotesque', system-ui, sans-serif; } .ds-price-head { display: flex; align-items: center; justify-content: space-between; } .ds-price-tier { font-size: 16px; font-weight: 600; color: #f4f4f5; } .ds-price-badge { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #93c5fd; background: rgb(147 197 253 / 0.1); border: 1px solid rgb(147 197 253 / 0.3); border-radius: 9999px; padding: 2px 8px; } .ds-price-figure { margin: 16px 0 0; display: flex; align-items: baseline; gap: 8px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 48px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; color: #f4f4f5; } .ds-price-unit { font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 14px; font-weight: 400; color: #a1a1aa; } .ds-price-list { margin: 24px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.625; color: #a1a1aa; } .ds-price-cta { margin-top: 28px; width: 100%; height: 36px; background: #f4f4f5; color: #0a0a0a; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: background-color 150ms ease; } .ds-price-cta:hover { background: rgb(244 244 245 / 0.8); } .ds-price-cta:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(147 197 253 / 0.5); }"
+    },
+    {
+      "name": "Board Preview Card",
+      "kind": "card",
+      "refersTo": null,
+      "description": "Hero demo card — tonal ladder step, status badge where truthful, mono origin ticket. Decorative, aria-hidden in context.",
+      "html": "<div class=\"ds-board-card\"><p class=\"ds-board-card-title\">Draft launch checklist</p><span class=\"ds-badge-urgent\">Urgent</span><p class=\"ds-board-card-ticket\">SN · Tue</p></div>",
+      "css": ".ds-board-card { background: #1a1a1a; border: 1px solid rgb(244 244 245 / 0.1); border-radius: 8px; padding: 8px; font-family: 'Bricolage Grotesque', system-ui, sans-serif; } .ds-board-card-title { margin: 0; font-size: 12px; font-weight: 500; line-height: 1.35; color: #f4f4f5; } .ds-badge-urgent { display: inline-block; margin-top: 6px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; font-weight: 500; color: #f87171; background: rgb(248 113 113 / 0.15); border-radius: 9999px; padding: 1px 6px; } .ds-board-card-ticket { margin: 6px 0 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: #a1a1aa; }"
     }
   ],
   "narrative": {
-    "northStar": "The Quiet Control Room",
-    "overview": "This is a calm operations console for small teams: neutral paper surfaces do the heavy lifting, and color only fires for action, priority, and status. The mood is calm and utilitarian — unpretentious, efficient, built for scanning a board in seconds rather than admiring chrome. Depth comes from light tonal shifts and thin rings, not decoration; the interface recedes so todos, assignments, and movement lead.\n\nThe system is a hybrid of two observed layers that already coexist: a shadcn/ui base-nova neutral token layer (pure OKLCH grays, compact controls, ring-bordered cards) and a functional Tailwind palette layer used directly on feature screens (Signal Blue CTAs, status reds/amber/greens, soft column washes). New screens should treat both as one vocabulary: chrome stays quiet; hue is earned by meaning.\n\nThe confirmed visual anti-reference is enterprise project-management chrome — Jira/Asana density, heavy borders, loud gradients, configuration-first surfaces. Product principle \"and nothing more\" is a visual principle here too: if an element isn't helping someone scan, act, or coordinate, it doesn't ship.",
+    "northStar": "The Woven Dark",
+    "overview": "This landing surface is a loom, not a showroom. Every shared-board SaaS page ships the same light screenshot hero; this one is composed on a visible warp/weft grid, divided by luminous band rules, and lit by exactly one glow. The world borrows its logic from handwoven shemma cloth (the grounded form candidate: weave index 6) — a dark field, hairline threads crossing at a fixed pitch, cells of divided cloth instead of floating cards, and rank expressed by scale rather than chrome. Its confirmed anti-reference is the category itself: the light hero, the feature-card wall, and enterprise-PM chrome are all refused on purpose.\n\nDensity is editorial-dark: a near-monochrome cloth of black steps and hairline borders, with Geist Mono carrying the labels of record (navigation, readouts, origin tickets, numerals) and Bricolage Grotesque carrying display and body at one voice. Color is spent almost nowhere — the sky-blue glow marks sync, focus, selection, and the Pro tier; red and green fire only where the product is telling the truth. The page reads scan → believe → act: hero proof, numbered how-it-works courses, divided-cloth features, honest pricing, FAQ, anchored close.",
     "keyCharacteristics": [
-      "Neutral, near-monochrome chrome; hue reserved for action and status",
-      "Compact controls (32px default button/input height) and dense 14px work text",
-      "Monochrome page-header toolbar family: white/black-border secondary, Ink solid primary, 4px radius",
-      "Flat at rest (ring borders); shadows only as feedback (hover, dialog, drag)",
-      "Soft status washes on Kanban columns; pill badges for priority",
-      "Single system sans — functional hierarchy, no display face"
+      "Loom ground: near-black field under a hairline warp/weft grid (72px pitch), every section closed by a luminous band rule",
+      "One glow accent; no second hue anywhere in the chrome",
+      "Bricolage Grotesque for display and body; Geist Mono only as labels, numerals, and readouts",
+      "Flat hairline panels — depth from the tonal ladder and 1px borders, never resting shadows",
+      "Exactly one solid primary action per viewport; everything else is outline or ghost",
+      "Status red/green only where product-truthful (Urgent, Done)"
     ],
     "rules": [
-      { "name": "The Signal-Only Rule", "body": "Hue appears only for action, status, priority, or focus. Everything else — nav, structure, chrome — stays in the neutral stack. If a new color can't answer \"what does this mean?\", it doesn't belong.", "section": "colors" },
-      { "name": "The Single-Action Rule", "body": "Signal Blue is the sole primary-action color. Don't introduce green/amber/purple buttons for ordinary CTAs; green and amber are reserved for status meaning.", "section": "colors" },
-      { "name": "The Monochrome Toolbar Rule", "body": "Page-header toolbar actions (Add Todo, Settings, Sign out) stay black/white only — white with Hard Black border for secondary, Ink solid for primary — never Signal Blue. Geometry is locked to 4px radius / 32px height / 16px horizontal padding.", "section": "colors" },
-      { "name": "The One-Family Rule", "body": "Hierarchy is size and weight only (700 titles → 600 headlines → 500 labels → 400 body). Don't introduce a second family or decorative styling to make text \"pop.\"", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, drag, overlay presence) — never as permanent card styling.", "section": "elevation" },
-      { "name": "The Toolbar Radius Rule", "body": "4px is exclusive to page-header toolbar controls (Add Todo, Settings, Sign out). Don't spread 4px onto dialogs, inputs, cards, or kit outline buttons — those keep 8–10px.", "section": "shapes" }
+      {
+        "name": "The One Glow Rule",
+        "body": "The sky-blue glow is the only accent hue in the world. It marks sync, focus, selection, hover, and the Pro tier — nothing else. If a second hue enters the chrome, the loom is broken.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status-Trio-Only Rule",
+        "body": "Red and green fire only where the product is telling the truth about a card's state. They never tint a section, a button, or a background.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Labels-of-Record Rule",
+        "body": "Geist Mono, uppercase, and tracked appears only as labels, numerals, tickets, and readouts — never as body copy, never as headlines. If text is prose, it is Bricolage; if text is a label of record, it is mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Scale-as-Rank Rule",
+        "body": "The how-it-works sequence ranks by scale: one mono numeral at 40% ink grows 36px → 60px and steps inward (0 / 40px / 80px) with each course. No bullets, no icons, no color — size and indent carry the rank.",
+        "section": "typography"
+      },
+      {
+        "name": "The Loom Ground Rule",
+        "body": "The ground is the warp/weft grid and every section boundary is a luminous band rule — never bare whitespace, never a plain `<hr>`. New sections weave onto the grid; they don't float above it.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-Loom Rule",
+        "body": "Surfaces are flat at rest. If something needs to feel raised, raise its tone one rung on the ladder or give it a hairline — never a drop shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One-Primary-Per-Viewport Rule",
+        "body": "Exactly one solid ink button per viewport; every other action is outline or ghost. The solidity of the primary is the conversion path — spending it twice spends its meaning.",
+        "section": "components"
+      }
     ],
     "dos": [
-      "Do keep chrome neutral: paper surfaces, hairline borders, Ink/Muted text — let board content and status washes carry the color.",
-      "Do use Signal Blue (`#2563eb`) for primary form CTAs and links; deepen to `#1d4ed8` on hover.",
-      "Do build page-header toolbar actions (Add Todo, Settings, Sign out) as the monochrome family: 4px radius, 32px height, `px-4`, white/Hard-Black-border secondary with invert hover, Ink solid primary — never Signal Blue on the toolbar.",
-      "Do apply the column washes exactly: Slate To Do, Sky In Progress, Mint Done, each with its 1px matching border.",
-      "Do keep controls compact (32px default height) and cards flat at rest (`ring-1`, no shadow).",
-      "Do show shadows only as feedback: `shadow-md` hover on clickable cards, `shadow-lg`/`shadow-xl` during drag, overlay shadows on dialogs.",
-      "Do mark urgency with the status trio: red overdue/Urgent, amber due-today, green complete — text and soft badges, not full-bleed fills.",
-      "Do use pill shapes for badges, counts, and avatars; 8–10px corners for kit controls; 4px for the page-header toolbar; 14px for cards.",
-      "Do keep page titles bold at 24–30px and work text at 14px in the single system sans."
+      "Do keep the loom ground: the 72px warp/weft grid under everything, and a luminous band rule between every section — never a section break by whitespace alone.",
+      "Do allow exactly one solid primary button per viewport; make every other action outline or ghost.",
+      "Do set labels of record — nav anchors, footer headings, sync readout, column titles, origin tickets, numerals — in Geist Mono, uppercase and tracked where they label.",
+      "Do separate surfaces with 1px hairline borders and the tonal ladder (canvas → board-frame → column → panel → card); keep every resting surface flat.",
+      "Do spend the glow only on sync, focus, selection, hover, and the Pro tier.",
+      "Do mark status truthfully: Urgent red and Done green on card states only.",
+      "Do rank the how-it-works courses with mono numerals scaled 36px → 60px and stepped indents.",
+      "Do keep pricing copy verbatim, including the ✓/✗ list marks, the live price from the settings row, and the bank-transfer note.",
+      "Do animate entrances on `cubic-bezier(0.16, 1, 0.3, 1)` and disable all of it under `prefers-reduced-motion`."
     ],
     "donts": [
-      "Don't add decorative color — gradients, brand-tinted section backgrounds, colored nav bars — or repurpose green/amber/purple for non-status CTAs.",
-      "Don't paint page-header toolbar controls Signal Blue or spread their 4px radius / Hard Black border onto dialogs, inputs, cards, or kit outline buttons.",
-      "Don't put permanent drop shadows on resting cards or columns; rest is flat by rule.",
-      "Don't reintroduce enterprise-PM chrome: heavy borders, dense toolbar walls, or configuration-first surfaces (anti-reference: Jira/Asana).",
-      "Don't introduce a second font family, display face, or uppercase-everything labeling scheme.",
-      "Don't soften the compact density into large airy paddings (32px+ control heights, 24px card gaps) — the system stays scannable and tight.",
-      "Don't stack multiple saturated colors in one card; a todo card may show one priority signal, status text colors, and owner-tag hues — nothing else."
+      "Don't reintroduce the category's light hero, a floating feature-card wall, or enterprise-PM chrome — that is the confirmed anti-reference.",
+      "Don't introduce a second accent hue, a gradient section background, or a large glow fill; one glow is the whole budget.",
+      "Don't put a resting drop shadow on any surface — flat at rest, by rule.",
+      "Don't use Geist Mono for body copy or headlines, or Bricolage for labels/readouts/numerals.",
+      "Don't double borders in collapsed grids or round the band rule, feature cells, or course rows — the woven edges stay square.",
+      "Don't invent a logo, wordmark graphic, or brand asset — the mark is type, and no asset exists.",
+      "Don't add testimonials, logos-of-customers, or benchmark claims — none exist in the product."
     ]
-  }
+  },
+  "additionalWorlds": [
+    {
+      "slug": "app",
+      "title": "Design System: Collaborative Kanban Todo App",
+      "generatedAt": "2026-10-01T04:47:45+03:00",
+      "restoredFrom": "git HEAD @ 2dbccca (some ui and bug done)",
+      "extensions": {
+        "colorMeta": {
+          "background": {
+            "role": "neutral",
+            "displayName": "Paper White",
+            "canonical": "oklch(1 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.97 0 0)"]
+          },
+          "foreground": {
+            "role": "neutral",
+            "displayName": "Near Black",
+            "canonical": "oklch(0.145 0 0)",
+            "tonalRamp": ["oklch(0.145 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.6 0 0)", "oklch(0.75 0 0)", "oklch(0.9 0 0)"]
+          },
+          "surface": {
+            "role": "neutral",
+            "displayName": "Card Paper",
+            "canonical": "oklch(1 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.985 0 0)"]
+          },
+          "surface-muted": {
+            "role": "neutral",
+            "displayName": "Quiet Gray",
+            "canonical": "oklch(0.97 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.92 0 0)", "oklch(0.97 0 0)"]
+          },
+          "mist": {
+            "role": "neutral",
+            "displayName": "Mist Wash",
+            "canonical": "#f9fafb",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.55 0 0)", "oklch(0.7 0 0)", "oklch(0.88 0 0)", "oklch(0.98 0 0)"]
+          },
+          "muted-fg": {
+            "role": "neutral",
+            "displayName": "Muted Ink",
+            "canonical": "oklch(0.556 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.7 0 0)", "oklch(0.85 0 0)", "oklch(0.95 0 0)"]
+          },
+          "border": {
+            "role": "neutral",
+            "displayName": "Hairline",
+            "canonical": "oklch(0.922 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.7 0 0)", "oklch(0.8 0 0)", "oklch(0.88 0 0)", "oklch(0.922 0 0)"]
+          },
+          "ring": {
+            "role": "neutral",
+            "displayName": "Focus Gray",
+            "canonical": "oklch(0.556 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.3 0 0)", "oklch(0.45 0 0)", "oklch(0.556 0 0)", "oklch(0.65 0 0)", "oklch(0.708 0 0)", "oklch(0.82 0 0)", "oklch(0.93 0 0)"]
+          },
+          "ink": {
+            "role": "primary",
+            "displayName": "Ink",
+            "canonical": "oklch(0.205 0 0)",
+            "tonalRamp": ["oklch(0.15 0 0)", "oklch(0.205 0 0)", "oklch(0.3 0 0)", "oklch(0.4 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.8 0 0)", "oklch(0.93 0 0)"]
+          },
+          "on-ink": {
+            "role": "neutral",
+            "displayName": "On Ink",
+            "canonical": "oklch(0.985 0 0)",
+            "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.94 0 0)", "oklch(0.985 0 0)"]
+          },
+          "hard-black": {
+            "role": "neutral",
+            "displayName": "Hard Black",
+            "canonical": "#000000",
+            "tonalRamp": ["oklch(0 0 0)", "oklch(0.15 0 0)", "oklch(0.25 0 0)", "oklch(0.35 0 0)", "oklch(0.45 0 0)", "oklch(0.6 0 0)", "oklch(0.8 0 0)", "oklch(0.97 0 0)"]
+          },
+          "on-action": {
+            "role": "neutral",
+            "displayName": "On Action",
+            "canonical": "#ffffff",
+            "tonalRamp": ["oklch(0.2 0 0)", "oklch(0.35 0 0)", "oklch(0.5 0 0)", "oklch(0.65 0 0)", "oklch(0.78 0 0)", "oklch(0.88 0 0)", "oklch(0.95 0 0)", "oklch(1 0 0)"]
+          },
+          "destructive": {
+            "role": "tertiary",
+            "displayName": "Urgent Red",
+            "canonical": "oklch(0.577 0.245 27.325)",
+            "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.5 0.22 27)", "oklch(0.577 0.245 27.325)", "oklch(0.72 0.18 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+          },
+          "status-amber": {
+            "role": "secondary",
+            "displayName": "Due Amber",
+            "canonical": "#b45309",
+            "tonalRamp": ["oklch(0.25 0.08 70)", "oklch(0.35 0.11 70)", "oklch(0.45 0.13 70)", "oklch(0.55 0.14 70)", "oklch(0.66 0.15 70)", "oklch(0.76 0.13 70)", "oklch(0.87 0.08 70)", "oklch(0.95 0.04 70)"]
+          },
+          "status-red": {
+            "role": "tertiary",
+            "displayName": "Overdue Red",
+            "canonical": "#dc2626",
+            "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.32 0.15 27)", "oklch(0.42 0.19 27)", "oklch(0.52 0.22 27)", "oklch(0.6 0.22 27)", "oklch(0.72 0.17 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+          },
+          "status-green": {
+            "role": "secondary",
+            "displayName": "Done Green",
+            "canonical": "#16a34a",
+            "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.32 0.1 150)", "oklch(0.42 0.12 150)", "oklch(0.52 0.14 150)", "oklch(0.6 0.14 150)", "oklch(0.72 0.12 150)", "oklch(0.85 0.08 150)", "oklch(0.95 0.03 150)"]
+          },
+          "success-soft": {
+            "role": "secondary",
+            "displayName": "Complete Wash",
+            "canonical": "#dcfce7",
+            "tonalRamp": ["oklch(0.22 0.08 150)", "oklch(0.35 0.1 150)", "oklch(0.48 0.12 150)", "oklch(0.62 0.12 150)", "oklch(0.75 0.1 150)", "oklch(0.85 0.07 150)", "oklch(0.92 0.05 150)", "oklch(0.97 0.02 150)"]
+          },
+          "error-surface": {
+            "role": "tertiary",
+            "displayName": "Error Wash",
+            "canonical": "#fef2f2",
+            "tonalRamp": ["oklch(0.22 0.1 27)", "oklch(0.35 0.14 27)", "oklch(0.5 0.18 27)", "oklch(0.65 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.87 0.06 27)", "oklch(0.94 0.03 27)", "oklch(0.98 0.01 27)"]
+          },
+          "error-border": {
+            "role": "tertiary",
+            "displayName": "Error Border",
+            "canonical": "#fecaca",
+            "tonalRamp": ["oklch(0.25 0.1 27)", "oklch(0.4 0.15 27)", "oklch(0.55 0.18 27)", "oklch(0.68 0.15 27)", "oklch(0.78 0.1 27)", "oklch(0.86 0.07 27)", "oklch(0.92 0.04 27)", "oklch(0.97 0.02 27)"]
+          },
+          "error-ink": {
+            "role": "tertiary",
+            "displayName": "Error Ink",
+            "canonical": "#b91c1c",
+            "tonalRamp": ["oklch(0.2 0.1 27)", "oklch(0.3 0.14 27)", "oklch(0.4 0.18 27)", "oklch(0.48 0.2 27)", "oklch(0.55 0.2 27)", "oklch(0.7 0.16 27)", "oklch(0.85 0.1 27)", "oklch(0.95 0.04 27)"]
+          },
+          "column-todo": {
+            "role": "neutral",
+            "displayName": "To Do Slate",
+            "canonical": "#f1f5f9",
+            "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.25 0.01 250)", "oklch(0.4 0.015 250)", "oklch(0.55 0.015 250)", "oklch(0.7 0.015 250)", "oklch(0.82 0.01 250)", "oklch(0.92 0.008 250)", "oklch(0.97 0.005 250)"]
+          },
+          "column-todo-border": {
+            "role": "neutral",
+            "displayName": "To Do Slate Border",
+            "canonical": "#e2e8f0",
+            "tonalRamp": ["oklch(0.15 0.01 250)", "oklch(0.28 0.01 250)", "oklch(0.42 0.015 250)", "oklch(0.58 0.015 250)", "oklch(0.72 0.012 250)", "oklch(0.84 0.01 250)", "oklch(0.91 0.006 250)", "oklch(0.95 0.004 250)"]
+          },
+          "column-progress": {
+            "role": "secondary",
+            "displayName": "Progress Sky",
+            "canonical": "#eff6ff",
+            "tonalRamp": ["oklch(0.2 0.05 255)", "oklch(0.32 0.08 255)", "oklch(0.45 0.1 255)", "oklch(0.6 0.1 255)", "oklch(0.75 0.08 255)", "oklch(0.86 0.05 255)", "oklch(0.94 0.02 255)", "oklch(0.98 0.008 255)"]
+          },
+          "column-progress-border": {
+            "role": "secondary",
+            "displayName": "Progress Sky Border",
+            "canonical": "#bfdbfe",
+            "tonalRamp": ["oklch(0.22 0.06 255)", "oklch(0.35 0.09 255)", "oklch(0.5 0.11 255)", "oklch(0.65 0.11 255)", "oklch(0.78 0.09 255)", "oklch(0.87 0.06 255)", "oklch(0.93 0.035 255)", "oklch(0.97 0.015 255)"]
+          },
+          "column-done": {
+            "role": "secondary",
+            "displayName": "Done Mint",
+            "canonical": "#f0fdf4",
+            "tonalRamp": ["oklch(0.2 0.05 155)", "oklch(0.32 0.08 155)", "oklch(0.45 0.1 155)", "oklch(0.6 0.1 155)", "oklch(0.75 0.08 155)", "oklch(0.87 0.05 155)", "oklch(0.95 0.02 155)", "oklch(0.98 0.008 155)"]
+          },
+          "column-done-border": {
+            "role": "secondary",
+            "displayName": "Done Mint Border",
+            "canonical": "#bbf7d0",
+            "tonalRamp": ["oklch(0.22 0.06 155)", "oklch(0.35 0.09 155)", "oklch(0.5 0.11 155)", "oklch(0.65 0.11 155)", "oklch(0.78 0.09 155)", "oklch(0.88 0.06 155)", "oklch(0.94 0.035 155)", "oklch(0.97 0.015 155)"]
+          }
+        },
+        "typographyMeta": {
+          "title": { "displayName": "Title", "purpose": "Page headers — Dashboard, Board Settings, auth headings." },
+          "headline": { "displayName": "Headline", "purpose": "Section headers — Boards I Own, settings groups." },
+          "body": { "displayName": "Body", "purpose": "Default work text, todo titles, descriptions — 14px dense reading." },
+          "label": { "displayName": "Label", "purpose": "Form labels, buttons, field labels — 14px medium." },
+          "micro": { "displayName": "Micro", "purpose": "Badges, chips, due dates, counts — 12px meta." }
+        },
+        "shadows": [
+          {
+            "name": "hover-lift",
+            "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            "purpose": "BoardCard and auth panel hover — interactive lift only, never at rest."
+          },
+          {
+            "name": "drag-source",
+            "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+            "purpose": "Todo being dragged (with 50% opacity)."
+          },
+          {
+            "name": "drag-overlay",
+            "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+            "purpose": "DragOverlay floating copy (with 2° rotation)."
+          },
+          {
+            "name": "focus-outline",
+            "value": "outline-color: oklch(0.556 0 0) at full opacity (was ring/50)",
+            "purpose": "Base-layer default focus outline via @apply border-border outline-ring on * — covers focused elements not using the ring-3 box-shadow pattern."
+          },
+          {
+            "name": "rest",
+            "value": "none",
+            "purpose": "Flat-By-Default: cards/columns/inputs separate via ring-1 and tone, not shadow."
+          }
+        ],
+        "motion": [
+          {
+            "name": "transition-shadow",
+            "value": "box-shadow 150ms ease",
+            "purpose": "Card hover lift feedback."
+          },
+          {
+            "name": "transition-colors",
+            "value": "background-color 150ms ease, color 150ms ease",
+            "purpose": "Button/badge state changes."
+          },
+          {
+            "name": "toolbar-invert",
+            "value": "transform 100ms ease, background-color 100ms ease, color 100ms ease",
+            "purpose": "Toolbar secondary white↔black invert hover/active."
+          },
+          {
+            "name": "drag-transition",
+            "value": "transform 200ms ease (dnd-kit CSS.Transform)",
+            "purpose": "Sortable drag reflow."
+          },
+          {
+            "name": "active-press",
+            "value": "transform 100ms ease, translateY(1px)",
+            "purpose": "Button active press."
+          },
+          {
+            "name": "reduced-motion",
+            "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }",
+            "purpose": "Global accessibility override — collapses every animation and transition to effectively instant."
+          }
+        ],
+        "breakpoints": [
+          {
+            "name": "sm",
+            "value": "640px"
+          },
+          {
+            "name": "md",
+            "value": "768px"
+          },
+          {
+            "name": "lg",
+            "value": "1024px"
+          }
+        ]
+      },
+      "components": [
+        {
+          "name": "Ink Button (kit default)",
+          "kind": "button",
+          "refersTo": "button-ink",
+          "description": "shadcn default solid button — near-black Ink fill for kit-level primary actions (auth submits: Sign in / Sign up / Invite / Reset, rendered full-width; New Board, dialog submits).",
+          "html": "<button class=\"ds-btn-ink\">Continue</button>",
+          "css": ".ds-btn-ink { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid transparent; border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-ink:hover { opacity: 0.8; } .ds-btn-ink:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(115 115 115 / 0.5); } .ds-btn-ink:active { transform: translateY(1px); }"
+        },
+        {
+          "name": "Toolbar Secondary Button",
+          "kind": "button",
+          "refersTo": "button-toolbar",
+          "description": "Unified page-header toolbar control (Settings, Sign out) — white fill, Hard Black 1px border, invert hover.",
+          "html": "<button class=\"ds-btn-toolbar\">Sign out</button>",
+          "css": ".ds-btn-toolbar { background: #ffffff; color: #000000; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: 0.01em; padding: 8px 16px; height: 32px; border: 1px solid #000000; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: transform 100ms ease, background-color 100ms ease, color 100ms ease; } .ds-btn-toolbar:hover { background: #000000; color: #ffffff; } .ds-btn-toolbar:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(115 115 115 / 0.5); } .ds-btn-toolbar:active { transform: translateY(1px); } .ds-btn-toolbar:disabled { opacity: 0.5; pointer-events: none; cursor: not-allowed; }"
+        },
+        {
+          "name": "Toolbar Primary Button (Add Todo)",
+          "kind": "button",
+          "refersTo": "button-toolbar-primary",
+          "description": "Ink solid primary in toolbar geometry — Add Todo; min-width 136px, 4px radius, centered label.",
+          "html": "<button class=\"ds-btn-toolbar-primary\">Add Todo</button>",
+          "css": ".ds-btn-toolbar-primary { background: oklch(0.205 0 0); color: oklch(0.985 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 16px; height: 32px; min-width: 136px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; text-align: center; transition: all 150ms ease; } .ds-btn-toolbar-primary:hover { opacity: 0.8; } .ds-btn-toolbar-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(115 115 115 / 0.5); } .ds-btn-toolbar-primary:active { transform: translateY(1px); } .ds-btn-toolbar-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+        },
+        {
+          "name": "Outline Button",
+          "kind": "button",
+          "refersTo": "button-outline",
+          "description": "Quiet kit outline for in-panel secondary actions (Cancel, dialogs) — paper fill, hairline border; not the toolbar Hard Black border.",
+          "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+          "css": ".ds-btn-outline { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; padding: 8px 10px; height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 10px; cursor: pointer; transition: all 150ms ease; } .ds-btn-outline:hover { background: oklch(0.97 0 0); color: oklch(0.145 0 0); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(115 115 115 / 0.5); border-color: oklch(0.556 0 0); }"
+        },
+        {
+          "name": "Text Input",
+          "kind": "input",
+          "refersTo": "input",
+          "description": "Compact 32px field — paper fill, hairline border, 3px focus ring.",
+          "html": "<input class=\"ds-input\" placeholder=\"Enter your email\" />",
+          "css": ".ds-input { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 1.5; height: 32px; width: 100%; padding: 4px 10px; border: 1px solid oklch(0.922 0 0); border-radius: 10px; transition: border-color 150ms ease; box-sizing: border-box; } .ds-input::placeholder { color: oklch(0.556 0 0); } .ds-input:focus { outline: none; border-color: oklch(0.556 0 0); box-shadow: 0 0 0 3px rgb(115 115 115 / 0.5); } .ds-input:disabled { opacity: 0.5; background: oklch(0.922 0 0 / 0.5); cursor: not-allowed; }"
+        },
+        {
+          "name": "Todo / Board Card",
+          "kind": "card",
+          "refersTo": "card",
+          "description": "Flat ring-bordered card — the resting surface for todos and board tiles.",
+          "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Draft Q3 plan</p></div>",
+          "css": ".ds-card { background: oklch(1 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; padding: 16px; border-radius: 14px; box-shadow: inset 0 0 0 1px oklch(0.145 0 0 / 0.1); transition: box-shadow 150ms ease; } .ds-card:hover { box-shadow: inset 0 0 0 1px oklch(0.145 0 0 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-card-title { font-size: 14px; font-weight: 500; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }"
+        },
+        {
+          "name": "Priority Badge",
+          "kind": "chip",
+          "refersTo": "chip-priority-urgent",
+          "description": "Pill priority chip — Urgent soft-red variant shown; High is Ink, Medium muted, Low outline.",
+          "html": "<span class=\"ds-badge-urgent\">Urgent</span>",
+          "css": ".ds-badge-urgent { display: inline-flex; align-items: center; height: 20px; width: fit-content; padding: 2px 8px; background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.577 0.245 27.325); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border: 1px solid transparent; border-radius: 9999px; white-space: nowrap; }"
+        },
+        {
+          "name": "Tag Chip",
+          "kind": "chip",
+          "refersTo": "chip-tag",
+          "description": "Small 6px-radius tag with owner color at 20% alpha background.",
+          "html": "<span class=\"ds-chip-tag\">design</span>",
+          "css": ".ds-chip-tag { display: inline-flex; align-items: center; padding: 2px 6px; background: oklch(0.97 0 0); color: oklch(0.145 0 0); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; border-radius: 6px; } .ds-chip-tag:hover { background: oklch(0.922 0 0); }"
+        },
+        {
+          "name": "Kanban Column",
+          "kind": "custom",
+          "refersTo": null,
+          "description": "Signature status column — fixed 288px, status wash + 1px border, header with count pill, card stack body.",
+          "html": "<div class=\"ds-column\"><div class=\"ds-column-header\"><span class=\"ds-column-title\">In Progress</span><span class=\"ds-column-count\">4</span></div><div class=\"ds-column-body\"><div class=\"ds-column-empty\">No todos</div></div></div>",
+          "css": ".ds-column { width: 288px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-column-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #bfdbfe; } .ds-column-title { font-size: 14px; font-weight: 600; color: oklch(0.145 0 0); } .ds-column-count { font-size: 12px; font-weight: 500; color: oklch(0.556 0 0); background: oklch(0.97 0 0); padding: 2px 8px; border-radius: 9999px; } .ds-column-body { flex: 1; padding: 8px; min-height: 200px; display: flex; flex-direction: column; gap: 8px; } .ds-column-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: oklch(0.556 0 0); } .ds-column:focus-within, .ds-column:hover { box-shadow: none; }"
+        },
+        {
+          "name": "Status Banner",
+          "kind": "custom",
+          "refersTo": null,
+          "description": "Shared shell for every static role=\"status\" region (components/StatusBanner.tsx). Card variant: amber icon card with a trailing self-service action (paywall, board lock). Strip variant: full-bleed border-bottom row under the nav with a bold label, muted detail, and trailing link (pending review, expiry warning). Non-blocking by design — never a modal.",
+          "html": "<div class=\"ds-status-card\" role=\"status\"><div class=\"ds-status-main\"><svg class=\"ds-status-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20\"/></svg><p class=\"ds-status-message\">This board is read-only — renew to restore editing.</p></div><a class=\"ds-status-action\" href=\"/upgrade\">Upgrade to Pro</a></div>",
+          "css": ".ds-status-card { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-status-main { display: flex; align-items: flex-start; gap: 8px; min-width: 0; } .ds-status-icon { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; color: #b45309; } .ds-status-message { margin: 0; font-size: 14px; line-height: 1.5; color: #78350f; } .ds-status-action { margin-left: auto; font-size: 14px; font-weight: 500; color: inherit; text-underline-offset: 4px; } /* strip variant: border-b only, inner container padding 8px 16px, bold label + muted detail, warning tone bg rgb(245 158 11 / 0.1) or neutral bg muted/40 */"
+        },
+        {
+          "name": "Settings Section",
+          "kind": "card",
+          "refersTo": "card",
+          "description": "Settings card stack section (components/settings/SettingsSection.tsx) — rounded-xl, hairline ring, 16px padding, optional h3 title; danger tone swaps ring and heading to red. Title omitted when the content titles itself; titleClassName tightens heading gap; className places the card (mt-4).",
+          "html": "<section class=\"ds-section\"><h3 class=\"ds-section-title\">Board Name</h3><div class=\"ds-section-body\">Rename content</div></section>",
+          "css": ".ds-section { background: oklch(1 0 0); color: oklch(0.145 0 0); padding: 16px; border-radius: 12px; box-shadow: inset 0 0 0 1px oklch(0.145 0 0 / 0.1); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-section--danger { box-shadow: inset 0 0 0 1px #fecaca; } .ds-section-title { margin: 0 0 12px; font-size: 20px; font-weight: 600; line-height: 1.4; color: oklch(0.145 0 0); } .ds-section--danger .ds-section-title { color: #7f1d1d; }"
+        },
+        {
+          "name": "Back Link",
+          "kind": "custom",
+          "refersTo": null,
+          "description": "Leading icon-only back link on secondary pages (components/BackLink.tsx) — muted 20px arrow, hover wash to muted/foreground, aria-label names the destination, not the icon.",
+          "html": "<a class=\"ds-backlink\" href=\"/boards\" aria-label=\"Back to boards\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 12H5\"/><path d=\"m12 19-7-7 7-7\"/></svg></a>",
+          "css": ".ds-backlink { display: inline-flex; align-items: center; justify-content: center; margin-left: -8px; padding: 8px; border-radius: 6px; color: oklch(0.556 0 0); text-decoration: none; transition: background-color 150ms ease, color 150ms ease; } .ds-backlink svg { width: 20px; height: 20px; } .ds-backlink:hover { background: oklch(0.97 0 0); color: oklch(0.145 0 0); }"
+        }
+      ],
+      "narrative": {
+        "northStar": "The Quiet Control Room",
+        "overview": "This is a calm operations console for small teams: neutral paper surfaces do the heavy lifting, and color only fires for action, priority, and status. The mood is calm and utilitarian — unpretentious, efficient, built for scanning a board in seconds rather than admiring chrome. Depth comes from light tonal shifts and thin rings, not decoration; the interface recedes so todos, assignments, and movement lead.\n\nThe system is a hybrid of two observed layers that already coexist: a shadcn/ui base-nova neutral token layer (pure OKLCH grays, compact controls, ring-bordered cards, primary Ink CTAs) and a functional Tailwind palette layer used directly on feature screens (status reds/amber/greens, soft column washes). New screens should treat both as one vocabulary: chrome stays quiet; hue is earned by meaning.\n\nThe confirmed visual anti-reference is enterprise project-management chrome — Jira/Asana density, heavy borders, loud gradients, configuration-first surfaces. Product principle \"and nothing more\" is a visual principle here too: if an element isn't helping someone scan, act, or coordinate, it doesn't ship.",
+        "keyCharacteristics": [
+          "Neutral, near-monochrome chrome; hue reserved for status and priority",
+          "Compact controls (32px default button/input height) and dense 14px work text",
+          "Monochrome page-header toolbar family: white/black-border secondary, Ink solid primary, 4px radius",
+          "Flat at rest (ring borders); shadows only as feedback (hover, dialog, drag)",
+          "Soft status washes on Kanban columns; pill badges for priority",
+          "Single system sans — functional hierarchy, no display face"
+        ],
+        "rules": [
+          {
+            "name": "The Signal-Only Rule",
+            "body": "Hue appears only for action, status, priority, or focus. Everything else — nav, structure, chrome — stays in the neutral stack. If a new color can't answer \"what does this mean?\", it doesn't belong.",
+            "section": "colors"
+          },
+          {
+            "name": "The Single-Action Rule",
+            "body": "Ink (the `primary` token, `oklch(0.205 0 0)`) is the sole primary-action color. Don't introduce green/amber/purple buttons for ordinary CTAs; green and amber are reserved for status meaning.",
+            "section": "colors"
+          },
+          {
+            "name": "The Monochrome Toolbar Rule",
+            "body": "Page-header toolbar actions (Add Todo, Settings, Sign out) stay black/white only — white with Hard Black border for secondary, Ink solid for primary — never tinted with hue. Geometry is locked to 4px radius / 32px height / 16px horizontal padding.",
+            "section": "colors"
+          },
+          {
+            "name": "The One-Family Rule",
+            "body": "Hierarchy is size and weight only (700 titles → 600 headlines → 500 labels → 400 body). Don't introduce a second family or decorative styling to make text \"pop.\"",
+            "section": "typography"
+          },
+          {
+            "name": "The Flat-By-Default Rule",
+            "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, drag, overlay presence) — never as permanent card styling.",
+            "section": "elevation"
+          },
+          {
+            "name": "The Toolbar Radius Rule",
+            "body": "4px is exclusive to page-header toolbar controls (Add Todo, Settings, Sign out). Don't spread 4px onto dialogs, inputs, cards, or kit outline buttons — those keep 8–10px.",
+            "section": "shapes"
+          }
+        ],
+        "dos": [
+          "Do keep chrome neutral: paper surfaces, hairline borders, Ink/Muted text — let board content and status washes carry the color.",
+          "Do use Ink (the `primary` token, `oklch(0.205 0 0)`) for primary form CTAs and links; hover drops to 80% opacity.",
+          "Do build page-header toolbar actions (Add Todo, Settings, Sign out) as the monochrome family: 4px radius, 32px height, `px-4`, white/Hard-Black-border secondary with invert hover, Ink solid primary — never a colored variant on the toolbar.",
+          "Do apply the column washes exactly: Slate To Do, Sky In Progress, Mint Done, each with its 1px matching border.",
+          "Do keep controls compact (32px default height) and cards flat at rest (`ring-1`, no shadow).",
+          "Do show shadows only as feedback: `shadow-md` hover on clickable cards, `shadow-lg`/`shadow-xl` during drag, overlay shadows on dialogs.",
+          "Do mark urgency with the status trio: red overdue/Urgent, amber due-today, green complete — text and soft badges, not full-bleed fills.",
+          "Do use pill shapes for badges, counts, and avatars; 8–10px corners for kit controls; 4px for the page-header toolbar; 14px for cards.",
+          "Do keep page titles bold at 24–30px and work text at 14px in the single system sans."
+        ],
+        "donts": [
+          "Don't add decorative color — gradients, brand-tinted section backgrounds, colored nav bars — or repurpose green/amber/purple for non-status CTAs.",
+          "Don't colorize page-header toolbar controls or spread their 4px radius / Hard Black border onto dialogs, inputs, cards, or kit outline buttons.",
+          "Don't put permanent drop shadows on resting cards or columns; rest is flat by rule.",
+          "Don't reintroduce enterprise-PM chrome: heavy borders, dense toolbar walls, or configuration-first surfaces (anti-reference: Jira/Asana).",
+          "Don't introduce a second font family, display face, or uppercase-everything labeling scheme.",
+          "Don't soften the compact density into large airy paddings (32px+ control heights, 24px card gaps) — the system stays scannable and tight.",
+          "Don't stack multiple saturated colors in one card; a todo card may show one priority signal, status text colors, and owner-tag hues — nothing else."
+        ]
+      }
+    }
+  ]
 }

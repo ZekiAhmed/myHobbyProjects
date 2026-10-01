@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { BackLink } from '@/components/BackLink'
 import { PageShell } from '@/components/PageShell'
+import { SettingsSection } from '@/components/settings/SettingsSection'
 import { SignOutButton } from '@/components/SignOutButton'
 import { ActiveSessions } from '@/components/settings/ActiveSessions'
 import { Button } from '@/components/ui/button'
@@ -18,15 +18,7 @@ export function AccountSettingsClient({ name, email }: AccountSettingsClientProp
     <PageShell
       title="Account settings"
       narrow
-      leading={
-        <Link
-          href="/boards"
-          className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Back to boards"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-      }
+      leading={<BackLink href="/boards" label="Back to boards" />}
     >
       <Tabs defaultValue="account">
         <TabsList>
@@ -35,26 +27,24 @@ export function AccountSettingsClient({ name, email }: AccountSettingsClientProp
         </TabsList>
 
         <TabsContent value="account" className="mt-4">
-          <section className="bg-white rounded-xl ring-1 ring-foreground/10 p-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Your account</h3>
+          <SettingsSection title="Your account">
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-500">Name</p>
-                <p className="text-sm font-medium text-gray-900">{name}</p>
+                <p className="text-xs text-muted-foreground">Name</p>
+                <p className="text-sm font-medium text-foreground">{name}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Email</p>
-                <p className="text-sm font-medium text-gray-900">{email}</p>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground">{email}</p>
               </div>
             </div>
-            <div className="mt-4 border-t border-gray-200 pt-4">
+            <div className="mt-4 border-t border-border pt-4">
               <SignOutButton />
             </div>
-          </section>
+          </SettingsSection>
 
-          <section className="mt-4 bg-white rounded-xl ring-1 ring-foreground/10 p-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-1">Your data</h3>
-            <p className="text-sm text-gray-500 mb-3">
+          <SettingsSection title="Your data" titleClassName="mb-1" className="mt-4">
+            <p className="text-sm text-muted-foreground mb-3">
               Download a JSON copy of your personal data: profile, Active sessions, boards,
               todos, comments, notifications, activity, and invitations. Password hashes,
               session tokens, and invite tokens are never included.
@@ -62,7 +52,7 @@ export function AccountSettingsClient({ name, email }: AccountSettingsClientProp
             <Button variant="outline" render={<a href="/api/me/export" />} nativeButton={false}>
               Export my data
             </Button>
-          </section>
+          </SettingsSection>
         </TabsContent>
 
         <TabsContent value="security" className="mt-4">

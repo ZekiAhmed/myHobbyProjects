@@ -24,7 +24,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sendVerificationEmail } from '@/lib/auth-client'
@@ -42,6 +42,20 @@ import { Button } from '@/components/ui/button'
  * - UI state (success/error messages, loading)
  */
 export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Check your inbox
+        </h1>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
+  )
+}
+
+function VerifyEmailContent() {
   // Get the token from URL query parameters
   // Example: /verify-email?token=abc123
   const searchParams = useSearchParams()
@@ -156,7 +170,7 @@ export default function VerifyEmailPage() {
       return (
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Verifying your email...</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             Please wait while we verify your email address.
           </p>
         </div>
@@ -185,7 +199,6 @@ export default function VerifyEmailPage() {
         <Button
           render={<Link href="/sign-in" />}
           nativeButton={false}
-          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           Sign in to your account
         </Button>
@@ -203,7 +216,7 @@ export default function VerifyEmailPage() {
     <div>
       <h1 className="text-2xl font-bold text-center mb-6">Check your inbox</h1>
       
-      <p className="text-gray-600 text-center mb-6">
+      <p className="text-muted-foreground text-center mb-6">
         We&apos;ve sent you a verification email. Please check your inbox and click the link to verify your email address.
       </p>
 
@@ -224,7 +237,7 @@ export default function VerifyEmailPage() {
       {/* Resend verification email form */}
       <form onSubmit={handleResend} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
             Didn&apos;t receive the email?
           </label>
           <Input
@@ -240,7 +253,7 @@ export default function VerifyEmailPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          className="w-full"
         >
           {/* Show loading text while sending */}
           {loading ? 'Sending...' : 'Resend verification email'}
@@ -248,8 +261,8 @@ export default function VerifyEmailPage() {
       </form>
 
       {/* Link back to sign-in */}
-      <p className="mt-4 text-center text-sm text-gray-600">
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
           Back to sign in
         </Link>
       </p>

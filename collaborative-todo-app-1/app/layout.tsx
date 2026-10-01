@@ -16,8 +16,8 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Kanban',
-  description: 'A collaborative Kanban todo app for small teams.',
+  title: 'Kanify',
+  description: 'A collaborative Kanify todo app for small teams.',
 }
 
 export default function RootLayout({

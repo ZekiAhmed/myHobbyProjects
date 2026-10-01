@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
     <div>
       <h1 className="text-2xl font-bold text-center mb-6">Forgot your password?</h1>
       
-      <p className="text-gray-600 text-center mb-6">
+      <p className="text-muted-foreground text-center mb-6">
         Enter your email address and we&apos;ll send you a link to reset your password.
       </p>
 
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
       {/* Request password reset form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
             Email
           </label>
           <Input
@@ -143,7 +143,7 @@ export default function ForgotPasswordPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          className="w-full"
         >
           {/* Show loading text while sending */}
           {loading ? 'Sending...' : 'Send reset link'}
@@ -151,9 +151,9 @@ export default function ForgotPasswordPage() {
       </form>
 
       {/* Link back to sign-in */}
-      <p className="mt-4 text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
         Remember your password?{' '}
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
+        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
           Sign in
         </Link>
       </p>

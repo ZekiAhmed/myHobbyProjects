@@ -94,7 +94,7 @@ export function InviteForm({ boardId }: InviteFormProps) {
 
   return (
     <div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-3">Invite by email</h3>
+      <h3 className="text-xl font-semibold text-foreground mb-3">Invite by email</h3>
 
       {paywall && <PaywallBanner reason={paywall.reason} message={paywall.message} />}
 
@@ -121,7 +121,6 @@ export function InviteForm({ boardId }: InviteFormProps) {
         <Button
           type="submit"
           disabled={inviteMutation.isPending}
-          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           {inviteMutation.isPending ? 'Sending...' : 'Invite'}
         </Button>
@@ -129,18 +128,18 @@ export function InviteForm({ boardId }: InviteFormProps) {
 
       {invitations.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase mb-2">
             Pending invitations
           </h4>
           <div className="space-y-2">
             {invitations.map((invitation: { id: string; email: string; expiresAt: string }) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between p-2 rounded-md bg-gray-50"
+                className="flex items-center justify-between p-2 rounded-md bg-muted"
               >
                 <div>
-                  <p className="text-sm text-gray-900">{invitation.email}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-foreground">{invitation.email}</p>
+                  <p className="text-xs text-muted-foreground">
                     Expires {new Date(invitation.expiresAt).toLocaleDateString()}
                   </p>
                 </div>

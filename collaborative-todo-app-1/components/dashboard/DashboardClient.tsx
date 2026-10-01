@@ -81,7 +81,7 @@ export function DashboardClient({ initialBoards, currentUserId }: { initialBoard
         {/* Empty state — shown when user has no boards */}
         {boards.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">You don&apos;t have any boards yet.</p>
+            <p className="text-muted-foreground mb-4">You don&apos;t have any boards yet.</p>
             <NewBoardModal />
           </div>
         )}

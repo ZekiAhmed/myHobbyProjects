@@ -26,7 +26,7 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
@@ -43,6 +43,20 @@ import { Button } from '@/components/ui/button'
  * - UI state (error message, loading)
  */
 export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Reset your password
+        </h1>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
+  )
+}
+
+function ResetPasswordForm() {
   // Router for programmatic navigation after reset
   const router = useRouter()
   
@@ -73,13 +87,12 @@ export default function ResetPasswordPage() {
     return (
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">Invalid Reset Link</h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-muted-foreground mb-6">
           This password reset link is invalid or has expired.
         </p>
         <Button
           render={<Link href="/forgot-password" />}
           nativeButton={false}
-          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           Request a new reset link
         </Button>
@@ -156,7 +169,7 @@ export default function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* New password field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
             New Password
           </label>
           <Input
@@ -172,7 +185,7 @@ export default function ResetPasswordPage() {
 
         {/* Confirm password field */}
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1">
             Confirm Password
           </label>
           <Input
@@ -190,7 +203,7 @@ export default function ResetPasswordPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          className="w-full"
         >
           {/* Show loading text while resetting */}
           {loading ? 'Resetting...' : 'Reset password'}
@@ -198,8 +211,8 @@ export default function ResetPasswordPage() {
       </form>
 
       {/* Link back to sign-in */}
-      <p className="mt-4 text-center text-sm text-gray-600">
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
           Back to sign in
         </Link>
       </p>

@@ -1,0 +1,7 @@
+[2026-10-01T02:46:37.581Z] GET http://localhost:3000/__nextjs_font/geist-latin.woff2 → 200 (67ms, 28369B)
+[2026-10-01T02:46:38.101Z] GET http://localhost:3000/?_rsc=i7H2zfRJZqVPlji6 → pending (?ms, ?B)
+[2026-10-01T02:46:38.102Z] GET http://localhost:3000/_next/static/chunks/app_globals_0yg4wg8.css → 200 (150ms, 34787B)
+[2026-10-01T02:46:38.092Z] GET http://localhost:3000/?_rsc=i7H2zfRJZqVPlji6 → 200 (583ms, ?B)
+[2026-10-01T02:46:38.100Z] GET http://localhost:3000/_next/static/chunks/app_globals_0yg4wg8.css → 200 (144ms, 34787B)
+[2026-10-01T02:46:38.399Z] GET http://localhost:3000/?_rsc=i7H2zfRJZqVPlji6 → 200 (54ms, ?B)
+[2026-10-01T02:46:38.399Z] GET http://localhost:3000/?_rsc=i7H2zfRJZqVPlji6 → 200 (88ms, ?B)

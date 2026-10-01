@@ -1,0 +1,261 @@
+/* Marketing route styles. Palette/type are route-local: app tokens in
+   app/globals.css are untouched and do not change for signed-in surfaces. */
+
+/* ---- Self-hosted faces (public/fonts) ---- */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/bricolage-grotesque-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-mono-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* ---- The route's own token scope ---- */
+
+.woven {
+  color-scheme: dark;
+
+  --background: #0a0a0a;
+  --foreground: #f4f4f5;
+  --card: #161616;
+  --card-foreground: #f4f4f5;
+  --popover: #161616;
+  --popover-foreground: #f4f4f5;
+  --primary: #f4f4f5;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #f4f4f5;
+  --muted: #1c1c1c;
+  --muted-foreground: #a1a1aa;
+  --accent: #1c1c1c;
+  --accent-foreground: #f4f4f5;
+  --border: rgb(244 244 245 / 0.12);
+  --input: rgb(244 244 245 / 0.16);
+  --ring: var(--glow);
+
+  /* Marketing-only accents — the same names as DESIGN.md frontmatter */
+  --glow: #93c5fd;
+  --board-frame: #0d0d0d;
+  --board-column: #101010;
+  --board-card: #1a1a1a;
+  --status-done: #4ade80;
+
+  color: var(--foreground);
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-optical-sizing: auto;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgb(244 244 245 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 244 245 / 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  background-position: center top;
+  caret-color: var(--glow);
+  scrollbar-color: #3f3f46 #0a0a0a;
+}
+
+.woven ::selection {
+  background: var(--glow);
+  color: var(--background);
+}
+
+.woven ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.woven ::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+.woven ::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border: 3px solid #0a0a0a;
+  border-radius: 8px;
+}
+
+.woven ::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* ---- Type roles ---- */
+
+.mono {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-feature-settings: "tnum" 1;
+}
+
+.woven h1,
+.woven h2,
+.woven h3 {
+  text-wrap: balance;
+}
+
+/* ---- Luminous band-rule divider ---- */
+
+.band {
+  height: 9px;
+  border-top: 1px solid rgb(244 244 245 / 0.1);
+  border-bottom: 1px solid rgb(244 244 245 / 0.1);
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(147 197 253 / 0.45) 22%,
+      rgb(244 244 245 / 0.6) 50%,
+      rgb(147 197 253 / 0.45) 78%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgb(244 244 245 / 0.16) 0 1px,
+      transparent 1px 9px
+    );
+  background-size:
+    100% 1px,
+    100% 100%;
+  background-position:
+    0 4px,
+    0 0;
+  background-repeat: no-repeat, repeat;
+}
+
+/* ---- Hero board glow (the one accent) ---- */
+
+.board-aura {
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    rgb(147 197 253 / 0.13),
+    transparent 70%
+  );
+}
+
+.sync-dot {
+  animation: sync-beat 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes sync-beat {
+  0% {
+    box-shadow: 0 0 0 0 rgb(147 197 253 / 0.55);
+    transform: scale(1.35);
+  }
+  6% {
+    box-shadow: 0 0 0 6px rgb(147 197 253 / 0);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(147 197 253 / 0);
+    transform: scale(1);
+  }
+}
+
+/* ---- Entrance + scroll motion ---- */
+
+@keyframes woven-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes woven-stretch {
+  from {
+    transform: scaleX(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-in > * {
+    animation: woven-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-in > *:nth-child(2) {
+    animation-delay: 0.07s;
+  }
+  .hero-in > *:nth-child(3) {
+    animation-delay: 0.14s;
+  }
+  .hero-in > *:nth-child(4) {
+    animation-delay: 0.21s;
+  }
+  .hero-in > *:nth-child(5) {
+    animation-delay: 0.28s;
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: woven-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 24%;
+    }
+
+    .band {
+      animation: woven-stretch 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 55%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-dot,
+  .hero-in > *,
+  .reveal,
+  .band {
+    animation: none !important;
+  }
+
+  .woven,
+  .woven * {
+    transition-duration: 0.01ms !important;
+  }
+}

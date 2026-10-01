@@ -114,28 +114,28 @@ export function MemberList({
 
   return (
     <div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-3">Members</h3>
+      <h3 className="text-xl font-semibold text-foreground mb-3">Members</h3>
       <div className="space-y-2">
         {allMembers.map((member) => (
           <div
             key={member.id}
-            className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50"
+            className="flex items-center justify-between p-2 rounded-md hover:bg-muted"
           >
             <div className="flex items-center gap-3">
               <Avatar>
                 {member.image && <AvatarImage src={member.image} alt={member.name} />}
-                <AvatarFallback className="bg-blue-100 font-medium text-blue-600">
+                <AvatarFallback className="bg-primary/10 font-medium text-primary">
                   {member.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-foreground">
                   {member.name}
                   {member.isOwner && (
-                    <span className="ml-2 text-xs text-gray-500">(Owner)</span>
+                    <span className="ml-2 text-xs text-muted-foreground">(Owner)</span>
                   )}
                 </p>
-                <p className="text-xs text-gray-500">{member.email}</p>
+                <p className="text-xs text-muted-foreground">{member.email}</p>
               </div>
             </div>
 
@@ -154,7 +154,7 @@ export function MemberList({
       </div>
 
       {!isOwner && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-border">
           <Button
             variant="destructive"
             size="sm"

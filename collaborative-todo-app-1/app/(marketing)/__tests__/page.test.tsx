@@ -185,9 +185,12 @@ describe('landing structure (section anchors)', () => {
     const html = await renderPage()
 
     expect(html).toMatch(/aria-hidden="true"/)
-    // the signature column washes are on the preview
-    expect(html).toContain('#f1f5f9')
-    expect(html).toContain('#eff6ff')
-    expect(html).toContain('#f0fdf4')
+    // the preview's live sync readout (the product's real 8s cadence)
+    expect(html).toContain('Sync')
+    expect(html).toContain('08s')
+    // and the three columns framing the demo cards
+    expect(html).toContain('To Do')
+    expect(html).toContain('In Progress')
+    expect(html).toContain('Done')
   })
 })

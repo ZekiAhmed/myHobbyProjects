@@ -17,9 +17,12 @@
  * NON-BLOCKING by design: a static informational region under the nav,
  * never a modal, never a redirect — the warning informs, the renewal
  * link acts.
+ *
+ * Strip shell (structure, tone): components/StatusBanner.tsx
  */
 
 import Link from 'next/link'
+import { StatusBanner } from '@/components/StatusBanner'
 import { deriveSubscription, formatRenewalDate } from '@/lib/subscription'
 
 export function ExpiryWarningBanner({ periodEnd }: { periodEnd: Date | null }) {
@@ -30,25 +33,29 @@ export function ExpiryWarningBanner({ periodEnd }: { periodEnd: Date | null }) {
   if (!periodEnd || !expiringSoon) return null
 
   return (
-    <div
-      role="status"
-      data-testid="expiry-warning-banner"
-      className="border-b bg-amber-500/10"
-    >
-      <div className="container mx-auto flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 md:px-6">
-        <p className="text-sm font-medium">
+    <StatusBanner
+      variant="strip"
+      tone="warning"
+      testId="expiry-warning-banner"
+      label={
+        <>
           Your Pro subscription renews {formatRenewalDate(periodEnd)}.
-        </p>
-        <p className="min-w-0 text-sm text-muted-foreground">
-          Renew early to stack another month onto your current period — no gap in service.
-        </p>
+        </>
+      }
+      message={
+        <>
+          Renew early to stack another month onto your current period — no gap in
+          service.
+        </>
+      }
+      action={
         <Link
           href="/upgrade"
           className="ml-auto shrink-0 text-sm font-medium underline underline-offset-4 transition-colors hover:text-foreground"
         >
           Extend by 1 month
         </Link>
-      </div>
-    </div>
+      }
+    />
   )
 }

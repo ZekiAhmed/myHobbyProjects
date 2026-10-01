@@ -7,8 +7,8 @@ import { PendingReviewBanner } from '@/components/subscription/PendingReviewBann
 import { ExpiryWarningBanner } from '@/components/subscription/ExpiryWarningBanner'
 
 export const metadata: Metadata = {
-  title: 'Kanban',
-  description: 'A collaborative Kanban todo app for small teams.',
+  title: 'Kanify',
+  description: 'A collaborative Kanify todo app for small teams.',
 }
 
 export default async function AppLayout({
@@ -40,10 +40,18 @@ export default async function AppLayout({
   // (spec §Domain & entitlement).
   return (
     <QueryProvider>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow-md"
+      >
+        Skip to content
+      </a>
       <AppNav email={session.user.email} />
       <PendingReviewBanner />
       <ExpiryWarningBanner periodEnd={subscriber?.subscriptionPeriodEnd ?? null} />
-      {children}
+      <main id="main" tabIndex={-1} className="focus:outline-none">
+        {children}
+      </main>
     </QueryProvider>
   )
 }

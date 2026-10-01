@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { sessionKeys } from '@/lib/queries/board-keys'
 import { listActiveSessions, revokeSession, revokeOtherSessions } from '@/actions/sessions'
+import { SettingsSection } from '@/components/settings/SettingsSection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -28,18 +29,18 @@ function formatTimestamp(value: string | Date) {
 
 function SessionsCard({ action, children }: { action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-xl bg-white p-4 ring-1 ring-foreground/10">
+    <SettingsSection>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Active sessions</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-xl font-semibold text-foreground">Active sessions</h3>
+          <p className="text-sm text-muted-foreground">
             These Active sessions are where your account is signed in.
           </p>
         </div>
         {action}
       </div>
       {children}
-    </section>
+    </SettingsSection>
   )
 }
 
@@ -141,14 +142,14 @@ export function ActiveSessions() {
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="flex items-center justify-between gap-3 rounded-md p-2 hover:bg-gray-50"
+              className="flex items-center justify-between gap-3 rounded-md p-2 hover:bg-muted"
             >
               <div className="min-w-0">
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <span className="truncate">{s.device}</span>
                   {s.isCurrent && <Badge variant="secondary">This device</Badge>}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {s.ip} &middot; Signed in {formatTimestamp(s.createdAt)} &middot; Expires{' '}
                   {formatTimestamp(s.expiresAt)}
                 </p>

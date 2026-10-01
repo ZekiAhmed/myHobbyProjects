@@ -24,10 +24,13 @@
  *               one); the Owner is offered an upgrade instead
  * Both CTAs come from the shared UpgradePromptLink, worded the same
  * way as every other paywall surface (subscription-billing issue 10).
+ *
+ * Card shell (structure, icon treatment): components/StatusBanner.tsx
  */
 
 import { Lock } from 'lucide-react'
 import type { BoardWriteLockReason } from '@/lib/subscription'
+import { StatusBanner } from '@/components/StatusBanner'
 import { UpgradePromptLink } from '@/components/subscription/UpgradePromptLink'
 
 interface BoardLockBannerProps {
@@ -50,17 +53,12 @@ function messageFor(reason: BoardWriteLockReason, isOwner: boolean): string {
 
 export function BoardLockBanner({ reason, isOwner }: BoardLockBannerProps) {
   return (
-    <div
-      role="status"
-      data-testid="board-lock-banner"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3"
-    >
-      <div className="flex min-w-0 items-start gap-2">
-        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />
-        <p className="text-sm text-amber-900">{messageFor(reason, isOwner)}</p>
-      </div>
-
-      {isOwner && <UpgradePromptLink reason={reason} />}
-    </div>
+    <StatusBanner
+      variant="card"
+      testId="board-lock-banner"
+      icon={Lock}
+      message={messageFor(reason, isOwner)}
+      action={isOwner ? <UpgradePromptLink reason={reason} /> : undefined}
+    />
   )
 }

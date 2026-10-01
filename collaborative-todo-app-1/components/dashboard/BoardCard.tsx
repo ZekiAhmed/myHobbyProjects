@@ -51,7 +51,7 @@ export function BoardCard({ board }: { board: Board }) {
         </CardHeader>
         
         <CardContent>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{board._count.members} members</span>
             <span>{board._count.todos} open todos</span>
           </div>

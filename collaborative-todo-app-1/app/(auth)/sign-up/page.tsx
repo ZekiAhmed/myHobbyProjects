@@ -26,7 +26,7 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signUp, authClient } from '@/lib/auth-client'
@@ -43,6 +43,20 @@ import { Button } from '@/components/ui/button'
  * - Navigation (redirect after sign-up)
  */
 export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Create an account
+        </h1>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
+  )
+}
+
+function SignUpForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('inviteToken')
@@ -161,7 +175,7 @@ export default function SignUpPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name field */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
             Name
           </label>
           <Input
@@ -176,7 +190,7 @@ export default function SignUpPage() {
 
         {/* Email field */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
             Email
           </label>
           <Input
@@ -191,7 +205,7 @@ export default function SignUpPage() {
 
         {/* Password field with strength indicator */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
             Password
           </label>
           <Input
@@ -214,13 +228,13 @@ export default function SignUpPage() {
                     key={i}
                     className={`h-1 flex-1 rounded ${
                       // Fill segments up to current strength level
-                      i < passwordStrength ? strengthColors[passwordStrength - 1] : 'bg-gray-200'
+                      i < passwordStrength ? strengthColors[passwordStrength - 1] : 'bg-border'
                     }`}
                   />
                 ))}
               </div>
               {/* Strength label text */}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {strengthLabels[passwordStrength]}
               </p>
             </div>
@@ -231,7 +245,7 @@ export default function SignUpPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          className="w-full"
         >
           {/* Show loading text while submitting */}
           {loading ? 'Creating account...' : 'Sign up'}
@@ -239,9 +253,9 @@ export default function SignUpPage() {
       </form>
 
       {/* Link to sign-in page */}
-      <p className="mt-4 text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/sign-in" className="text-blue-600 hover:text-blue-700">
+        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
           Sign in
         </Link>
       </p>

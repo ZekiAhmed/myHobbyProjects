@@ -45,13 +45,14 @@ import { TodoCard } from '@/components/board/TodoCard'
 import { FilterBar } from '@/components/board/FilterBar'
 import { TodoSidePanel } from '@/components/board/TodoSidePanel'
 import { BoardLockBanner } from '@/components/board/BoardLockBanner'
+import { BackLink } from '@/components/BackLink'
 import { PageShell } from '@/components/PageShell'
 import { Button } from '@/components/ui/button'
 import { quickCompleteTodo, updateTodoStatusAndOrder } from '@/actions/todos'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { ArrowLeft, Activity as ActivityIcon, Settings } from 'lucide-react'
+import { Activity as ActivityIcon, Settings } from 'lucide-react'
 import { generateKeyBetween } from 'fractional-indexing'
 import { onFocusTodo } from '@/lib/focus-todo'
 import type { Todo } from '@/lib/generated/prisma/browser'
@@ -237,6 +238,12 @@ export function KanbanBoard({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      // Space lifts the card for drag; Enter is reserved for opening it.
+      keyboardCodes: {
+        start: ['Space'],
+        cancel: ['Escape'],
+        end: ['Space', 'Enter', 'Tab'],
+      },
     })
   )
 
@@ -433,15 +440,7 @@ export function KanbanBoard({
     <PageShell
       title={boardDetail?.name || 'Loading...'}
       leading={
-        isMobile ? (
-          <Link
-            href="/boards"
-            className="-ml-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Back to dashboard"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        ) : undefined
+        isMobile ? <BackLink href="/boards" label="Back to dashboard" /> : undefined
       }
       actions={
         <div className="flex items-center gap-2">

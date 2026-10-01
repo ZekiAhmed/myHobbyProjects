@@ -91,7 +91,7 @@ describe('marketing footer', () => {
     const html = await renderShell()
 
     expect(html).toContain('A collaborative todo app for small teams')
-    expect(html).toContain(`© ${new Date().getFullYear()} Kanban`)
+    expect(html).toContain(`© ${new Date().getFullYear()} Kanify`)
     // the product column repeats the section anchors
     expect(html).toContain('href="#features"')
     expect(html).toContain('href="#pricing"')

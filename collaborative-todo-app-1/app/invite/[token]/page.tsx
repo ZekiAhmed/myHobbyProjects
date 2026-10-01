@@ -84,12 +84,11 @@ export default async function InvitePage({
     return (
       <AuthPanel>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Invalid</h1>
-          <p className="text-gray-600 mb-6">This invite link is invalid.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Invitation Invalid</h1>
+          <p className="text-muted-foreground mb-6">This invite link is invalid.</p>
           <Button
             render={<Link href="/boards" />}
             nativeButton={false}
-            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             Go to Dashboard
           </Button>
@@ -102,12 +101,11 @@ export default async function InvitePage({
     return (
       <AuthPanel>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Used</h1>
-          <p className="text-gray-600 mb-6">This invitation has already been used.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Invitation Used</h1>
+          <p className="text-muted-foreground mb-6">This invitation has already been used.</p>
           <Button
             render={<Link href="/boards" />}
             nativeButton={false}
-            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             Go to Dashboard
           </Button>
@@ -120,14 +118,13 @@ export default async function InvitePage({
     return (
       <AuthPanel>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Expired</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Invitation Expired</h1>
+          <p className="text-muted-foreground mb-6">
             This invitation link has expired. Ask the board owner to send a new one.
           </p>
           <Button
             render={<Link href="/boards" />}
             nativeButton={false}
-            className="bg-blue-600 text-white hover:bg-blue-700"
           >
             Go to Dashboard
           </Button>
@@ -139,16 +136,16 @@ export default async function InvitePage({
   return (
     <AuthPanel>
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;ve been invited!</h1>
-        <p className="text-gray-600 mb-6">
-          Join <span className="font-semibold">{invitation.board.name}</span> on Kanban
+        <h1 className="text-2xl font-bold text-foreground mb-2">You&apos;ve been invited!</h1>
+        <p className="text-muted-foreground mb-6">
+          Join <span className="font-semibold">{invitation.board.name}</span> on Kanify
         </p>
 
         <div className="space-y-3">
           <Button
             render={<Link href={`/sign-in?inviteToken=${token}`} />}
             nativeButton={false}
-            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            className="w-full"
           >
             Sign in to join
           </Button>
@@ -156,7 +153,7 @@ export default async function InvitePage({
             render={<Link href={`/sign-up?inviteToken=${token}`} />}
             nativeButton={false}
             variant="outline"
-            className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+            className="w-full"
           >
             Create an account to join
           </Button>

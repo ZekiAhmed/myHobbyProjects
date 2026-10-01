@@ -21,7 +21,7 @@
 
 'use client' // This is a Client Component (uses hooks, browser APIs)
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn, authClient } from '@/lib/auth-client'
@@ -40,6 +40,20 @@ import { Button } from '@/components/ui/button'
  * - Search params (read callbackUrl from URL)
  */
 export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Sign in to your account
+        </h1>
+      }
+    >
+      <SignInForm />
+    </Suspense>
+  )
+}
+
+function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/boards'
@@ -146,7 +160,7 @@ export default function SignInPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email field */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
             Email
           </label>
           <Input
@@ -161,7 +175,7 @@ export default function SignInPage() {
 
         {/* Password field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
             Password
           </label>
           <Input
@@ -178,7 +192,7 @@ export default function SignInPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-primary underline-offset-4 hover:underline"
           >
             Forgot password?
           </Link>
@@ -188,7 +202,7 @@ export default function SignInPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
+          className="w-full"
         >
           {/* Show loading text while submitting */}
           {loading ? 'Signing in...' : 'Sign in'}
@@ -196,9 +210,9 @@ export default function SignInPage() {
       </form>
 
       {/* Link to sign-up page */}
-      <p className="mt-4 text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/sign-up" className="text-blue-600 hover:text-blue-700">
+        <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
           Sign up
         </Link>
       </p>

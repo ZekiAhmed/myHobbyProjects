@@ -19,10 +19,13 @@
  * CALM BY DESIGN: loading and error states render nothing at all. A
  * billing outage must never break the app shell, and a banner that
  * flickers on every navigation is noise, not a promise kept.
+ *
+ * Strip shell (structure, tone): components/StatusBanner.tsx
  */
 
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
+import { StatusBanner } from '@/components/StatusBanner'
 import { billingSubmissionsQueryOptions } from '@/lib/queries/board-keys'
 import { paymentStatusDetail, paymentStatusLabel } from '@/lib/payment-status'
 
@@ -37,26 +40,27 @@ export function PendingReviewBanner() {
   if (!pending) return null
 
   return (
-    <div
-      role="status"
-      data-testid="pending-review-banner"
-      className="border-b bg-muted/40"
-    >
-      <div className="container mx-auto flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 md:px-6">
-        <p className="text-sm font-medium">{paymentStatusLabel(pending.status)}</p>
-        <p className="min-w-0 text-sm text-muted-foreground">
+    <StatusBanner
+      variant="strip"
+      tone="neutral"
+      testId="pending-review-banner"
+      label={paymentStatusLabel(pending.status)}
+      message={
+        <>
           {paymentStatusDetail(pending.status)} Reference{' '}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             {pending.reference}
           </code>
-        </p>
+        </>
+      }
+      action={
         <Link
           href="/billing"
           className="ml-auto shrink-0 text-sm font-medium underline underline-offset-4 transition-colors hover:text-foreground"
         >
           View billing history
         </Link>
-      </div>
-    </div>
+      }
+    />
   )
 }

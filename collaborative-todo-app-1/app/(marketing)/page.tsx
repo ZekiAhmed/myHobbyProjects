@@ -3,8 +3,9 @@
  *
  * Route: / — the public root of the site. The dashboard lives at /boards.
  *
- * Section inventory (top → bottom):
- *   hero (session-branched CTA + CSS mini-board) → how it works →
+ * Section inventory (top → bottom), each pair separated by a luminous
+ * band rule:
+ *   hero (session-branched CTA + live board preview) → how it works →
  *   features (#features) → pricing (#pricing, live price from the
  *   settings row) → FAQ → final CTA
  *
@@ -16,18 +17,24 @@
  * admin edits at /admin — getPricingSettings() returns bank details
  * too, but only price/currency ever reach this render (bank details
  * belong to /upgrade, behind the session).
+ *
+ * The board preview (hero-board.tsx) is a client component: its
+ * mono sync readout counts the product's real 8-second refetch
+ * cadence and demo cards glide on each tick. Decorative, aria-hidden;
+ * this page itself never polls.
  */
 
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/session'
 import { getPricingSettings } from '@/lib/pricing-settings'
 import { Button } from '@/components/ui/button'
+import { HeroBoard } from './hero-board'
 
 const FEATURES = [
   {
     title: 'Boards for every project',
     description:
-      'Create a Kanban board per project and organize work into columns that match how your team actually ships.',
+      'Create a Kanify board per project and organize work into columns that match how your team actually ships.',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -134,7 +141,7 @@ const STEPS = [
   {
     title: 'Create a board',
     description:
-      'Spin up a Kanban board per project in seconds — To Do, In Progress, Done, ready to fill.',
+      'Spin up a Kanify board per project in seconds — To Do, In Progress, Done, ready to fill.',
   },
   {
     title: 'Invite your team',
@@ -171,88 +178,9 @@ const FAQS = [
   },
 ] as const
 
-/**
- * Decorative product preview — the signature Kanban column built from
- * DESIGN.md tokens (Slate/Sky/Mint washes, ring-bordered cards, pill
- * badges). aria-hidden: it repeats the headline's meaning.
- */
-const BOARD_PREVIEW_COLUMNS = [
-  {
-    title: 'To Do',
-    count: '3',
-    className: 'bg-[#f1f5f9] border-[#e2e8f0]',
-    cards: [
-      { title: 'Draft launch checklist', badge: 'urgent' as const },
-      { title: 'Review pricing copy', badge: null },
-    ],
-  },
-  {
-    title: 'In Progress',
-    count: '2',
-    className: 'bg-[#eff6ff] border-[#bfdbfe]',
-    cards: [
-      { title: 'Ship invite flow', badge: 'tag' as const },
-      { title: 'Write release notes', badge: null },
-    ],
-  },
-  {
-    title: 'Done',
-    count: '4',
-    className: 'bg-[#f0fdf4] border-[#bbf7d0]',
-    cards: [{ title: 'Set up the board', badge: 'done' as const }],
-  },
-] as const
-
-function BoardPreview() {
-  return (
-    <div
-      aria-hidden="true"
-      className="grid w-full grid-cols-3 gap-2 md:gap-3"
-    >
-      {BOARD_PREVIEW_COLUMNS.map((column) => (
-        <div
-          key={column.title}
-          className={`rounded-lg border p-2 ${column.className}`}
-        >
-          <div className="mb-2 flex items-center justify-between px-1">
-            <span className="text-xs font-semibold text-foreground">
-              {column.title}
-            </span>
-            <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {column.count}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {column.cards.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-md bg-background p-2.5 ring-1 ring-foreground/10"
-              >
-                <p className="text-xs font-medium text-foreground">
-                  {card.title}
-                </p>
-                {card.badge === 'urgent' && (
-                  <span className="mt-2 inline-block rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive">
-                    Urgent
-                  </span>
-                )}
-                {card.badge === 'tag' && (
-                  <span className="mt-2 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    feature
-                  </span>
-                )}
-                {card.badge === 'done' && (
-                  <span className="mt-2 inline-block text-[11px] font-semibold text-[#16a34a]">
-                    ✓ Done
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+/** Woven band rule — the divider between sections. */
+function Band() {
+  return <div className="band" aria-hidden="true" />
 }
 
 export default async function LandingPage() {
@@ -262,12 +190,22 @@ export default async function LandingPage() {
   ])
 
   const authCta = session ? (
-    <Button size="lg" render={<Link href="/boards" />} nativeButton={false}>
+    <Button
+      size="lg"
+      render={<Link href="/boards" />}
+      nativeButton={false}
+      className="h-11 px-6 text-[15px]"
+    >
       Go to dashboard
     </Button>
   ) : (
     <>
-      <Button size="lg" render={<Link href="/sign-up" />} nativeButton={false}>
+      <Button
+        size="lg"
+        render={<Link href="/sign-up" />}
+        nativeButton={false}
+        className="h-11 px-6 text-[15px]"
+      >
         Get started
       </Button>
       <Button
@@ -275,6 +213,7 @@ export default async function LandingPage() {
         size="lg"
         render={<Link href="/sign-in" />}
         nativeButton={false}
+        className="h-11 px-6 text-[15px]"
       >
         Sign in
       </Button>
@@ -282,201 +221,229 @@ export default async function LandingPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 md:px-6">
+    <div>
       {/* Hero */}
-      <section className="grid items-center gap-10 py-16 md:py-24 lg:grid-cols-2">
-        <div className="flex flex-col items-start gap-6 text-center lg:text-left">
-          <h1 className="max-w-xl text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+      <section className="flex min-h-[calc(100svh-6rem)] flex-col justify-center px-4 pt-14 pb-12 md:px-6 md:pt-16">
+        <div className="hero-in mx-auto flex w-full max-w-6xl flex-col items-center text-center">
+          <p className="mono text-[11px] tracking-[0.2em] text-zinc-400 uppercase md:text-xs">
+            Collaborative todo app for small teams
+          </p>
+          <h1 className="mt-6 max-w-[15ch] text-[clamp(2.5rem,6.5vw,5.25rem)] leading-[1.02] font-extrabold tracking-[-0.035em] text-foreground">
             Plan, track, and ship together
           </h1>
-          <p className="max-w-xl text-lg text-muted-foreground">
-            Kanban is a collaborative todo board for small teams. Organize
+          <p className="mt-5 max-w-[54ch] text-base leading-relaxed text-muted-foreground md:text-lg">
+            Kanify is a collaborative todo board for small teams. Organize
             tasks, see progress at a glance, and get work across the finish
             line.
           </p>
-          <div className="flex items-center justify-center gap-3 lg:justify-start">
+          <div className="mt-8 flex items-center justify-center gap-3">
             {authCta}
           </div>
-        </div>
-        <div className="flex justify-center lg:justify-end">
-          <BoardPreview />
+          <div className="mt-12 w-full max-w-5xl text-left md:mt-16">
+            <HeroBoard />
+          </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="py-16 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-            How it works
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            From empty page to moving cards in three steps.
-          </p>
+      <Band />
+
+      {/* How it works — numbered climbing courses */}
+      <section id="how-it-works" className="px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="reveal max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              How it works
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              From empty page to moving cards in three steps.
+            </p>
+          </div>
+          <ol className="mt-12 border-b border-[var(--border)]">
+            {STEPS.map((step, index) => (
+              <li
+                key={step.title}
+                className={`reveal flex flex-col gap-3 border-t border-[var(--border)] py-8 md:flex-row md:items-baseline md:gap-10 ${
+                  index === 1 ? 'md:ml-10' : index === 2 ? 'md:ml-20' : ''
+                }`}
+              >
+                <span className="mono shrink-0 text-4xl leading-none font-light tabular-nums text-foreground/40 md:text-6xl">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground md:text-xl">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 max-w-[62ch] leading-relaxed text-muted-foreground">
+                    {step.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-        <ol className="mt-10 grid gap-6 md:grid-cols-3">
-          {STEPS.map((step, index) => (
-            <li
-              key={step.title}
-              className="rounded-xl bg-background p-6 ring-1 ring-foreground/10"
-            >
-              <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground ring-1 ring-foreground/10">
-                {index + 1}
-              </span>
-              <h3 className="mt-4 text-base font-semibold text-foreground">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {step.description}
-              </p>
-            </li>
-          ))}
-        </ol>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-16 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-            Everything a small team needs
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            No configuration marathon — the defaults are the workflow.
-          </p>
-        </div>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-xl bg-background p-6 ring-1 ring-foreground/10"
-            >
-              <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground ring-1 ring-foreground/10 [&_svg]:size-5">
-                {feature.icon}
-              </span>
-              <h3 className="mt-4 text-base font-semibold text-foreground">
-                {feature.title}
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+      <Band />
+
+      {/* Features — cells of cloth on the weave grid */}
+      <section id="features" className="px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="reveal max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              Everything a small team needs
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              No configuration marathon — the defaults are the workflow.
+            </p>
+          </div>
+          <div className="reveal mt-12 grid border-t border-l border-[var(--border)] sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <div
+                key={feature.title}
+                className="group border-r border-b border-[var(--border)] p-6 transition-colors hover:bg-white/[0.025] md:p-7"
+              >
+                <span className="flex size-9 items-center justify-center rounded-md border border-[var(--border)] bg-white/[0.03] text-zinc-400 transition-colors group-hover:text-[var(--glow)] [&_svg]:size-5">
+                  {feature.icon}
+                </span>
+                <h3 className="mt-4 text-base font-semibold text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
+      <Band />
 
       {/* Pricing */}
-      <section id="pricing" className="py-16 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-            Simple, honest pricing
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Start free. Pay only when your team joins.
+      <section id="pricing" className="px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="reveal max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              Simple, honest pricing
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Start free. Pay only when your team joins.
+            </p>
+          </div>
+
+          <div className="reveal mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+            {/* Free */}
+            <div className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--card)] p-7">
+              <h3 className="text-base font-semibold text-foreground">Free</h3>
+              <p className="mt-4 flex items-baseline gap-2">
+                <span className="mono text-5xl leading-none font-medium tabular-nums text-foreground">
+                  0
+                </span>
+                <span className="text-sm text-muted-foreground">forever</span>
+              </p>
+              <ul className="mt-6 flex flex-col gap-2.5 text-sm text-muted-foreground">
+                <li>✓ Unlimited personal boards</li>
+                <li>✓ Full board features — columns, drag-and-drop, tags</li>
+                <li>✓ Comments, activity log, notifications</li>
+                <li className="text-muted-foreground/80">
+                  ✗ Inviting teammates — Pro only
+                </li>
+              </ul>
+              <div className="mt-auto pt-8">
+                <Button
+                  variant="outline"
+                  render={<Link href={session ? '/boards' : '/sign-up'} />}
+                  nativeButton={false}
+                  className="w-full"
+                >
+                  {session ? 'Go to dashboard' : 'Get started'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Pro */}
+            <div className="flex flex-col rounded-xl border border-[var(--glow)]/25 bg-[var(--card)] p-7">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-foreground">
+                  Pro
+                </h3>
+                <span className="mono rounded-full border border-[var(--glow)]/30 bg-[var(--glow)]/10 px-2 py-0.5 text-[10px] tracking-[0.1em] text-[var(--glow)] uppercase">
+                  For teams
+                </span>
+              </div>
+              <p className="mt-4 flex items-baseline gap-2">
+                <span className="mono text-5xl leading-none font-medium tabular-nums text-foreground">
+                  {settings.price} {settings.currency}
+                </span>
+                <span className="text-sm text-muted-foreground">/ month</span>
+              </p>
+              <ul className="mt-6 flex flex-col gap-2.5 text-sm text-muted-foreground">
+                <li>✓ Everything in Free</li>
+                <li>✓ Invite Members to any board you own</li>
+                <li>✓ One subscription covers all your boards</li>
+                <li>✓ Members join and use your boards free</li>
+              </ul>
+              <div className="mt-auto pt-8">
+                <Button
+                  render={<Link href={session ? '/upgrade' : '/sign-up'} />}
+                  nativeButton={false}
+                  className="w-full"
+                >
+                  {session ? 'Get Pro' : 'Get started'}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <p className="mx-auto mt-6 max-w-4xl text-center text-xs leading-relaxed text-muted-foreground">
+            Paid by bank transfer — upload your receipt and an admin activates
+            Pro within 24 hours. No bank details are shown here; they live
+            inside the app once you subscribe.
           </p>
         </div>
-
-        <div className="mx-auto mt-10 grid max-w-3xl gap-6 md:grid-cols-2">
-          {/* Free */}
-          <div className="flex flex-col rounded-xl bg-background p-6 ring-1 ring-foreground/10">
-            <h3 className="text-base font-semibold text-foreground">Free</h3>
-            <p className="mt-3 flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold text-foreground">0</span>
-              <span className="text-sm text-muted-foreground">forever</span>
-            </p>
-            <ul className="mt-5 flex flex-col gap-2.5 text-sm text-muted-foreground">
-              <li>✓ Unlimited personal boards</li>
-              <li>✓ Full board features — columns, drag-and-drop, tags</li>
-              <li>✓ Comments, activity log, notifications</li>
-              <li className="text-muted-foreground/70">
-                ✗ Inviting teammates — Pro only
-              </li>
-            </ul>
-            <div className="mt-6 pt-1">
-              <Button
-                variant="outline"
-                render={
-                  <Link href={session ? '/boards' : '/sign-up'} />
-                }
-                nativeButton={false}
-                className="w-full"
-              >
-                {session ? 'Go to dashboard' : 'Get started'}
-              </Button>
-            </div>
-          </div>
-
-          {/* Pro */}
-          <div className="flex flex-col rounded-xl bg-background p-6 ring-1 ring-foreground/10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-foreground">Pro</h3>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                For teams
-              </span>
-            </div>
-            <p className="mt-3 flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold text-foreground">
-                {settings.price} {settings.currency}
-              </span>
-              <span className="text-sm text-muted-foreground">/ month</span>
-            </p>
-            <ul className="mt-5 flex flex-col gap-2.5 text-sm text-muted-foreground">
-              <li>✓ Everything in Free</li>
-              <li>✓ Invite Members to any board you own</li>
-              <li>✓ One subscription covers all your boards</li>
-              <li>✓ Members join and use your boards free</li>
-            </ul>
-            <div className="mt-6 pt-1">
-              <Button
-                render={
-                  <Link href={session ? '/upgrade' : '/sign-up'} />
-                }
-                nativeButton={false}
-                className="w-full"
-              >
-                {session ? 'Get Pro' : 'Get started'}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <p className="mx-auto mt-5 max-w-3xl text-center text-xs text-muted-foreground">
-          Paid by bank transfer — upload your receipt and an admin activates
-          Pro within 24 hours. No bank details are shown here; they live
-          inside the app once you subscribe.
-        </p>
       </section>
+
+      <Band />
 
       {/* FAQ */}
-      <section id="faq" className="py-16 md:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-            Frequently asked questions
-          </h2>
+      <section id="faq" className="px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="reveal max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              Frequently asked questions
+            </h2>
+          </div>
+          <dl className="reveal mt-10 border-t border-[var(--border)]">
+            {FAQS.map((faq) => (
+              <div
+                key={faq.question}
+                className="grid gap-2 border-b border-[var(--border)] py-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] md:gap-10"
+              >
+                <dt className="text-base font-semibold text-foreground md:text-lg">
+                  {faq.question}
+                </dt>
+                <dd className="text-sm leading-relaxed text-muted-foreground md:text-base">
+                  {faq.answer}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
-        <dl className="mx-auto mt-10 flex max-w-3xl flex-col gap-8">
-          {FAQS.map((faq) => (
-            <div key={faq.question}>
-              <dt className="text-base font-semibold text-foreground">
-                {faq.question}
-              </dt>
-              <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {faq.answer}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
+      <Band />
+
       {/* Final CTA */}
-      <section className="pb-20 pt-4 md:pb-24">
-        <div className="rounded-xl bg-background p-10 text-center ring-1 ring-foreground/10">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+      <section className="px-4 pt-4 pb-24 md:px-6">
+        <div className="reveal mx-auto max-w-4xl rounded-2xl border border-[var(--border)] bg-[var(--card)] px-6 py-14 text-center md:px-12">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             Ready to ship together?
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
             Create your first board in seconds — free for you and your
             personal projects.
           </p>
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-8 flex items-center justify-center gap-3">
             {authCta}
           </div>
         </div>

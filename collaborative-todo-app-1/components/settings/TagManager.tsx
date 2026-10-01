@@ -102,24 +102,24 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
 
   return (
     <div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-3">Tags</h3>
+      <h3 className="text-xl font-semibold text-foreground mb-3">Tags</h3>
 
       {/* Existing tags */}
       <div className="space-y-2 mb-4">
         {tags.length === 0 && (
-          <p className="text-sm text-gray-500">No tags yet. Create one below.</p>
+          <p className="text-sm text-muted-foreground">No tags yet. Create one below.</p>
         )}
         {tags.map((tag) => (
           <div
             key={tag.id}
-            className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50"
+            className="flex items-center justify-between p-2 rounded-md hover:bg-muted"
           >
             <div className="flex items-center gap-2">
               <div
                 className="h-4 w-4 rounded-full"
                 style={{ backgroundColor: tag.color }}
               />
-              <span className="text-sm text-gray-900">{tag.name}</span>
+              <span className="text-sm text-foreground">{tag.name}</span>
             </div>
             <Button
               variant="destructive"
@@ -199,7 +199,7 @@ export function TagManager({ boardId, tags }: TagManagerProps) {
                 onClick={() => setColor(presetColor)}
                 className={`rounded-full ${
                   color === presetColor
-                    ? 'ring-2 ring-offset-2 ring-gray-400 scale-110'
+                    ? 'ring-2 ring-offset-2 ring-ring scale-110'
                     : 'hover:scale-105'
                 }`}
                 style={{ backgroundColor: presetColor }}
